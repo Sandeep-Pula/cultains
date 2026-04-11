@@ -1,0 +1,325 @@
+.section {
+  position: relative;
+  padding: 7.5rem 0 4rem;
+  overflow: hidden;
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top left, rgba(223, 201, 175, 0.32), transparent 28%),
+    radial-gradient(circle at right top, rgba(195, 169, 132, 0.18), transparent 24%),
+    linear-gradient(180deg, #faf6ef 0%, #f6efe5 62%, #f4ecdf 100%);
+  z-index: -1;
+}
+
+.content {
+  width: min(1180px, calc(100vw - 1.5rem));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.92fr);
+  gap: 2.25rem;
+  align-items: center;
+}
+
+.copyColumn {
+  max-width: 670px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.48rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(111, 84, 56, 0.12);
+  color: var(--color-earth-brown);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin-top: 1rem;
+  color: var(--color-ink);
+  font-size: clamp(2.9rem, 6.8vw, 5.5rem);
+  line-height: 0.96;
+  letter-spacing: -0.06em;
+}
+
+.subtitle {
+  margin-top: 1.15rem;
+  color: var(--color-body);
+  font-size: clamp(1.02rem, 1.8vw, 1.18rem);
+  max-width: 38rem;
+}
+
+.ctaRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.7rem;
+}
+
+.secondaryCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 3.35rem;
+  padding: 0.9rem 1.2rem;
+  border-radius: 999px;
+  border: 1px solid rgba(111, 84, 56, 0.14);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--color-ink);
+  font-weight: 600;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.secondaryCta:hover {
+  transform: translateY(-1px);
+  background: #fffdf9;
+}
+
+.microcopy {
+  margin-top: 0.95rem;
+  color: var(--color-muted-brown);
+  font-size: 0.94rem;
+}
+
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1.4rem;
+}
+
+.badge {
+  padding: 0.68rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(111, 84, 56, 0.12);
+  background: rgba(255, 255, 255, 0.65);
+  color: var(--color-body);
+  font-size: 0.9rem;
+}
+
+.visualColumn {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mockupCard {
+  width: min(100%, 500px);
+  padding: 1.15rem;
+  border-radius: 28px;
+  background: rgba(255, 252, 247, 0.86);
+  border: 1px solid rgba(111, 84, 56, 0.12);
+  box-shadow: 0 24px 80px rgba(84, 59, 24, 0.12);
+}
+
+.mockupHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.mockupPill,
+.mockupPillMuted {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mockupPill {
+  background: #ffffff;
+  color: var(--color-ink);
+}
+
+.mockupPillMuted {
+  background: #efe5d8;
+  color: var(--color-earth-brown);
+}
+
+.beforeAfter {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.roomPanel {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.panelLabel {
+  color: var(--color-muted-brown);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.roomScene {
+  position: relative;
+  min-height: 270px;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(111, 84, 56, 0.1);
+}
+
+.beforeScene {
+  background:
+    linear-gradient(180deg, #efe7dc 0%, #e6dbcd 68%, #d8c6af 68%, #d4b894 100%);
+}
+
+.afterScene {
+  background:
+    linear-gradient(180deg, #f2eadf 0%, #eadcc8 66%, #d3b28d 66%, #c79b68 100%);
+}
+
+.placeholder {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  font-size: 0.8rem;
+  color: rgba(74, 53, 35, 0.7);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0.35rem 0.55rem;
+  border-radius: 10px;
+}
+
+.wallpaperPatch {
+  position: absolute;
+  inset: 0 0 34% 0;
+  background:
+    linear-gradient(90deg, rgba(177, 146, 115, 0.1) 0%, rgba(177, 146, 115, 0.1) 48%, transparent 48%, transparent 52%, rgba(177, 146, 115, 0.1) 52%, rgba(177, 146, 115, 0.1) 100%),
+    linear-gradient(180deg, #ecdfce 0%, #e2cfba 100%);
+}
+
+.windowFrame {
+  position: absolute;
+  width: 4.6rem;
+  height: 5.4rem;
+  top: 2.7rem;
+  right: 3.3rem;
+  border: 0.45rem solid #7b5b39;
+  border-radius: 0.35rem;
+}
+
+.windowFrame::before,
+.windowFrame::after {
+  content: '';
+  position: absolute;
+  background: #7b5b39;
+}
+
+.windowFrame::before {
+  width: 0.32rem;
+  height: 100%;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+}
+
+.windowFrame::after {
+  width: 100%;
+  height: 0.32rem;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.curtainLeft,
+.curtainRight {
+  position: absolute;
+  top: 2.1rem;
+  width: 2rem;
+  height: 7rem;
+  background: linear-gradient(180deg, #bc8b58 0%, #9a6d43 100%);
+  border-radius: 1rem;
+}
+
+.curtainLeft {
+  right: 6.8rem;
+}
+
+.curtainRight {
+  right: 1.5rem;
+}
+
+.sofa {
+  position: absolute;
+  left: 2rem;
+  right: 2rem;
+  bottom: 3rem;
+  height: 3.6rem;
+  background: linear-gradient(180deg, #d8bea5 0%, #c7a27d 100%);
+  border-radius: 1.4rem 1.4rem 0.8rem 0.8rem;
+}
+
+.rug {
+  position: absolute;
+  left: 2.3rem;
+  right: 2.3rem;
+  bottom: 1rem;
+  height: 1rem;
+  background: #ead7c2;
+  border-radius: 999px;
+}
+
+.insightStrip {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.insightItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 2.9rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 16px;
+  background: #ffffff;
+  color: var(--color-body);
+  border: 1px solid rgba(111, 84, 56, 0.1);
+}
+
+@media (max-width: 980px) {
+  .content {
+    grid-template-columns: 1fr;
+  }
+
+  .visualColumn {
+    justify-content: stretch;
+  }
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding-top: 7.5rem;
+    padding-bottom: 3rem;
+  }
+
+  .content {
+    width: min(1180px, calc(100vw - 1rem));
+    gap: 1.5rem;
+  }
+
+  .ctaRow,
+  .beforeAfter {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .roomScene {
+    min-height: 230px;
+  }
+}

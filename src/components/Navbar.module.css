@@ -1,0 +1,110 @@
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem min(2rem, 4vw);
+  z-index: 100;
+  background: rgba(250, 246, 239, 0.78);
+  transition: background 0.3s ease, padding 0.3s ease, border-color 0.3s ease;
+  border-bottom: 1px solid transparent;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.scrolled {
+  background: rgba(250, 246, 239, 0.94);
+  border-bottom: 1px solid rgba(111, 84, 56, 0.1);
+  padding: 0.7rem min(2rem, 4vw);
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--color-ink);
+  letter-spacing: -0.05em;
+  text-decoration: none;
+}
+
+.logoBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.9rem;
+  height: 2.9rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #fffaf4;
+  border: 1px solid rgba(111, 84, 56, 0.12);
+  box-shadow: 0 6px 18px rgba(96, 70, 37, 0.08);
+  flex-shrink: 0;
+}
+
+.logoMark {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.logoText {
+  line-height: 1;
+}
+
+.links {
+  display: flex;
+  gap: var(--spacing-lg);
+  align-items: center;
+}
+
+.link {
+  color: var(--color-body);
+  opacity: 1;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: opacity 0.2s ease, color 0.2s ease;
+  text-decoration: none;
+  position: relative;
+}
+
+.link:hover {
+  color: var(--color-ink);
+}
+
+.ctaLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.8rem;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  background: var(--color-earth-brown);
+  border: 1px solid rgba(111, 84, 56, 0.1);
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .nav {
+    gap: 0.75rem;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .links {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .logoText {
+    font-size: 1.25rem;
+  }
+}

@@ -1,0 +1,18 @@
+.appContainer {
+  position: relative;
+  width: 100vw;
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--color-cream) 0%, var(--color-sand) 100%);
+}
+
+.liquidTransition {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #f3ebdf;
+  z-index: 50;
+  pointer-events: none;
+  transform-origin: bottom;
+}
