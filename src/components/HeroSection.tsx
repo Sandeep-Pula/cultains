@@ -102,20 +102,14 @@ export const HeroSection = () => {
               <div className={styles.roomPanel}>
                 <span className={styles.panelLabel}>Before</span>
                 <div className={`${styles.roomScene} ${styles.beforeScene}`}>
-                  <span className={styles.placeholder}>Placeholder room image</span>
+                  <img src="/homepage_scene_before.png" alt="Before design" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               </div>
 
               <div className={styles.roomPanel}>
                 <span className={styles.panelLabel}>After</span>
                 <div className={`${styles.roomScene} ${styles.afterScene}`}>
-                  <div className={styles.wallpaperPatch} />
-                  <div className={styles.windowFrame} />
-                  <div className={styles.curtainLeft} />
-                  <div className={styles.curtainRight} />
-                  <div className={styles.sofa} />
-                  <div className={styles.rug} />
-                  <span className={styles.placeholder}>Styled preview placeholder</span>
+                  <img src="/homepage_scene_after.png" alt="After design" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               </div>
             </div>
