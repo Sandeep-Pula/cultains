@@ -102,14 +102,14 @@ export const HeroSection = () => {
               <div className={styles.roomPanel}>
                 <span className={styles.panelLabel}>Before</span>
                 <div className={`${styles.roomScene} ${styles.beforeScene}`}>
-                  <img src="/homepage_scene_before.png" alt="Before design" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={`${import.meta.env.BASE_URL}homepage_scene_before.png`} alt="Before design" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               </div>
 
               <div className={styles.roomPanel}>
                 <span className={styles.panelLabel}>After</span>
                 <div className={`${styles.roomScene} ${styles.afterScene}`}>
-                  <img src="/homepage_scene_after.png" alt="After design" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={`${import.meta.env.BASE_URL}homepage_scene_after.png`} alt="After design" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               </div>
             </div>

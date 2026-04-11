@@ -26,7 +26,7 @@ export const Navbar = () => {
     >
       <a href={homeHref('#top')} className={styles.logo} aria-label="Cultains home">
         <span className={styles.logoBadge}>
-          <img src="/cultains-logo-black.png" alt="Cultains logo" className={styles.logoMark} />
+          <img src={`${import.meta.env.BASE_URL}cultains-logo-black.png`} alt="Cultains logo" className={styles.logoMark} />
         </span>
         <span className={styles.logoText}>Cultains</span>
       </a>

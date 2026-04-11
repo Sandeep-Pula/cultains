@@ -242,7 +242,7 @@ export const HomeContent = () => {
         <div className={styles.container}>
           <div className={styles.footerInner}>
             <div className={styles.footerBrand}>
-              <img src="/cultains-logo-black.png" alt="Cultains logo" className={styles.footerLogo} />
+              <img src={`${import.meta.env.BASE_URL}cultains-logo-black.png`} alt="Cultains logo" className={styles.footerLogo} />
               <div>
                 <strong>Cultains</strong>
                 <p>Interior visualization for decorators and design firms in India.</p>
