@@ -18,7 +18,7 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
     <section className={styles.section}>
       <div className={styles.container}>
         <div className={styles.backRow}>
-          <a href="/" className={styles.backLink}>
+          <a href="#top" className={styles.backLink}>
             <ArrowLeft size={16} />
             Back to homepage
           </a>
@@ -78,7 +78,7 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
 
               <p className={styles.switchText}>
                 {isSignup ? 'Already have an account?' : 'New to Cultains?'}{' '}
-                <a href={isSignup ? '/login' : '/signup'}>
+                <a href={isSignup ? '#login' : '#signup'}>
                   {isSignup ? 'Login' : 'Create account'}
                 </a>
               </p>
