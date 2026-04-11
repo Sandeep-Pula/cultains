@@ -4,9 +4,7 @@ import styles from './Navbar.module.css';
 
 export const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
-  const isHomePage = window.location.pathname === '/';
-
-  const homeHref = (hash: string) => (isHomePage ? hash : `/${hash}`);
+  // Default routing uses hash history on GitHub Pages
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,7 +22,7 @@ export const Navbar = () => {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
     >
-      <a href={homeHref('#top')} className={styles.logo} aria-label="Cultains home">
+      <a href="#top" className={styles.logo} aria-label="Cultains home">
         <span className={styles.logoBadge}>
           <img src={`${import.meta.env.BASE_URL}cultains-logo-black.png`} alt="Cultains logo" className={styles.logoMark} />
         </span>
@@ -32,12 +30,12 @@ export const Navbar = () => {
       </a>
 
       <div className={styles.links}>
-        <a href={homeHref('#about')} className={styles.link}>Problem</a>
-        <a href={homeHref('#workflow')} className={styles.link}>How it works</a>
-        <a href={homeHref('#product')} className={styles.link}>Features</a>
-        <a href="/login" className={styles.link}>Login</a>
-        <a href="/signup" className={styles.link}>Sign up</a>
-        <a href={homeHref('#contact')} className={styles.ctaLink}>Book Demo</a>
+        <a href="#about" className={styles.link}>Problem</a>
+        <a href="#workflow" className={styles.link}>How it works</a>
+        <a href="#product" className={styles.link}>Features</a>
+        <a href="#login" className={styles.link}>Login</a>
+        <a href="#signup" className={styles.link}>Sign up</a>
+        <a href="#contact" className={styles.ctaLink}>Book Demo</a>
       </div>
     </motion.nav>
   );

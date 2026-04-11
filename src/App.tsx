@@ -10,16 +10,16 @@ import './styles/global.css';
 import { Navbar } from './components/Navbar';
 
 function App() {
-  const [pathname, setPathname] = useState(window.location.pathname);
+  const [hash, setHash] = useState(window.location.hash);
 
   useEffect(() => {
-    const handlePopState = () => setPathname(window.location.pathname);
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    const handleHashChange = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const isLoginPage = pathname === '/login';
-  const isSignupPage = pathname === '/signup';
+  const isLoginPage = hash === '#login';
+  const isSignupPage = hash === '#signup';
   const isAuthPage = isLoginPage || isSignupPage;
 
   return (
