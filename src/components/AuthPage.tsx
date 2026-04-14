@@ -51,9 +51,13 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
         await signInWithEmailAndPassword(auth, email, password);
         window.location.hash = '#dashboard';
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err.message || 'An error occurred during authentication.');
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An error occurred during authentication.');
+      }
     } finally {
       setLoading(false);
     }
