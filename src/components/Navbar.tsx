@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { onAuthStateChanged, signOut, User } from 'firebase/auth';
+import { auth } from '../lib/firebase';
 import styles from './Navbar.module.css';
 
 export const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
-  // Default routing uses hash history on GitHub Pages
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -14,6 +16,17 @@ export const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, setUser);
+    return () => unsub();
+  }, []);
+
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await signOut(auth);
+    window.location.hash = '#login';
+  };
 
   return (
     <motion.nav
@@ -33,8 +46,20 @@ export const Navbar = () => {
         <a href="#about" className={styles.link}>Problem</a>
         <a href="#workflow" className={styles.link}>How it works</a>
         <a href="#product" className={styles.link}>Features</a>
-        <a href="#login" className={styles.link}>Login</a>
-        <a href="#signup" className={styles.link}>Sign up</a>
+        <a href="#try-once" className={styles.link}>Try once</a>
+        
+        {user ? (
+          <>
+            <a href="#dashboard" className={styles.link}>Dashboard</a>
+            <button onClick={handleLogout} className={styles.link} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>Log out</button>
+          </>
+        ) : (
+          <>
+            <a href="#login" className={styles.link}>Login</a>
+            <a href="#signup" className={styles.link}>Sign up</a>
+          </>
+        )}
+        
         <a href="#contact" className={styles.ctaLink}>Book Demo</a>
       </div>
     </motion.nav>
