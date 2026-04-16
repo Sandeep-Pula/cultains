@@ -31,7 +31,7 @@ function App() {
   const isLoginPage = hash === '#login';
   const isSignupPage = hash === '#signup';
   const isTryOncePage = hash === '#try-once';
-  const isDashboardPage = hash === '#dashboard';
+  const isDashboardPage = hash.startsWith('#dashboard');
   const isAuthPage = isLoginPage || isSignupPage;
 
   // Protect Dashboard route
@@ -50,14 +50,16 @@ function App() {
 
   return (
     <div className={styles.appContainer}>
-      <Navbar />
+      {!isDashboardPage ? <Navbar /> : null}
 
-      <motion.div
-        className={styles.liquidTransition}
-        initial={{ scaleY: 1 }}
-        animate={{ scaleY: 0 }}
-        transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1], delay: 0.2 }}
-      />
+      {!isDashboardPage ? (
+        <motion.div
+          className={styles.liquidTransition}
+          initial={{ scaleY: 1 }}
+          animate={{ scaleY: 0 }}
+          transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1], delay: 0.2 }}
+        />
+      ) : null}
 
       <main>
         {isDashboardPage && user ? (
