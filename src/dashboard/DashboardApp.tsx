@@ -507,7 +507,7 @@ export const DashboardApp = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#fcf8f2] text-[#201812]">
+    <div className="min-h-screen bg-brand-60 text-brand-dark">
       <Sidebar activeView={activeView} onNavigate={(view) => handleNavigate(dashboardHash(view))} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="lg:pl-72">
         <Topbar
@@ -526,23 +526,23 @@ export const DashboardApp = () => {
           <div className="mb-6 flex flex-wrap items-center justify-end gap-3">
             <button
               onClick={() => setAddCustomerOpen(true)}
-              className="inline-flex items-center gap-2 rounded-2xl border border-[#eadfd2] bg-white px-4 py-2.5 text-sm font-medium text-[#201812] shadow-sm"
+              className="inline-flex items-center gap-2 rounded-2xl border border-brand-30 bg-brand-60 px-4 py-2.5 text-sm font-medium text-brand-dark shadow-sm hover:bg-brand-30"
             >
               <Plus size={16} />
               Add customer
             </button>
             <button
               onClick={() => setAddProjectOpen(true)}
-              className="inline-flex items-center gap-2 rounded-2xl bg-[#201812] px-4 py-2.5 text-sm font-medium text-white shadow-sm"
+              className="inline-flex items-center gap-2 rounded-2xl bg-brand-10 px-4 py-2.5 text-sm font-medium text-brand-60 shadow-sm hover:bg-brand-dark"
             >
               <Plus size={16} />
               Add project
             </button>
-            <a href="#try-once" className="inline-flex items-center gap-2 rounded-2xl border border-[#eadfd2] bg-white px-4 py-2.5 text-sm font-medium text-[#201812] shadow-sm">
+            <a href="#try-once" className="inline-flex items-center gap-2 rounded-2xl border border-brand-30 bg-brand-60 px-4 py-2.5 text-sm font-medium text-brand-dark shadow-sm hover:bg-brand-30">
               <Plus size={16} />
               Generate render
             </a>
-            <button onClick={handleLogout} className="inline-flex items-center gap-2 rounded-2xl bg-[#6f5438] px-4 py-2.5 text-sm font-medium text-white">
+            <button onClick={handleLogout} className="inline-flex items-center gap-2 rounded-2xl bg-brand-dark px-4 py-2.5 text-sm font-medium text-brand-60 opacity-90 hover:opacity-100">
               <LogOut size={16} />
               Log out
             </button>

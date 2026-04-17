@@ -58,17 +58,17 @@ export const AddProjectModal = ({ open, team, onClose, onSubmit }: AddProjectMod
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#1f1711]/25 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-4xl rounded-[28px] border border-[#eadfd2] bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-[#eadfd2] px-6 py-4">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-brand-dark/25 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-4xl rounded-[28px] border border-brand-30 bg-brand-60 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-brand-30 px-6 py-4">
           <div>
-            <div className="inline-flex rounded-full bg-[#f7efe3] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#9b8570]">
+            <div className="inline-flex rounded-full bg-brand-30/40 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-brand-dark/65">
               New project workspace
             </div>
-            <h3 className="mt-3 text-2xl font-semibold text-[#201812]">Create a highlighted project intake</h3>
-            <p className="mt-1 text-sm text-[#6f604f]">Use this when a decorator wants to start a new customer job and assign ownership from day one.</p>
+            <h3 className="mt-3 text-2xl font-semibold text-brand-dark">Create a highlighted project intake</h3>
+            <p className="mt-1 text-sm text-brand-dark/80">Use this when a decorator wants to start a new customer job and assign ownership from day one.</p>
           </div>
-          <button onClick={onClose} className="rounded-2xl border border-[#eadfd2] px-3 py-2 text-sm text-[#6f604f]">
+          <button onClick={onClose} className="rounded-2xl border border-brand-30 px-3 py-2 text-sm text-brand-dark">
             Close
           </button>
         </div>
@@ -83,23 +83,23 @@ export const AddProjectModal = ({ open, team, onClose, onSubmit }: AddProjectMod
               ['Location', 'location'],
               ['Address', 'address'],
             ].map(([label, key]) => (
-              <label key={key} className="grid gap-2 text-sm text-[#6f604f]">
-                <span className="font-medium text-[#201812]">{label}</span>
+              <label key={key} className="grid gap-2 text-sm text-brand-dark/80">
+                <span className="font-medium text-brand-dark">{label}</span>
                 <input
                   value={form[key as keyof typeof form] as string}
                   onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
-                  className="rounded-2xl border border-[#eadfd2] bg-[#fcf8f2] px-3 py-2.5 outline-none"
+                  className="rounded-2xl border border-brand-30 bg-white px-3 py-2.5 outline-none text-brand-dark"
                   required={['customerName', 'title', 'phone', 'location'].includes(key)}
                 />
               </label>
             ))}
 
-            <label className="grid gap-2 text-sm text-[#6f604f]">
-              <span className="font-medium text-[#201812]">Project type</span>
+            <label className="grid gap-2 text-sm text-brand-dark/80">
+              <span className="font-medium text-brand-dark">Project type</span>
               <select
                 value={form.projectType}
                 onChange={(event) => setForm((current) => ({ ...current, projectType: event.target.value as typeof form.projectType }))}
-                className="rounded-2xl border border-[#eadfd2] bg-[#fcf8f2] px-3 py-2.5"
+                className="rounded-2xl border border-brand-30 bg-white px-3 py-2.5 text-brand-dark"
               >
                 <option value="living_room">Living room</option>
                 <option value="bedroom">Bedroom</option>
@@ -110,12 +110,12 @@ export const AddProjectModal = ({ open, team, onClose, onSubmit }: AddProjectMod
               </select>
             </label>
 
-            <label className="grid gap-2 text-sm text-[#6f604f]">
-              <span className="font-medium text-[#201812]">Site status</span>
+            <label className="grid gap-2 text-sm text-brand-dark/80">
+              <span className="font-medium text-brand-dark">Site status</span>
               <select
                 value={form.siteStatus}
                 onChange={(event) => setForm((current) => ({ ...current, siteStatus: event.target.value as typeof form.siteStatus }))}
-                className="rounded-2xl border border-[#eadfd2] bg-[#fcf8f2] px-3 py-2.5"
+                className="rounded-2xl border border-brand-30 bg-white px-3 py-2.5 text-brand-dark"
               >
                 <option value="in_progress">In progress</option>
                 <option value="ready">Ready</option>
@@ -123,12 +123,12 @@ export const AddProjectModal = ({ open, team, onClose, onSubmit }: AddProjectMod
               </select>
             </label>
 
-            <label className="grid gap-2 text-sm text-[#6f604f]">
-              <span className="font-medium text-[#201812]">Sales owner</span>
+            <label className="grid gap-2 text-sm text-brand-dark/80">
+              <span className="font-medium text-brand-dark">Sales owner</span>
               <select
                 value={form.ownerId}
                 onChange={(event) => setForm((current) => ({ ...current, ownerId: event.target.value }))}
-                className="rounded-2xl border border-[#eadfd2] bg-[#fcf8f2] px-3 py-2.5"
+                className="rounded-2xl border border-brand-30 bg-white px-3 py-2.5 text-brand-dark"
               >
                 <option value="">Select owner</option>
                 {team.map((member) => (
@@ -139,12 +139,12 @@ export const AddProjectModal = ({ open, team, onClose, onSubmit }: AddProjectMod
               </select>
             </label>
 
-            <label className="grid gap-2 text-sm text-[#6f604f]">
-              <span className="font-medium text-[#201812]">Lead designer</span>
+            <label className="grid gap-2 text-sm text-brand-dark/80">
+              <span className="font-medium text-brand-dark">Lead designer</span>
               <select
                 value={form.leadDesignerId}
                 onChange={(event) => setForm((current) => ({ ...current, leadDesignerId: event.target.value }))}
-                className="rounded-2xl border border-[#eadfd2] bg-[#fcf8f2] px-3 py-2.5"
+                className="rounded-2xl border border-brand-30 bg-white px-3 py-2.5 text-brand-dark"
               >
                 <option value="">Select designer</option>
                 {team.map((member) => (
@@ -155,41 +155,41 @@ export const AddProjectModal = ({ open, team, onClose, onSubmit }: AddProjectMod
               </select>
             </label>
 
-            <label className="grid gap-2 text-sm text-[#6f604f] md:col-span-2">
-              <span className="font-medium text-[#201812]">Project notes</span>
+            <label className="grid gap-2 text-sm text-brand-dark/80 md:col-span-2">
+              <span className="font-medium text-brand-dark">Project notes</span>
               <textarea
                 value={form.notes}
                 onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
-                className="min-h-28 rounded-2xl border border-[#eadfd2] bg-[#fcf8f2] px-3 py-2.5 outline-none"
+                className="min-h-28 rounded-2xl border border-brand-30 bg-white px-3 py-2.5 outline-none text-brand-dark"
                 placeholder="Budget cues, site context, preferred materials, approvals needed"
               />
             </label>
           </div>
 
-          <div className="rounded-[28px] border border-[#eadfd2] bg-gradient-to-br from-[#fffaf4] to-[#f3e8d8] p-5">
-            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-[#9b8570]">What happens next</div>
+          <div className="rounded-[28px] border border-brand-30 bg-gradient-to-br from-white to-brand-30/30 p-5">
+            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-dark/65">What happens next</div>
             <div className="mt-4 space-y-4">
               {[
                 'Project appears in the pipeline board immediately.',
                 'Customer workspace is opened so notes and assignments can continue.',
                 'Follow-up reminders and render queue start from this record.',
               ].map((item) => (
-                <div key={item} className="rounded-2xl bg-white/80 px-4 py-3 text-sm text-[#5f5042] shadow-sm">
+                <div key={item} className="rounded-2xl bg-white/85 px-4 py-3 text-sm text-brand-dark/85 shadow-sm">
                   {item}
                 </div>
               ))}
             </div>
 
-            <div className="mt-6 rounded-2xl bg-[#201812] px-4 py-4 text-sm text-[#f8efe4]">
+            <div className="mt-6 rounded-2xl bg-brand-10 px-4 py-4 text-sm text-brand-60">
               Highlighted action: use this modal for all new job intake so your team always starts with ownership, customer info, and project stage in one place.
             </div>
           </div>
 
           <div className="flex justify-end gap-3 lg:col-span-2">
-            <button type="button" onClick={onClose} className="rounded-2xl border border-[#eadfd2] px-4 py-2.5 text-sm font-medium text-[#6f604f]">
+            <button type="button" onClick={onClose} className="rounded-2xl border border-brand-30 px-4 py-2.5 text-sm font-medium text-brand-dark">
               Cancel
             </button>
-            <button type="submit" className="rounded-2xl bg-[#6f5438] px-4 py-2.5 text-sm font-medium text-white shadow-sm">
+            <button type="submit" className="rounded-2xl bg-brand-10 px-4 py-2.5 text-sm font-medium text-brand-60 shadow-sm">
               Create project
             </button>
           </div>

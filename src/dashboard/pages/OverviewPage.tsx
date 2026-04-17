@@ -75,9 +75,9 @@ export const OverviewPage = ({
                 <button
                   key={action.label}
                   onClick={action.action}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-white border border-[#eadfd2] px-4 py-3 text-sm font-medium text-[#201812] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#fffaf4]"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-white border border-brand-30 px-4 py-3 text-sm font-medium text-brand-dark shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-60"
                 >
-                  <Icon size={16} className="text-[#6f5438]" />
+                  <Icon size={16} className="text-brand-10" />
                   {action.label}
                 </button>
               );
@@ -93,24 +93,24 @@ export const OverviewPage = ({
           />
         </div>
 
-        <div className="rounded-[32px] border border-[#eadfd2] bg-white p-6 shadow-sm">
-          <div className="text-sm font-semibold uppercase tracking-[0.2em] text-[#9b8570]">Analytics snapshot</div>
+        <div className="rounded-[32px] border border-brand-30 bg-white p-6 shadow-sm">
+          <div className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-dark/60">Analytics snapshot</div>
           <div className="mt-5 space-y-4">
-            <div className="rounded-2xl bg-[#faf4eb] p-4">
-              <div className="text-sm text-[#6f604f]">Renders this week</div>
-              <div className="mt-2 text-3xl font-semibold text-[#201812]">
+            <div className="rounded-2xl bg-brand-60 p-4">
+              <div className="text-sm text-brand-dark/80">Renders this week</div>
+              <div className="mt-2 text-3xl font-semibold text-brand-dark">
                 {data.customers.reduce((sum, customer) => sum + customer.renders.filter((render) => new Date(render.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000).length, 0)}
               </div>
             </div>
-            <div className="rounded-2xl bg-[#faf4eb] p-4">
-              <div className="text-sm text-[#6f604f]">Most active customer</div>
-              <button onClick={() => mostActive && onOpenCustomer(mostActive.id)} className="mt-2 text-left text-xl font-semibold text-[#201812] underline-offset-4 hover:underline">
+            <div className="rounded-2xl bg-brand-60 p-4">
+              <div className="text-sm text-brand-dark/80">Most active customer</div>
+              <button onClick={() => mostActive && onOpenCustomer(mostActive.id)} className="mt-2 text-left text-xl font-semibold text-brand-dark underline-offset-4 hover:underline">
                 {mostActive?.customerName}
               </button>
             </div>
-            <div className="rounded-2xl bg-[#faf4eb] p-4">
-              <div className="text-sm text-[#6f604f]">Completed this month</div>
-              <div className="mt-2 text-3xl font-semibold text-[#201812]">
+            <div className="rounded-2xl bg-brand-60 p-4">
+              <div className="text-sm text-brand-dark/80">Completed this month</div>
+              <div className="mt-2 text-3xl font-semibold text-brand-dark">
                 {
                   data.customers.filter((customer) => customer.stage === 'completed' && new Date(customer.lastUpdated).getMonth() === new Date().getMonth()).length
                 }
@@ -130,10 +130,10 @@ export const OverviewPage = ({
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-3xl border border-[#eadfd2] bg-white p-5 shadow-sm">
+        <div className="rounded-3xl border border-brand-30 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-[#201812]">Recent activity</h2>
-            <button onClick={() => onNavigate('#dashboard/customers')} className="text-sm font-medium text-[#6f5438]">See all customers</button>
+            <h2 className="text-xl font-semibold text-brand-dark">Recent activity</h2>
+            <button onClick={() => onNavigate('#dashboard/customers')} className="text-sm font-medium text-brand-10">See all customers</button>
           </div>
           <div className="mt-5 space-y-4">
             {data.customers
@@ -144,16 +144,16 @@ export const OverviewPage = ({
                 <button
                   key={activity.id}
                   onClick={() => onOpenCustomer(activity.customer.id)}
-                  className="flex w-full items-start gap-4 rounded-2xl border border-[#f0e6db] bg-[#fcf8f2] px-4 py-4 text-left transition hover:border-[#e1d1bf]"
+                  className="flex w-full items-start gap-4 rounded-2xl border border-brand-30/60 bg-brand-60 px-4 py-4 text-left transition hover:border-brand-30"
                 >
-                  <div className="mt-1 h-3 w-3 rounded-full bg-[#6f5438]" />
+                  <div className="mt-1 h-3 w-3 rounded-full bg-brand-10" />
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="font-medium text-[#201812]">{activity.title}</div>
-                      <div className="text-xs text-[#9b8570]">{formatDateTime(activity.createdAt)}</div>
+                      <div className="font-medium text-brand-dark">{activity.title}</div>
+                      <div className="text-xs text-brand-dark/60">{formatDateTime(activity.createdAt)}</div>
                     </div>
-                    <p className="mt-1 text-sm text-[#6f604f]">{activity.description}</p>
-                    <div className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-[#9b8570]">
+                    <p className="mt-1 text-sm text-brand-dark/80">{activity.description}</p>
+                    <div className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-brand-dark/60">
                       {activity.customer.customerName} • {activity.actorName}
                     </div>
                   </div>
@@ -163,40 +163,40 @@ export const OverviewPage = ({
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-3xl border border-[#eadfd2] bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-brand-30 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-[#201812]">Upcoming tasks</h2>
-              <span className="text-sm text-[#9b8570]">{data.tasks.filter((task) => !task.done).length} open</span>
+              <h2 className="text-xl font-semibold text-brand-dark">Upcoming tasks</h2>
+              <span className="text-sm text-brand-dark/60">{data.tasks.filter((task) => !task.done).length} open</span>
             </div>
             <div className="mt-4 space-y-3">
               {data.tasks.map((task: TaskItem) => (
-                <label key={task.id} className="flex items-start gap-3 rounded-2xl bg-[#fcf8f2] p-4">
+                <label key={task.id} className="flex items-start gap-3 rounded-2xl bg-brand-60 p-4">
                   <input
                     type="checkbox"
                     checked={task.done}
                     onChange={() => onToggleTask(task.id)}
-                    className="mt-1 h-4 w-4 rounded border-[#d7c7b4] text-[#6f5438]"
+                    className="mt-1 h-4 w-4 rounded border-brand-30 text-brand-10"
                   />
                   <div className="flex-1">
-                    <div className="font-medium text-[#201812]">{task.title}</div>
-                    <div className="mt-1 text-sm text-[#6f604f]">{relativeDate(task.dueAt)}</div>
+                    <div className="font-medium text-brand-dark">{task.title}</div>
+                    <div className="mt-1 text-sm text-brand-dark/80">{relativeDate(task.dueAt)}</div>
                   </div>
                 </label>
               ))}
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[#eadfd2] bg-white p-5 shadow-sm">
-            <h2 className="text-xl font-semibold text-[#201812]">Project pipeline</h2>
+          <div className="rounded-3xl border border-brand-30 bg-white p-5 shadow-sm">
+            <h2 className="text-xl font-semibold text-brand-dark">Project pipeline</h2>
             <div className="mt-4 space-y-3">
               {pipeline.map(([stage, count]) => (
                 <div key={stage} className="space-y-2">
-                  <div className="flex items-center justify-between text-sm text-[#6f604f]">
+                  <div className="flex items-center justify-between text-sm text-brand-dark/80">
                     <span>{stageLabels[stage as keyof typeof stageLabels]}</span>
                     <span>{count}</span>
                   </div>
-                  <div className="h-2 rounded-full bg-[#efe5d7]">
-                    <div className="h-2 rounded-full bg-[#6f5438]" style={{ width: `${(count / data.customers.length) * 100}%` }} />
+                  <div className="h-2 rounded-full bg-brand-30/40">
+                    <div className="h-2 rounded-full bg-brand-10" style={{ width: `${(count / data.customers.length) * 100}%` }} />
                   </div>
                 </div>
               ))}
@@ -206,10 +206,10 @@ export const OverviewPage = ({
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-3xl border border-[#eadfd2] bg-white p-5 shadow-sm">
+        <div className="rounded-3xl border border-brand-30 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2">
-            <BellRing size={18} className="text-[#6f5438]" />
-            <h2 className="text-xl font-semibold text-[#201812]">Follow-up center</h2>
+            <BellRing size={18} className="text-brand-10" />
+            <h2 className="text-xl font-semibold text-brand-dark">Follow-up center</h2>
           </div>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {[
@@ -240,18 +240,18 @@ export const OverviewPage = ({
             ].map((group) => {
               const Icon = group.icon;
               return (
-                <div key={group.title} className="rounded-2xl bg-[#fcf8f2] p-4">
-                  <div className="flex items-center gap-2 text-[#201812]">
+                <div key={group.title} className="rounded-2xl bg-brand-60 p-4">
+                  <div className="flex items-center gap-2 text-brand-dark">
                     <Icon size={16} />
                     <h3 className="font-medium">{group.title}</h3>
                   </div>
                   <div className="mt-3 space-y-2">
                     {group.items.length ? group.items.map((customer) => (
                       <button key={customer.id} onClick={() => onOpenCustomer(customer.id)} className="block w-full rounded-2xl bg-white px-3 py-3 text-left">
-                        <div className="font-medium text-[#201812]">{customer.customerName}</div>
-                        <div className="mt-1 text-sm text-[#6f604f]">{customer.title}</div>
+                        <div className="font-medium text-brand-dark">{customer.customerName}</div>
+                        <div className="mt-1 text-sm text-brand-dark/80">{customer.title}</div>
                       </button>
-                    )) : <div className="text-sm text-[#9b8570]">{group.empty}</div>}
+                    )) : <div className="text-sm text-brand-dark/60">{group.empty}</div>}
                   </div>
                 </div>
               );
@@ -260,8 +260,8 @@ export const OverviewPage = ({
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-3xl border border-[#eadfd2] bg-white p-5 shadow-sm">
-            <h2 className="text-xl font-semibold text-[#201812]">Today’s operating board</h2>
+          <div className="rounded-3xl border border-brand-30 bg-white p-5 shadow-sm">
+            <h2 className="text-xl font-semibold text-brand-dark">Today’s operating board</h2>
             <div className="mt-4 grid gap-3">
               {[
                 { label: 'Today’s follow-ups', value: data.customers.filter((customer) => new Date(customer.nextFollowUpAt).toDateString() === new Date().toDateString()).length },
@@ -269,24 +269,24 @@ export const OverviewPage = ({
                 { label: 'Upcoming site visits', value: data.customers.filter((customer) => customer.siteVisitScheduledAt).length },
                 { label: 'Expected pipeline value', value: formatCurrency(data.customers.reduce((sum, customer) => sum + customer.quote.quoteValue, 0)) },
               ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between rounded-2xl bg-[#fcf8f2] px-4 py-3">
-                  <span className="text-sm text-[#6f604f]">{item.label}</span>
-                  <span className="font-semibold text-[#201812]">{item.value}</span>
+                <div key={item.label} className="flex items-center justify-between rounded-2xl bg-brand-60 px-4 py-3">
+                  <span className="text-sm text-brand-dark/80">{item.label}</span>
+                  <span className="font-semibold text-brand-dark">{item.value}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[#eadfd2] bg-white p-5 shadow-sm">
-            <h2 className="text-xl font-semibold text-[#201812]">Recent customer messages</h2>
+          <div className="rounded-3xl border border-brand-30 bg-white p-5 shadow-sm">
+            <h2 className="text-xl font-semibold text-brand-dark">Recent customer messages</h2>
             <div className="mt-4 space-y-3">
               {recentMessages.map((message) => (
-                <button key={message.id} onClick={() => onOpenCustomer(message.customerId)} className="block w-full rounded-2xl bg-[#fcf8f2] px-4 py-4 text-left">
+                <button key={message.id} onClick={() => onOpenCustomer(message.customerId)} className="block w-full rounded-2xl bg-brand-60 px-4 py-4 text-left">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="font-medium text-[#201812]">{message.customerName}</div>
-                    <div className="text-xs text-[#9b8570]">{relativeDate(message.createdAt)}</div>
+                    <div className="font-medium text-brand-dark">{message.customerName}</div>
+                    <div className="text-xs text-brand-dark/60">{relativeDate(message.createdAt)}</div>
                   </div>
-                  <div className="mt-1 text-sm text-[#6f604f]">{message.summary}</div>
+                  <div className="mt-1 text-sm text-brand-dark/80">{message.summary}</div>
                 </button>
               ))}
             </div>
@@ -295,18 +295,18 @@ export const OverviewPage = ({
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-        <div className="rounded-3xl border border-[#eadfd2] bg-white p-5 shadow-sm">
-          <h2 className="text-xl font-semibold text-[#201812]">Pinned customers</h2>
+        <div className="rounded-3xl border border-brand-30 bg-white p-5 shadow-sm">
+          <h2 className="text-xl font-semibold text-brand-dark">Pinned customers</h2>
           <div className="mt-4 space-y-3">
             {data.customers.filter((customer) => customer.pinned).map((customer) => (
               <button
                 key={customer.id}
                 onClick={() => onOpenCustomer(customer.id)}
-                className="flex w-full items-center justify-between rounded-2xl border border-[#f0e6db] bg-[#fcf8f2] px-4 py-4 text-left"
+                className="flex w-full items-center justify-between rounded-2xl border border-brand-30/60 bg-brand-60 px-4 py-4 text-left"
               >
                 <div>
-                  <div className="font-medium text-[#201812]">{customer.customerName}</div>
-                  <div className="text-sm text-[#6f604f]">{customer.title}</div>
+                  <div className="font-medium text-brand-dark">{customer.customerName}</div>
+                  <div className="text-sm text-brand-dark/80">{customer.title}</div>
                 </div>
                 <StatusBadge stage={customer.stage} />
               </button>
@@ -314,8 +314,8 @@ export const OverviewPage = ({
           </div>
         </div>
 
-        <div className="rounded-3xl border border-[#eadfd2] bg-white p-5 shadow-sm">
-          <h2 className="text-xl font-semibold text-[#201812]">Projects needing attention</h2>
+        <div className="rounded-3xl border border-brand-30 bg-white p-5 shadow-sm">
+          <h2 className="text-xl font-semibold text-brand-dark">Projects needing attention</h2>
           <div className="mt-4 space-y-3">
             {data.customers
               .filter((customer) => customer.needsFollowUp || customer.renderPending)
@@ -324,11 +324,11 @@ export const OverviewPage = ({
                 <button
                   key={customer.id}
                   onClick={() => onOpenCustomer(customer.id)}
-                  className="flex w-full items-center justify-between rounded-2xl border border-[#f0e6db] bg-[#fcf8f2] px-4 py-4 text-left"
+                  className="flex w-full items-center justify-between rounded-2xl border border-brand-30/60 bg-brand-60 px-4 py-4 text-left"
                 >
                   <div>
-                    <div className="font-medium text-[#201812]">{customer.customerName}</div>
-                    <div className="text-sm text-[#6f604f]">
+                    <div className="font-medium text-brand-dark">{customer.customerName}</div>
+                    <div className="text-sm text-brand-dark/80">
                       {customer.needsFollowUp ? 'Needs follow-up' : 'Render pending'} • Updated {formatDate(customer.lastUpdated)}
                     </div>
                   </div>

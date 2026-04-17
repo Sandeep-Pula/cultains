@@ -11,8 +11,10 @@ html, body {
   height: 100%;
   scroll-behavior: smooth;
   scroll-padding-top: 6.5rem;
-  background-color: var(--color-oled-black);
-  color: var(--color-soft-white);
+  background:
+    radial-gradient(circle at top left, rgba(134, 134, 172, 0.22), transparent 32%),
+    linear-gradient(180deg, #f9f8fd 0%, var(--color-brand-60) 42%, #f4f3fb 100%);
+  color: var(--color-brand-dark);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -64,14 +66,14 @@ ul {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-oled-black);
+  background: var(--color-brand-60-soft);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-deep-slate);
+  background: var(--color-brand-30-strong);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-slate-hover);
+  background: var(--color-brand-10);
 }

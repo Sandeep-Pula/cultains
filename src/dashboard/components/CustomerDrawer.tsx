@@ -84,7 +84,7 @@ export const CustomerDrawer = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[90] bg-[#1f1711]/20 backdrop-blur-sm"
+            className="fixed inset-0 z-[90] bg-brand-dark/20 backdrop-blur-sm"
             onClick={onClose}
           />
           <motion.aside
@@ -92,12 +92,12 @@ export const CustomerDrawer = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 240, damping: 26 }}
-            className="fixed right-0 top-0 z-[100] h-full w-full max-w-3xl overflow-y-auto border-l border-[#eadfd2] bg-[#fcf8f2] shadow-2xl"
+            className="fixed right-0 top-0 z-[100] h-full w-full max-w-3xl overflow-y-auto border-l border-brand-30 bg-brand-60 shadow-2xl"
           >
-            <div className="sticky top-0 z-10 flex items-start justify-between border-b border-[#eadfd2] bg-[#fcf8f2]/95 px-5 py-4 backdrop-blur">
+            <div className="sticky top-0 z-10 flex items-start justify-between border-b border-brand-30 bg-brand-60/95 px-5 py-4 backdrop-blur">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-2xl font-semibold tracking-tight text-[#201812]">{customer.customerName}</h2>
+                  <h2 className="text-2xl font-semibold tracking-tight text-brand-dark">{customer.customerName}</h2>
                   <StatusBadge stage={customer.stage} />
                   {customer.priority === 'high' ? (
                     <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-700">
@@ -105,28 +105,28 @@ export const CustomerDrawer = ({
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-1 text-sm text-[#6f604f]">
+                <p className="mt-1 text-sm text-brand-dark/80">
                   {customer.title} • Updated {relativeDate(customer.lastUpdated)}
                 </p>
               </div>
-              <button onClick={onClose} className="rounded-2xl border border-[#eadfd2] bg-white p-2 text-[#6f5438]">
+              <button onClick={onClose} className="rounded-2xl border border-brand-30 bg-white p-2 text-brand-10">
                 <X size={18} />
               </button>
             </div>
 
             <div className="space-y-6 px-5 py-5">
               <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-                <section className="rounded-3xl border border-[#eadfd2] bg-white p-5">
-                  <h3 className="text-lg font-semibold text-[#201812]">Customer profile</h3>
+                <section className="rounded-3xl border border-brand-30 bg-white p-5">
+                  <h3 className="text-lg font-semibold text-brand-dark">Customer profile</h3>
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    <div className="rounded-2xl bg-[#faf4eb] p-4">
-                      <div className="flex items-center gap-2 text-sm text-[#6f604f]"><Phone size={16} /> {customer.phone}</div>
-                      <div className="mt-3 flex items-center gap-2 text-sm text-[#6f604f]"><Mail size={16} /> {customer.email}</div>
-                      <div className="mt-3 flex items-center gap-2 text-sm text-[#6f604f]"><MapPin size={16} /> {customer.address}</div>
+                    <div className="rounded-2xl bg-brand-60 p-4">
+                      <div className="flex items-center gap-2 text-sm text-brand-dark/80"><Phone size={16} /> {customer.phone}</div>
+                      <div className="mt-3 flex items-center gap-2 text-sm text-brand-dark/80"><Mail size={16} /> {customer.email}</div>
+                      <div className="mt-3 flex items-center gap-2 text-sm text-brand-dark/80"><MapPin size={16} /> {customer.address}</div>
                     </div>
-                    <div className="rounded-2xl bg-[#faf4eb] p-4 text-sm leading-6 text-[#6f604f]">
-                      <div><span className="font-semibold text-[#201812]">Location:</span> {customer.location}</div>
-                      <div className="mt-2"><span className="font-semibold text-[#201812]">Notes:</span> {customer.notes}</div>
+                    <div className="rounded-2xl bg-brand-60 p-4 text-sm leading-6 text-brand-dark/80">
+                      <div><span className="font-semibold text-brand-dark">Location:</span> {customer.location}</div>
+                      <div className="mt-2"><span className="font-semibold text-brand-dark">Notes:</span> {customer.notes}</div>
                     </div>
                   </div>
                 </section>

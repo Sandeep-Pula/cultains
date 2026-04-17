@@ -85,31 +85,31 @@ export const relativeDate = (value: string) => {
 export const stageBadgeClass = (stage: ProjectStage) =>
   clsx(
     'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium',
-    stage === 'completed' && 'bg-emerald-100 text-emerald-700',
-    stage === 'customer_approved' && 'bg-teal-100 text-teal-700',
-    stage === 'render_shared' && 'bg-sky-100 text-sky-700',
-    stage === 'design_in_progress' && 'bg-amber-100 text-amber-700',
-    stage === 'consultation' && 'bg-orange-100 text-orange-700',
-    stage === 'inquiry' && 'bg-stone-200 text-stone-700',
-    stage === 'execution_started' && 'bg-violet-100 text-violet-700',
-    stage === 'on_hold' && 'bg-rose-100 text-rose-700',
+    stage === 'completed' && 'bg-[rgba(15,14,71,0.12)] text-[var(--color-brand-10)]',
+    stage === 'customer_approved' && 'bg-[rgba(80,80,129,0.14)] text-[var(--color-brand-30-strong)]',
+    stage === 'render_shared' && 'bg-[rgba(134,134,172,0.2)] text-[var(--color-brand-dark)]',
+    stage === 'design_in_progress' && 'bg-[rgba(80,80,129,0.12)] text-[var(--color-brand-30-strong)]',
+    stage === 'consultation' && 'bg-[rgba(80,80,129,0.1)] text-[var(--color-brand-dark)]',
+    stage === 'inquiry' && 'bg-[rgba(39,39,87,0.08)] text-[var(--color-brand-dark)]',
+    stage === 'execution_started' && 'bg-[rgba(15,14,71,0.1)] text-[var(--color-brand-10)]',
+    stage === 'on_hold' && 'bg-[rgba(39,39,87,0.12)] text-[var(--color-brand-dark)]',
   );
 
 export const siteBadgeClass = (status: SiteStatus) =>
   clsx(
     'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium',
-    status === 'ready' && 'bg-emerald-50 text-emerald-700',
-    status === 'in_progress' && 'bg-amber-50 text-amber-700',
-    status === 'under_construction' && 'bg-orange-50 text-orange-700',
+    status === 'ready' && 'bg-[rgba(134,134,172,0.16)] text-[var(--color-brand-dark)]',
+    status === 'in_progress' && 'bg-[rgba(80,80,129,0.12)] text-[var(--color-brand-30-strong)]',
+    status === 'under_construction' && 'bg-[rgba(39,39,87,0.1)] text-[var(--color-brand-dark)]',
   );
 
 export const renderApprovalBadgeClass = (status: RenderApprovalStatus) =>
   clsx(
     'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium',
-    status === 'approved' && 'bg-emerald-100 text-emerald-700',
-    status === 'pending_review' && 'bg-amber-100 text-amber-700',
-    status === 'draft' && 'bg-stone-200 text-stone-700',
-    status === 'rejected' && 'bg-rose-100 text-rose-700',
+    status === 'approved' && 'bg-[rgba(15,14,71,0.12)] text-[var(--color-brand-10)]',
+    status === 'pending_review' && 'bg-[rgba(80,80,129,0.14)] text-[var(--color-brand-30-strong)]',
+    status === 'draft' && 'bg-[rgba(39,39,87,0.08)] text-[var(--color-brand-dark)]',
+    status === 'rejected' && 'bg-[rgba(39,39,87,0.12)] text-[var(--color-brand-dark)]',
   );
 
 export const getCustomerOwner = (customer: CustomerProject, team: TeamMember[]) =>

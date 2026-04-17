@@ -9,9 +9,9 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at top left, rgba(223, 201, 175, 0.32), transparent 28%),
-    radial-gradient(circle at right top, rgba(195, 169, 132, 0.18), transparent 24%),
-    linear-gradient(180deg, #faf6ef 0%, #f6efe5 62%, #f4ecdf 100%);
+    radial-gradient(circle at 14% 18%, rgba(134, 134, 172, 0.24), transparent 26%),
+    radial-gradient(circle at 86% 22%, rgba(80, 80, 129, 0.12), transparent 22%),
+    linear-gradient(180deg, #f9f8fd 0%, var(--color-brand-60) 60%, #eeedf8 100%);
   z-index: -1;
 }
 
@@ -33,9 +33,9 @@
   align-items: center;
   padding: 0.48rem 0.9rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(111, 84, 56, 0.12);
-  color: var(--color-earth-brown);
+  background: rgba(80, 80, 129, 0.1);
+  border: 1px solid rgba(80, 80, 129, 0.14);
+  color: var(--color-brand-dark);
   font-size: 0.82rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -43,7 +43,7 @@
 
 .title {
   margin-top: 1rem;
-  color: var(--color-ink);
+  color: var(--color-brand-dark);
   font-size: clamp(2.9rem, 6.8vw, 5.5rem);
   line-height: 0.96;
   letter-spacing: -0.06em;
@@ -51,9 +51,10 @@
 
 .subtitle {
   margin-top: 1.15rem;
-  color: var(--color-body);
+  color: var(--color-brand-dark);
   font-size: clamp(1.02rem, 1.8vw, 1.18rem);
   max-width: 38rem;
+  opacity: 0.9;
 }
 
 .ctaRow {
@@ -70,21 +71,22 @@
   min-height: 3.35rem;
   padding: 0.9rem 1.2rem;
   border-radius: 999px;
-  border: 1px solid rgba(111, 84, 56, 0.14);
-  background: rgba(255, 255, 255, 0.8);
-  color: var(--color-ink);
+  border: 1px solid rgba(80, 80, 129, 0.2);
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--color-brand-dark);
   font-weight: 600;
   transition: transform 0.2s ease, background 0.2s ease;
 }
 
 .secondaryCta:hover {
   transform: translateY(-1px);
-  background: #fffdf9;
+  background: var(--color-brand-60-soft);
 }
 
 .microcopy {
   margin-top: 0.95rem;
-  color: var(--color-muted-brown);
+  color: var(--color-brand-dark);
+  opacity: 0.7;
   font-size: 0.94rem;
 }
 
@@ -98,9 +100,9 @@
 .badge {
   padding: 0.68rem 0.95rem;
   border-radius: 999px;
-  border: 1px solid rgba(111, 84, 56, 0.12);
-  background: rgba(255, 255, 255, 0.65);
-  color: var(--color-body);
+  border: 1px solid rgba(80, 80, 129, 0.12);
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--color-brand-dark);
   font-size: 0.9rem;
 }
 
@@ -113,9 +115,9 @@
   width: min(100%, 500px);
   padding: 1.15rem;
   border-radius: 28px;
-  background: rgba(255, 252, 247, 0.86);
-  border: 1px solid rgba(111, 84, 56, 0.12);
-  box-shadow: 0 24px 80px rgba(84, 59, 24, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(236, 235, 246, 0.92) 100%);
+  border: 1px solid rgba(80, 80, 129, 0.14);
+  box-shadow: var(--shadow-medium);
 }
 
 .mockupHeader {
@@ -138,13 +140,14 @@
 }
 
 .mockupPill {
-  background: #ffffff;
-  color: var(--color-ink);
+  background: rgba(80, 80, 129, 0.12);
+  color: var(--color-brand-dark);
 }
 
 .mockupPillMuted {
-  background: #efe5d8;
-  color: var(--color-earth-brown);
+  background: rgba(80, 80, 129, 0.08);
+  opacity: 0.7;
+  color: var(--color-brand-dark);
 }
 
 .beforeAfter {
@@ -170,17 +173,17 @@
   min-height: 270px;
   border-radius: 22px;
   overflow: hidden;
-  border: 1px solid rgba(111, 84, 56, 0.1);
+  border: 1px solid rgba(80, 80, 129, 0.12);
 }
 
 .beforeScene {
   background:
-    linear-gradient(180deg, #efe7dc 0%, #e6dbcd 68%, #d8c6af 68%, #d4b894 100%);
+    linear-gradient(180deg, #f0eff8 0%, #e5e4f2 68%, #cdcbe4 68%, #bab7d8 100%);
 }
 
 .afterScene {
   background:
-    linear-gradient(180deg, #f2eadf 0%, #eadcc8 66%, #d3b28d 66%, #c79b68 100%);
+    linear-gradient(180deg, #ecebf6 0%, #dddcef 66%, #b8b7d6 66%, #8686ac 100%);
 }
 
 .placeholder {
@@ -188,7 +191,7 @@
   left: 1rem;
   bottom: 1rem;
   font-size: 0.8rem;
-  color: rgba(74, 53, 35, 0.7);
+  color: rgba(39, 39, 87, 0.72);
   background: rgba(255, 255, 255, 0.72);
   padding: 0.35rem 0.55rem;
   border-radius: 10px;
@@ -198,8 +201,8 @@
   position: absolute;
   inset: 0 0 34% 0;
   background:
-    linear-gradient(90deg, rgba(177, 146, 115, 0.1) 0%, rgba(177, 146, 115, 0.1) 48%, transparent 48%, transparent 52%, rgba(177, 146, 115, 0.1) 52%, rgba(177, 146, 115, 0.1) 100%),
-    linear-gradient(180deg, #ecdfce 0%, #e2cfba 100%);
+    linear-gradient(90deg, rgba(80, 80, 129, 0.1) 0%, rgba(80, 80, 129, 0.1) 48%, transparent 48%, transparent 52%, rgba(80, 80, 129, 0.1) 52%, rgba(80, 80, 129, 0.1) 100%),
+    linear-gradient(180deg, #e6e4f2 0%, #d6d5e8 100%);
 }
 
 .windowFrame {
@@ -208,7 +211,7 @@
   height: 5.4rem;
   top: 2.7rem;
   right: 3.3rem;
-  border: 0.45rem solid #7b5b39;
+  border: 0.45rem solid var(--color-brand-30-strong);
   border-radius: 0.35rem;
 }
 
@@ -216,7 +219,7 @@
 .windowFrame::after {
   content: '';
   position: absolute;
-  background: #7b5b39;
+  background: var(--color-brand-30-strong);
 }
 
 .windowFrame::before {
@@ -241,7 +244,7 @@
   top: 2.1rem;
   width: 2rem;
   height: 7rem;
-  background: linear-gradient(180deg, #bc8b58 0%, #9a6d43 100%);
+  background: linear-gradient(180deg, var(--color-brand-30-base) 0%, var(--color-brand-10-soft) 100%);
   border-radius: 1rem;
 }
 
@@ -259,7 +262,7 @@
   right: 2rem;
   bottom: 3rem;
   height: 3.6rem;
-  background: linear-gradient(180deg, #d8bea5 0%, #c7a27d 100%);
+  background: linear-gradient(180deg, #b7b7d7 0%, #8f8fb7 100%);
   border-radius: 1.4rem 1.4rem 0.8rem 0.8rem;
 }
 
@@ -269,7 +272,7 @@
   right: 2.3rem;
   bottom: 1rem;
   height: 1rem;
-  background: #ead7c2;
+  background: rgba(15, 14, 71, 0.14);
   border-radius: 999px;
 }
 
@@ -286,9 +289,9 @@
   min-height: 2.9rem;
   padding: 0.85rem 0.95rem;
   border-radius: 16px;
-  background: #ffffff;
-  color: var(--color-body);
-  border: 1px solid rgba(111, 84, 56, 0.1);
+  background: rgba(255, 255, 255, 0.74);
+  color: var(--color-brand-dark);
+  border: 1px solid rgba(80, 80, 129, 0.1);
 }
 
 @media (max-width: 980px) {

@@ -30,24 +30,22 @@
 .copyColumn,
 .formCard {
   border-radius: 28px;
-  border: 1px solid rgba(111, 84, 56, 0.1);
-  box-shadow: 0 18px 44px rgba(96, 70, 37, 0.07);
+  border: 1px solid rgba(80, 80, 129, 0.12);
+  box-shadow: var(--shadow-soft);
 }
 
 .copyColumn {
   padding: 2rem;
-  background:
-    radial-gradient(circle at top left, rgba(212, 178, 132, 0.18), transparent 28%),
-    linear-gradient(180deg, #fffaf4 0%, #f5ecdf 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(236, 235, 246, 0.92) 100%);
 }
 
 .eyebrow {
   display: inline-flex;
   padding: 0.45rem 0.85rem;
   border-radius: 999px;
-  background: #f4ece1;
-  border: 1px solid rgba(111, 84, 56, 0.1);
-  color: var(--color-earth-brown);
+  background: rgba(80, 80, 129, 0.1);
+  border: 1px solid rgba(80, 80, 129, 0.12);
+  color: var(--color-brand-dark);
   font-size: 0.82rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -55,7 +53,7 @@
 
 .title {
   margin-top: 1rem;
-  color: var(--color-ink);
+  color: var(--color-brand-dark);
   font-size: clamp(2.2rem, 5vw, 4rem);
   line-height: 1.03;
   letter-spacing: -0.05em;
@@ -63,8 +61,9 @@
 
 .subtitle {
   margin-top: 1rem;
-  color: var(--color-body);
+  color: var(--color-brand-dark);
   max-width: 34rem;
+  opacity: 0.8;
 }
 
 .benefits {
@@ -77,7 +76,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.7rem;
-  color: var(--color-ink);
+  color: var(--color-brand-dark);
 }
 
 .formColumn {
@@ -87,17 +86,18 @@
 .formCard {
   width: 100%;
   padding: 1.6rem;
-  background: #fffaf4;
+  background: rgba(255, 255, 255, 0.94);
 }
 
 .formTitle {
-  color: var(--color-ink);
+  color: var(--color-brand-dark);
   font-size: 1.8rem;
 }
 
 .formText {
   margin-top: 0.55rem;
-  color: var(--color-body);
+  color: var(--color-brand-dark);
+  opacity: 0.8;
 }
 
 .form {
@@ -112,7 +112,7 @@
 }
 
 .field span {
-  color: var(--color-ink);
+  color: var(--color-brand-dark);
   font-size: 0.92rem;
   font-weight: 600;
 }
@@ -121,29 +121,31 @@
   min-height: 3rem;
   padding: 0.85rem 0.95rem;
   border-radius: 14px;
-  border: 1px solid rgba(111, 84, 56, 0.14);
-  background: white;
-  color: var(--color-ink);
+  border: 1px solid rgba(80, 80, 129, 0.14);
+  background: var(--color-brand-60-soft);
+  color: var(--color-brand-dark);
   font: inherit;
 }
 
 .submitButton {
   min-height: 3.2rem;
   border-radius: 16px;
-  background: var(--color-earth-brown);
-  color: white;
+  background: linear-gradient(135deg, var(--color-brand-10) 0%, var(--color-brand-10-soft) 100%);
+  color: #f4f3fb;
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 16px 28px rgba(15, 14, 71, 0.18);
 }
 
 .switchText {
   margin-top: 1rem;
-  color: var(--color-body);
+  color: var(--color-brand-dark);
+  opacity: 0.8;
 }
 
 .switchText a {
-  color: var(--color-earth-brown);
+  color: var(--color-brand-10);
   font-weight: 600;
 }
 

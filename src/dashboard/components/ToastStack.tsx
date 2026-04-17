@@ -22,8 +22,8 @@ export const ToastStack = ({ toasts }: ToastStackProps) => (
               <CheckCircle2 size={16} />
             </div>
             <div>
-              <div className="font-medium text-[#201812]">{toast.title}</div>
-              {toast.description ? <div className="mt-1 text-sm text-[#6f604f]">{toast.description}</div> : null}
+              <div className="font-medium text-brand-dark">{toast.title}</div>
+              {toast.description ? <div className="mt-1 text-sm text-brand-dark/80">{toast.description}</div> : null}
             </div>
           </div>
         </motion.div>

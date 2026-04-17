@@ -57,14 +57,14 @@ export const AddCustomerModal = ({ open, team, onClose, onSubmit }: AddCustomerM
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#1f1711]/25 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-3xl rounded-[28px] border border-[#eadfd2] bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-[#eadfd2] px-6 py-4">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-brand-dark/25 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-3xl rounded-[28px] border border-brand-30 bg-brand-60 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-brand-30 px-6 py-4">
           <div>
-            <h3 className="text-2xl font-semibold text-[#201812]">Add new customer</h3>
-            <p className="mt-1 text-sm text-[#6f604f]">Create a new customer and assign the project owner immediately.</p>
+            <h3 className="text-2xl font-semibold text-brand-dark">Add new customer</h3>
+            <p className="mt-1 text-sm text-brand-dark/80">Create a new customer and assign the project owner immediately.</p>
           </div>
-          <button onClick={onClose} className="rounded-2xl border border-[#eadfd2] px-3 py-2 text-sm text-[#6f604f]">
+          <button onClick={onClose} className="rounded-2xl border border-brand-30 px-3 py-2 text-sm text-brand-dark">
             Close
           </button>
         </div>
@@ -78,23 +78,23 @@ export const AddCustomerModal = ({ open, team, onClose, onSubmit }: AddCustomerM
             ['Location', 'location'],
             ['Address', 'address'],
           ].map(([label, key]) => (
-            <label key={key} className="grid gap-2 text-sm text-[#6f604f]">
-              <span className="font-medium text-[#201812]">{label}</span>
+            <label key={key} className="grid gap-2 text-sm text-brand-dark/80">
+              <span className="font-medium text-brand-dark">{label}</span>
               <input
                 value={form[key as keyof typeof form] as string}
                 onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
-                className="rounded-2xl border border-[#eadfd2] bg-[#fcf8f2] px-3 py-2.5 outline-none"
+                className="rounded-2xl border border-brand-30 bg-brand-30/40 px-3 py-2.5 outline-none text-brand-dark"
                 required={['customerName', 'phone', 'title', 'location'].includes(key)}
               />
             </label>
           ))}
 
-          <label className="grid gap-2 text-sm text-[#6f604f]">
-            <span className="font-medium text-[#201812]">Project type</span>
+          <label className="grid gap-2 text-sm text-brand-dark/80">
+            <span className="font-medium text-brand-dark">Project type</span>
             <select
               value={form.projectType}
               onChange={(event) => setForm((current) => ({ ...current, projectType: event.target.value as typeof form.projectType }))}
-              className="rounded-2xl border border-[#eadfd2] bg-[#fcf8f2] px-3 py-2.5"
+              className="rounded-2xl border border-brand-30 bg-brand-30/40 px-3 py-2.5 text-brand-dark"
             >
               <option value="living_room">Living room</option>
               <option value="bedroom">Bedroom</option>
@@ -105,12 +105,12 @@ export const AddCustomerModal = ({ open, team, onClose, onSubmit }: AddCustomerM
             </select>
           </label>
 
-          <label className="grid gap-2 text-sm text-[#6f604f]">
-            <span className="font-medium text-[#201812]">Site status</span>
+          <label className="grid gap-2 text-sm text-brand-dark/80">
+            <span className="font-medium text-brand-dark">Site status</span>
             <select
               value={form.siteStatus}
               onChange={(event) => setForm((current) => ({ ...current, siteStatus: event.target.value as typeof form.siteStatus }))}
-              className="rounded-2xl border border-[#eadfd2] bg-[#fcf8f2] px-3 py-2.5"
+              className="rounded-2xl border border-brand-30 bg-brand-30/40 px-3 py-2.5 text-brand-dark"
             >
               <option value="ready">Ready</option>
               <option value="in_progress">In progress</option>
@@ -118,12 +118,12 @@ export const AddCustomerModal = ({ open, team, onClose, onSubmit }: AddCustomerM
             </select>
           </label>
 
-          <label className="grid gap-2 text-sm text-[#6f604f]">
-            <span className="font-medium text-[#201812]">Owner</span>
+          <label className="grid gap-2 text-sm text-brand-dark/80">
+            <span className="font-medium text-brand-dark">Owner</span>
             <select
               value={form.ownerId}
               onChange={(event) => setForm((current) => ({ ...current, ownerId: event.target.value }))}
-              className="rounded-2xl border border-[#eadfd2] bg-[#fcf8f2] px-3 py-2.5"
+              className="rounded-2xl border border-brand-30 bg-brand-30/40 px-3 py-2.5 text-brand-dark"
             >
               <option value="">Select owner</option>
               {team.map((member) => (
@@ -134,12 +134,12 @@ export const AddCustomerModal = ({ open, team, onClose, onSubmit }: AddCustomerM
             </select>
           </label>
 
-          <label className="grid gap-2 text-sm text-[#6f604f]">
-            <span className="font-medium text-[#201812]">Lead designer</span>
+          <label className="grid gap-2 text-sm text-brand-dark/80">
+            <span className="font-medium text-brand-dark">Lead designer</span>
             <select
               value={form.leadDesignerId}
               onChange={(event) => setForm((current) => ({ ...current, leadDesignerId: event.target.value }))}
-              className="rounded-2xl border border-[#eadfd2] bg-[#fcf8f2] px-3 py-2.5"
+              className="rounded-2xl border border-brand-30 bg-brand-30/40 px-3 py-2.5 text-brand-dark"
             >
               <option value="">Select lead designer</option>
               {team.map((member) => (
@@ -150,12 +150,12 @@ export const AddCustomerModal = ({ open, team, onClose, onSubmit }: AddCustomerM
             </select>
           </label>
 
-          <label className="grid gap-2 text-sm text-[#6f604f]">
-            <span className="font-medium text-[#201812]">Field staff</span>
+          <label className="grid gap-2 text-sm text-brand-dark/80">
+            <span className="font-medium text-brand-dark">Field staff</span>
             <select
               value={form.fieldStaffId}
               onChange={(event) => setForm((current) => ({ ...current, fieldStaffId: event.target.value }))}
-              className="rounded-2xl border border-[#eadfd2] bg-[#fcf8f2] px-3 py-2.5"
+              className="rounded-2xl border border-brand-30 bg-brand-30/40 px-3 py-2.5 text-brand-dark"
             >
               <option value="">Select field staff</option>
               {team.map((member) => (
@@ -166,21 +166,21 @@ export const AddCustomerModal = ({ open, team, onClose, onSubmit }: AddCustomerM
             </select>
           </label>
 
-          <label className="grid gap-2 text-sm text-[#6f604f] md:col-span-2">
-            <span className="font-medium text-[#201812]">Notes</span>
+          <label className="grid gap-2 text-sm text-brand-dark/80 md:col-span-2">
+            <span className="font-medium text-brand-dark">Notes</span>
             <textarea
               value={form.notes}
               onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
-              className="min-h-24 rounded-2xl border border-[#eadfd2] bg-[#fcf8f2] px-3 py-2.5 outline-none"
+              className="min-h-24 rounded-2xl border border-brand-30 bg-brand-30/40 px-3 py-2.5 outline-none text-brand-dark"
               placeholder="Project context, preferences, or sales notes"
             />
           </label>
 
           <div className="flex justify-end gap-3 md:col-span-2">
-            <button type="button" onClick={onClose} className="rounded-2xl border border-[#eadfd2] px-4 py-2.5 text-sm font-medium text-[#6f604f]">
+            <button type="button" onClick={onClose} className="rounded-2xl border border-brand-30 px-4 py-2.5 text-sm font-medium text-brand-dark">
               Cancel
             </button>
-            <button type="submit" className="rounded-2xl bg-[#6f5438] px-4 py-2.5 text-sm font-medium text-white">
+            <button type="submit" className="rounded-2xl bg-brand-10 px-4 py-2.5 text-sm font-medium text-brand-60">
               Create customer
             </button>
           </div>
