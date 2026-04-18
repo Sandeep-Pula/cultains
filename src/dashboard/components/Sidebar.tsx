@@ -5,6 +5,11 @@ import {
   Users,
   UsersRound,
   X,
+  Package,
+  CreditCard,
+  History,
+  Contact,
+  Settings
 } from 'lucide-react';
 import type { DashboardView } from '../types';
 import { dashboardHash, viewTitles } from '../utils';
@@ -13,6 +18,10 @@ const items: { view: DashboardView; icon: typeof Home }[] = [
   { view: 'overview', icon: Home },
   { view: 'customers', icon: Users },
   { view: 'team', icon: UsersRound },
+  { view: 'inventory', icon: Package },
+  { view: 'billing', icon: CreditCard },
+  { view: 'render-history', icon: History },
+  { view: 'crm', icon: Contact },
 ];
 
 type SidebarProps = {
@@ -24,11 +33,13 @@ type SidebarProps = {
 
 export const Sidebar = ({ activeView, onNavigate, open, onClose }: SidebarProps) => (
   <>
-    <div
+    <button
+      type="button"
       className={clsx(
         'fixed inset-0 z-40 bg-brand-dark/20 backdrop-blur-sm transition lg:hidden',
         open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0',
       )}
+      aria-label="Close navigation overlay"
       onClick={onClose}
     />
     <aside
@@ -47,7 +58,7 @@ export const Sidebar = ({ activeView, onNavigate, open, onClose }: SidebarProps)
             <div className="text-xs uppercase tracking-[0.18em] text-brand-dark/70">Decorator OS</div>
           </div>
         </a>
-        <button onClick={onClose} className="rounded-xl p-2 text-brand-dark lg:hidden">
+        <button onClick={onClose} aria-label="Close dashboard navigation" className="rounded-xl p-2 text-brand-dark lg:hidden">
           <X size={18} />
         </button>
       </div>
@@ -76,18 +87,51 @@ export const Sidebar = ({ activeView, onNavigate, open, onClose }: SidebarProps)
         })}
       </div>
 
-      <div className="mt-auto rounded-3xl bg-brand-60 p-4">
+      <div className="mt-8 rounded-3xl bg-brand-60 p-4">
         <div className="flex items-center gap-3">
           <div className="rounded-2xl bg-brand-30 p-2 text-brand-10">
             <Sparkles size={18} />
           </div>
           <div>
             <div className="font-medium text-brand-dark">Need a quick render?</div>
-            <div className="text-sm text-brand-dark/80">Jump to the try-on tool from here.</div>
+            <div className="text-[13px] text-brand-dark/80">Jump to the try-on tool from here.</div>
           </div>
         </div>
-        <a href="#try-once" className="mt-4 inline-flex rounded-2xl bg-brand-10 px-4 py-2 text-sm font-medium text-brand-60 transition hover:bg-brand-dark">
+        <a href="#try-once" className="mt-4 flex justify-center rounded-2xl bg-brand-10 px-4 py-2 text-sm font-medium text-brand-dark transition hover:bg-brand-dark hover:text-brand-60">
           Generate new render
+        </a>
+      </div>
+
+      <div className="mt-auto pt-6">
+        <a
+          href={dashboardHash('settings')}
+          onClick={() => {
+            onNavigate('settings');
+            onClose();
+          }}
+          className={clsx(
+            'flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition',
+            activeView === 'settings' ? 'bg-brand-60 text-brand-10' : 'text-brand-dark/90 hover:bg-brand-60/50',
+          )}
+        >
+          <Settings size={18} />
+          <span>{viewTitles['settings']}</span>
+        </a>
+        <a
+          href={dashboardHash('profile')}
+          onClick={() => {
+            onNavigate('profile');
+            onClose();
+          }}
+          className={clsx(
+            'flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition',
+            activeView === 'profile' ? 'bg-brand-60 text-brand-10' : 'text-brand-dark/90 hover:bg-brand-60/50',
+          )}
+        >
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-10 text-[10px] font-bold text-brand-dark">
+            JD
+          </span>
+          <span>{viewTitles['profile']}</span>
         </a>
       </div>
     </aside>

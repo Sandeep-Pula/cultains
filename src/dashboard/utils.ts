@@ -24,6 +24,12 @@ export const viewTitles: Record<DashboardView, string> = {
   overview: 'Overview',
   customers: 'Customers',
   team: 'Team',
+  inventory: 'Inventory',
+  billing: 'Billing',
+  'render-history': 'Render History',
+  crm: 'CRM',
+  settings: 'Settings',
+  profile: 'Profile',
 };
 
 export const stageLabels: Record<ProjectStage, string> = {
@@ -37,6 +43,19 @@ export const stageLabels: Record<ProjectStage, string> = {
   on_hold: 'On hold',
 };
 
+export const stageProgressMap: Record<ProjectStage, number> = {
+  inquiry: 8,
+  consultation: 18,
+  design_in_progress: 46,
+  render_shared: 64,
+  customer_approved: 78,
+  execution_started: 88,
+  completed: 100,
+  on_hold: 30,
+};
+
+export const getStageProgress = (stage: ProjectStage) => stageProgressMap[stage];
+
 export const siteStatusLabels: Record<SiteStatus, string> = {
   under_construction: 'Under construction',
   ready: 'Ready',
@@ -46,7 +65,7 @@ export const siteStatusLabels: Record<SiteStatus, string> = {
 export const parseDashboardView = (hash: string): DashboardView => {
   const value = hash.replace(/^#dashboard\/?/, '').replace('/', '');
   if (!value) return 'overview';
-  if (['customers', 'team'].includes(value)) {
+  if (['customers', 'team', 'inventory', 'billing', 'render-history', 'crm', 'settings', 'profile'].includes(value)) {
     return value as DashboardView;
   }
   return 'overview';

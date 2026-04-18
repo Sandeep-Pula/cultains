@@ -1,7 +1,13 @@
 export type DashboardView =
   | 'overview'
   | 'customers'
-  | 'team';
+  | 'team'
+  | 'inventory'
+  | 'billing'
+  | 'render-history'
+  | 'crm'
+  | 'settings'
+  | 'profile';
 
 export type ProjectStage =
   | 'inquiry'
@@ -97,6 +103,7 @@ export interface QuoteSummary {
   quoteStatus: QuoteStatus;
   paymentStage: PaymentStage;
   advanceReceived: number;
+  partiallyPaidAmount?: number;
 }
 
 export interface CustomerProject {
@@ -167,6 +174,7 @@ export interface DashboardData {
   customers: CustomerProject[];
   deletedCustomers: DeletedCustomerRecord[];
   tasks: TaskItem[];
+  inventory: InventoryItem[];
   recentlyViewedIds: string[];
 }
 
@@ -182,4 +190,23 @@ export interface ToastItem {
   id: string;
   title: string;
   description?: string;
+}
+
+export type InventoryCategory = 'Hardware & Tools' | 'Office & Tech' | 'Decor & Lighting' | 'Raw Material' | 'Vehicle';
+export type InventoryStatus = 'in-stock' | 'low-stock' | 'out-of-stock' | 'clearance';
+export type InventoryCondition = 'new' | 'good' | 'fair' | 'aging' | 'damaged';
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  sku: string;
+  category: InventoryCategory;
+  currentStock: number;
+  minimumStock: number;
+  status: InventoryStatus;
+  condition: InventoryCondition;
+  costPerUnit: number;
+  lastRestockedAt: string;
+  assignedTeamIds: string[];
+  notes: string;
 }

@@ -1,11 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword,
-  sendPasswordResetEmail
-} from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { authService } from '../lib/authService';
 import styles from './AuthPage.module.css';
 
 type AuthPageProps = {
@@ -41,14 +36,14 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
 
     try {
       if (isForgotPassword) {
-        await sendPasswordResetEmail(auth, email);
+        await authService.requestPasswordReset(email);
         setSuccessMsg('A password reset link has been sent to your email.');
         // Don't redirect immediately so they see the message
       } else if (isSignup) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        await authService.signUp(email, password, name);
         window.location.hash = '#dashboard';
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        await authService.signIn(email, password);
         window.location.hash = '#dashboard';
       }
     } catch (err) {

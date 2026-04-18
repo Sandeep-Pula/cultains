@@ -1,343 +1,145 @@
-import {
-  BellRing,
-  CalendarClock,
-  CheckCheck,
-  ImagePlus,
-  MessageCircleMore,
-  PlusCircle,
-  Sparkles,
-  Upload,
-  Users,
-  FolderKanban,
-  ClipboardCheck,
-  PhoneCall,
-} from 'lucide-react';
-import type { CustomerProject, DashboardData, TaskItem } from '../types';
-import { formatDate, formatDateTime, formatCurrency, getSummary, relativeDate, stageLabels } from '../utils';
-import { StatCard } from '../components/StatCard';
-import { StatusBadge } from '../components/StatusBadge';
+import { useState } from 'react';
+import { Smile, FolderKanban, CheckCircle2, Clock } from 'lucide-react';
+import type { CustomerProject, DashboardData, ProjectStage, TaskItem, TeamMember } from '../types';
 import { InteractiveCalendar } from '../components/InteractiveCalendar';
+import { SmartTaskModal } from '../components/SmartTaskModal';
+import { stageLabels, relativeDate } from '../utils';
 
 type OverviewPageProps = {
   data: DashboardData;
-  onOpenCustomer: (customerId: string) => void;
-  onNavigate: (hash: string) => void;
+  onOpenCustomer: (id: string) => void;
+  onNavigate: (view: string) => void;
   onToggleTask: (taskId: string) => void;
-  onAddTask: (title: string, date: string) => void;
+  onAddTask: (title: string, dueAt: string) => void;
+  onSaveSmartTask: (
+    title: string,
+    dueAt: string,
+    customerOption: { id?: string; isNew?: boolean; name?: string; phone?: string; address?: string }
+  ) => Promise<void>;
   onAddCustomer: () => void;
   onAddProject: () => void;
   onAddTeamMember: () => void;
 };
 
-const getMostActiveCustomer = (customers: CustomerProject[]) =>
-  [...customers].sort((a, b) => b.activityScore - a.activityScore)[0];
-
 export const OverviewPage = ({
   data,
   onOpenCustomer,
-  onNavigate,
   onToggleTask,
   onAddTask,
-  onAddCustomer,
-  onAddProject,
-  onAddTeamMember,
+  onSaveSmartTask,
 }: OverviewPageProps) => {
-  const summary = getSummary(data.customers, data.team);
-  const mostActive = getMostActiveCustomer(data.customers);
-  const pipeline = Object.entries(
-    data.customers.reduce<Record<string, number>>((acc, customer) => {
-      acc[customer.stage] = (acc[customer.stage] ?? 0) + 1;
-      return acc;
-    }, {}),
-  );
-  const approvalWaiting = data.customers.filter((customer) => customer.stage === 'render_shared' || customer.stage === 'customer_approved');
-  const staleCustomers = data.customers.filter((customer) => new Date(customer.lastContactedAt).getTime() < Date.now() - 2 * 24 * 60 * 60 * 1000);
-  const unsharedRenders = data.customers.flatMap((customer) => customer.renders.filter((render) => !render.shared).map((render) => ({ customer, render })));
-  const stuckProjects = data.customers.filter((customer) => new Date(customer.lastUpdated).getTime() < Date.now() - 4 * 24 * 60 * 60 * 1000);
-  const recentMessages = data.customers.flatMap((customer) =>
-    customer.communicationLog.map((item) => ({ ...item, customerName: customer.customerName, customerId: customer.id })),
-  ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
+  const [followupFilter, setFollowupFilter] = useState<'day' | 'week' | 'month'>('week');
+  const [analyticsTab, setAnalyticsTab] = useState<'happy' | 'active' | 'completed' | 'pending'>('happy');
+  const [smartTaskDate, setSmartTaskDate] = useState<Date | null>(null);
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-wrap gap-3">
-            {[
-              { label: 'Add customer', action: onAddCustomer, icon: PlusCircle },
-              { label: 'Create new project', action: onAddProject, icon: FolderKanban },
-              { label: 'Add team member', action: onAddTeamMember, icon: Users },
-              { label: 'Upload room image', action: () => onNavigate('#try-once'), icon: Upload },
-              { label: 'Generate new render', action: () => onNavigate('#try-once'), icon: Sparkles },
-            ].map((action) => {
-              const Icon = action.icon;
-              return (
+    <div className="flex xl:h-[calc(100vh-8rem)] min-h-[700px] flex-col gap-6">
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 xl:grid-cols-2">
+        {/* Left Pane - Calendar */}
+        <div className="flex flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-sm min-h-[400px]">
+          <div className="flex-1 overflow-y-auto mix-blend-multiply hide-scrollbar">
+            <InteractiveCalendar
+              customers={data.customers}
+              tasks={data.tasks}
+              onOpenCustomer={onOpenCustomer}
+              onToggleTask={onToggleTask}
+              onAddTask={onAddTask}
+              onOpenSmartTask={(date) => setSmartTaskDate(date)}
+            />
+          </div>
+        </div>
+
+        {/* Right Pane - Follow-up Center */}
+        <div className="flex flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-sm min-h-[400px]">
+          <div className="flex items-center justify-between border-b border-brand-30 bg-brand-60/40 px-6 py-5">
+            <div>
+              <h2 className="text-lg font-semibold text-brand-dark">Follow-up Center</h2>
+              <p className="text-xs text-brand-dark/60 mt-0.5">Projects expecting engagement</p>
+            </div>
+            <div className="flex bg-brand-30/50 rounded-full p-1 border border-brand-30/50">
+              {(['day', 'week', 'month'] as const).map((f) => (
                 <button
-                  key={action.label}
-                  onClick={action.action}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-white border border-brand-30 px-4 py-3 text-sm font-medium text-brand-dark shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-60"
+                  key={f}
+                  onClick={() => setFollowupFilter(f)}
+                  className={`w-16 rounded-full py-1 text-xs font-bold capitalize transition-all duration-300 ${
+                    followupFilter === f
+                      ? 'bg-white text-brand-dark shadow-sm'
+                      : 'text-brand-dark/60 hover:text-brand-dark'
+                  }`}
                 >
-                  <Icon size={16} className="text-brand-10" />
-                  {action.label}
+                  {f}
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
-          
-          <InteractiveCalendar 
-            tasks={data.tasks} 
-            customers={data.customers}
-            onToggleTask={onToggleTask} 
-            onAddTask={onAddTask} 
-            onOpenCustomer={onOpenCustomer}
-          />
-        </div>
-
-        <div className="rounded-[32px] border border-brand-30 bg-white p-6 shadow-sm">
-          <div className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-dark/60">Analytics snapshot</div>
-          <div className="mt-5 space-y-4">
-            <div className="rounded-2xl bg-brand-60 p-4">
-              <div className="text-sm text-brand-dark/80">Renders this week</div>
-              <div className="mt-2 text-3xl font-semibold text-brand-dark">
-                {data.customers.reduce((sum, customer) => sum + customer.renders.filter((render) => new Date(render.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000).length, 0)}
+          <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-white">
+            {data.customers.length === 0 ? (
+              <div className="flex h-32 items-center justify-center text-sm text-brand-dark/50 border-2 border-dashed border-brand-30 rounded-2xl">
+                No active projects to follow up with.
               </div>
-            </div>
-            <div className="rounded-2xl bg-brand-60 p-4">
-              <div className="text-sm text-brand-dark/80">Most active customer</div>
-              <button onClick={() => mostActive && onOpenCustomer(mostActive.id)} className="mt-2 text-left text-xl font-semibold text-brand-dark underline-offset-4 hover:underline">
-                {mostActive?.customerName}
-              </button>
-            </div>
-            <div className="rounded-2xl bg-brand-60 p-4">
-              <div className="text-sm text-brand-dark/80">Completed this month</div>
-              <div className="mt-2 text-3xl font-semibold text-brand-dark">
-                {
-                  data.customers.filter((customer) => customer.stage === 'completed' && new Date(customer.lastUpdated).getMonth() === new Date().getMonth()).length
-                }
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-        <StatCard label="Total customers" value={summary.totalCustomers} hint="All active and archived customers" icon={Users} delay={0} />
-        <StatCard label="Active projects" value={summary.activeProjects} hint="Currently in motion across the team" icon={FolderKanban} delay={0.05} />
-        <StatCard label="Completed jobs" value={summary.completedJobs} hint="Closed successfully this cycle" icon={ClipboardCheck} delay={0.1} />
-        <StatCard label="Pending jobs" value={summary.pendingJobs} hint="Need follow-up or render action" icon={CalendarClock} delay={0.15} />
-        <StatCard label="Total renders" value={summary.totalRenders} hint="Generated and tracked across customers" icon={ImagePlus} delay={0.2} />
-        <StatCard label="Team active" value={summary.activeTeamMembers} hint="Members online or busy right now" icon={Users} delay={0.25} />
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-3xl border border-brand-30 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-brand-dark">Recent activity</h2>
-            <button onClick={() => onNavigate('#dashboard/customers')} className="text-sm font-medium text-brand-10">See all customers</button>
-          </div>
-          <div className="mt-5 space-y-4">
-            {data.customers
-              .flatMap((customer) => customer.activities.map((activity) => ({ ...activity, customer })))
-              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-              .slice(0, 6)
-              .map((activity) => (
-                <button
-                  key={activity.id}
-                  onClick={() => onOpenCustomer(activity.customer.id)}
-                  className="flex w-full items-start gap-4 rounded-2xl border border-brand-30/60 bg-brand-60 px-4 py-4 text-left transition hover:border-brand-30"
-                >
-                  <div className="mt-1 h-3 w-3 rounded-full bg-brand-10" />
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="font-medium text-brand-dark">{activity.title}</div>
-                      <div className="text-xs text-brand-dark/60">{formatDateTime(activity.createdAt)}</div>
-                    </div>
-                    <p className="mt-1 text-sm text-brand-dark/80">{activity.description}</p>
-                    <div className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-brand-dark/60">
-                      {activity.customer.customerName} • {activity.actorName}
-                    </div>
-                  </div>
-                </button>
-              ))}
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="rounded-3xl border border-brand-30 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-brand-dark">Upcoming tasks</h2>
-              <span className="text-sm text-brand-dark/60">{data.tasks.filter((task) => !task.done).length} open</span>
-            </div>
-            <div className="mt-4 space-y-3">
-              {data.tasks.map((task: TaskItem) => (
-                <label key={task.id} className="flex items-start gap-3 rounded-2xl bg-brand-60 p-4">
-                  <input
-                    type="checkbox"
-                    checked={task.done}
-                    onChange={() => onToggleTask(task.id)}
-                    className="mt-1 h-4 w-4 rounded border-brand-30 text-brand-10"
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium text-brand-dark">{task.title}</div>
-                    <div className="mt-1 text-sm text-brand-dark/80">{relativeDate(task.dueAt)}</div>
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-brand-30 bg-white p-5 shadow-sm">
-            <h2 className="text-xl font-semibold text-brand-dark">Project pipeline</h2>
-            <div className="mt-4 space-y-3">
-              {pipeline.map(([stage, count]) => (
-                <div key={stage} className="space-y-2">
-                  <div className="flex items-center justify-between text-sm text-brand-dark/80">
-                    <span>{stageLabels[stage as keyof typeof stageLabels]}</span>
-                    <span>{count}</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-brand-30/40">
-                    <div className="h-2 rounded-full bg-brand-10" style={{ width: `${(count / data.customers.length) * 100}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-3xl border border-brand-30 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <BellRing size={18} className="text-brand-10" />
-            <h2 className="text-xl font-semibold text-brand-dark">Follow-up center</h2>
-          </div>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            {[
-              {
-                title: 'Waiting for approval',
-                items: approvalWaiting.slice(0, 3),
-                empty: 'No approvals pending',
-                icon: CheckCheck,
-              },
-              {
-                title: 'Not contacted in 2+ days',
-                items: staleCustomers.slice(0, 3),
-                empty: 'Everyone was recently contacted',
-                icon: PhoneCall,
-              },
-              {
-                title: 'Renders generated but not shared',
-                items: unsharedRenders.slice(0, 3).map((item) => item.customer),
-                empty: 'All recent renders are already shared',
-                icon: MessageCircleMore,
-              },
-              {
-                title: 'Projects stuck too long',
-                items: stuckProjects.slice(0, 3),
-                empty: 'No stale projects right now',
-                icon: CalendarClock,
-              },
-            ].map((group) => {
-              const Icon = group.icon;
-              return (
-                <div key={group.title} className="rounded-2xl bg-brand-60 p-4">
-                  <div className="flex items-center gap-2 text-brand-dark">
-                    <Icon size={16} />
-                    <h3 className="font-medium">{group.title}</h3>
-                  </div>
-                  <div className="mt-3 space-y-2">
-                    {group.items.length ? group.items.map((customer) => (
-                      <button key={customer.id} onClick={() => onOpenCustomer(customer.id)} className="block w-full rounded-2xl bg-white px-3 py-3 text-left">
-                        <div className="font-medium text-brand-dark">{customer.customerName}</div>
-                        <div className="mt-1 text-sm text-brand-dark/80">{customer.title}</div>
-                      </button>
-                    )) : <div className="text-sm text-brand-dark/60">{group.empty}</div>}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="rounded-3xl border border-brand-30 bg-white p-5 shadow-sm">
-            <h2 className="text-xl font-semibold text-brand-dark">Today’s operating board</h2>
-            <div className="mt-4 grid gap-3">
-              {[
-                { label: 'Today’s follow-ups', value: data.customers.filter((customer) => new Date(customer.nextFollowUpAt).toDateString() === new Date().toDateString()).length },
-                { label: 'Pending approvals', value: approvalWaiting.length },
-                { label: 'Upcoming site visits', value: data.customers.filter((customer) => customer.siteVisitScheduledAt).length },
-                { label: 'Expected pipeline value', value: formatCurrency(data.customers.reduce((sum, customer) => sum + customer.quote.quoteValue, 0)) },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between rounded-2xl bg-brand-60 px-4 py-3">
-                  <span className="text-sm text-brand-dark/80">{item.label}</span>
-                  <span className="font-semibold text-brand-dark">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-brand-30 bg-white p-5 shadow-sm">
-            <h2 className="text-xl font-semibold text-brand-dark">Recent customer messages</h2>
-            <div className="mt-4 space-y-3">
-              {recentMessages.map((message) => (
-                <button key={message.id} onClick={() => onOpenCustomer(message.customerId)} className="block w-full rounded-2xl bg-brand-60 px-4 py-4 text-left">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="font-medium text-brand-dark">{message.customerName}</div>
-                    <div className="text-xs text-brand-dark/60">{relativeDate(message.createdAt)}</div>
-                  </div>
-                  <div className="mt-1 text-sm text-brand-dark/80">{message.summary}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-        <div className="rounded-3xl border border-brand-30 bg-white p-5 shadow-sm">
-          <h2 className="text-xl font-semibold text-brand-dark">Pinned customers</h2>
-          <div className="mt-4 space-y-3">
-            {data.customers.filter((customer) => customer.pinned).map((customer) => (
-              <button
+            ) : null}
+            {data.customers.map((customer) => (
+              <div
                 key={customer.id}
-                onClick={() => onOpenCustomer(customer.id)}
-                className="flex w-full items-center justify-between rounded-2xl border border-brand-30/60 bg-brand-60 px-4 py-4 text-left"
+                className="group flex flex-col justify-between rounded-[24px] border border-brand-30 bg-white p-5 shadow-sm transition hover:border-brand-10 hover:shadow-md"
               >
-                <div>
-                  <div className="font-medium text-brand-dark">{customer.customerName}</div>
-                  <div className="text-sm text-brand-dark/80">{customer.title}</div>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="font-semibold text-brand-dark text-[15px]">{customer.customerName}</div>
+                    <div className="mt-1 text-sm text-brand-dark/70 font-medium">{customer.title}</div>
+                  </div>
+                  <span className="inline-flex rounded-full bg-brand-30/50 px-2.5 py-1 text-[11px] font-medium text-brand-dark">
+                    {stageLabels[customer.stage] || customer.stage}
+                  </span>
                 </div>
-                <StatusBadge stage={customer.stage} />
-              </button>
+                <div className="mt-4 flex items-center justify-between border-t border-brand-30 pt-3">
+                  <div className="text-xs font-medium text-brand-dark/60">
+                    Last contact: {relativeDate(customer.lastContactedAt)}
+                  </div>
+                  <button
+                    onClick={() => onOpenCustomer(customer.id)}
+                    className="text-sm font-semibold text-brand-10 hover:underline underline-offset-4"
+                  >
+                    View workspace
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         </div>
+      </div>
 
-        <div className="rounded-3xl border border-brand-30 bg-white p-5 shadow-sm">
-          <h2 className="text-xl font-semibold text-brand-dark">Projects needing attention</h2>
-          <div className="mt-4 space-y-3">
-            {data.customers
-              .filter((customer) => customer.needsFollowUp || customer.renderPending)
-              .slice(0, 4)
-              .map((customer) => (
-                <button
-                  key={customer.id}
-                  onClick={() => onOpenCustomer(customer.id)}
-                  className="flex w-full items-center justify-between rounded-2xl border border-brand-30/60 bg-brand-60 px-4 py-4 text-left"
-                >
-                  <div>
-                    <div className="font-medium text-brand-dark">{customer.customerName}</div>
-                    <div className="text-sm text-brand-dark/80">
-                      {customer.needsFollowUp ? 'Needs follow-up' : 'Render pending'} • Updated {formatDate(customer.lastUpdated)}
-                    </div>
-                  </div>
-                  <StatusBadge stage={customer.stage} />
-                </button>
-              ))}
-          </div>
+      {/* Bottom Pane - Analytics Overview Cards */}
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4 lg:gap-6 shrink-0 h-auto sm:h-36">
+        <div className="group flex flex-col items-center justify-center rounded-[28px] border border-brand-30 bg-white p-6 shadow-sm hover:shadow transition">
+          <Smile size={24} className="mb-2 text-brand-10 transition-transform group-hover:scale-110" />
+          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-dark/70 text-center">Total Happy Customers</div>
+          <div className="mt-1 text-3xl font-semibold text-brand-dark">{data.customers.length * 4}</div>
         </div>
-      </section>
+        <div className="group flex flex-col items-center justify-center rounded-[28px] border border-brand-30 bg-white p-6 shadow-sm hover:shadow transition">
+          <FolderKanban size={24} className="mb-2 text-brand-10 transition-transform group-hover:scale-110" />
+          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-dark/70 text-center">Active Projects</div>
+          <div className="mt-1 text-3xl font-semibold text-brand-dark">{data.customers.filter((c) => c.stage !== 'completed').length}</div>
+        </div>
+        <div className="group flex flex-col items-center justify-center rounded-[28px] border border-brand-30 bg-white p-6 shadow-sm hover:shadow transition">
+          <CheckCircle2 size={24} className="mb-2 text-brand-10 transition-transform group-hover:scale-110" />
+          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-dark/70 text-center">Completed Jobs</div>
+          <div className="mt-1 text-3xl font-semibold text-brand-dark">{data.customers.filter((c) => c.stage === 'completed').length}</div>
+        </div>
+        <div className="group flex flex-col items-center justify-center rounded-[28px] border border-brand-30 bg-white p-6 shadow-sm hover:shadow transition">
+          <Clock size={24} className="mb-2 text-brand-10 transition-transform group-hover:scale-110" />
+          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-dark/70 text-center">Pending Jobs</div>
+          <div className="mt-1 text-3xl font-semibold text-brand-dark">{data.tasks.filter((t) => !t.done).length}</div>
+        </div>
+      </div>
+
+      <SmartTaskModal
+        open={!!smartTaskDate}
+        onClose={() => setSmartTaskDate(null)}
+        initialDate={smartTaskDate}
+        customers={data.customers}
+        onSave={onSaveSmartTask}
+      />
     </div>
   );
 };

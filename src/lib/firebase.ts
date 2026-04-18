@@ -1,5 +1,7 @@
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY?.trim(),
@@ -16,10 +18,12 @@ const missingFirebaseEnv = Object.entries(firebaseConfig)
 
 if (missingFirebaseEnv.length > 0) {
   throw new Error(
-    `Missing Firebase configuration: ${missingFirebaseEnv.join(", ")}. ` +
-      "Set the matching VITE_FIREBASE_* variables locally and in the GitHub Actions environment before building.",
+    `Missing Firebase configuration: ${missingFirebaseEnv.join(', ')}. ` +
+      'Set the matching VITE_FIREBASE_* variables locally and in the GitHub Actions environment before building.',
   );
 }
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);

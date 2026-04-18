@@ -8,6 +8,7 @@ import { HomeContent } from './components/HomeContent';
 import { AuthPage } from './components/AuthPage';
 import { AIInteriorDesigner } from './components/AIInteriorDesigner';
 import { Dashboard } from './components/Dashboard';
+import { DashboardSkeleton } from './dashboard/components/DashboardSkeleton';
 import styles from './App.module.css';
 import './styles/global.css';
 
@@ -16,15 +17,26 @@ import { Navbar } from './components/Navbar';
 function App() {
   const [hash, setHash] = useState(window.location.hash);
   const [user, setUser] = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, setUser);
+    const unsub = onAuthStateChanged(auth, (nextUser) => {
+      setUser(nextUser);
+      setAuthReady(true);
+    });
     return () => unsub();
   }, []);
 
   useEffect(() => {
-    const handleHashChange = () => setHash(window.location.hash);
+    const handleHashChange = () => {
+      setHash(window.location.hash);
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    };
     window.addEventListener('hashchange', handleHashChange);
+    
+    // Also trigger scroll on mount if navigating to a specific hash out of the gate
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
@@ -36,17 +48,17 @@ function App() {
 
   // Protect Dashboard route
   useEffect(() => {
-    if (isDashboardPage && user === null) {
+    if (authReady && isDashboardPage && user === null) {
       window.location.hash = '#login';
     }
-  }, [user, isDashboardPage]);
+  }, [authReady, user, isDashboardPage]);
 
   // Autoredirect to dashboard if logged in and visiting login/signup
   useEffect(() => {
-    if (user && isAuthPage) {
+    if (authReady && user && isAuthPage) {
       window.location.hash = '#dashboard';
     }
-  }, [user, isAuthPage]);
+  }, [authReady, user, isAuthPage]);
 
   return (
     <div className={styles.appContainer}>
@@ -62,7 +74,9 @@ function App() {
       ) : null}
 
       <main>
-        {isDashboardPage && user ? (
+        {isDashboardPage && !authReady ? (
+          <DashboardSkeleton />
+        ) : isDashboardPage && user ? (
           <Dashboard />
         ) : isTryOncePage ? (
           <AIInteriorDesigner />

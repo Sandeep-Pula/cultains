@@ -1,81 +1,47 @@
-import { Bell, Menu, Search } from 'lucide-react';
-import type { CustomerProject, DashboardView, TeamMember } from '../types';
-import { viewTitles } from '../utils';
+import { Menu, Search, LogOut } from 'lucide-react';
+import type { DashboardView } from '../types';
 
 type TopbarProps = {
   activeView: DashboardView;
-  userName: string;
-  companyName: string;
   search: string;
   onSearchChange: (value: string) => void;
   onOpenSidebar: () => void;
-  recentlyViewed: CustomerProject[];
-  team: TeamMember[];
-  onOpenCustomer: (customerId: string) => void;
+  onLogout: () => void;
 };
 
 export const Topbar = ({
-  activeView,
-  userName,
-  companyName,
   search,
   onSearchChange,
   onOpenSidebar,
-  recentlyViewed,
-  team,
-  onOpenCustomer,
+  onLogout,
 }: TopbarProps) => {
-  const activeCount = team.filter((member) => member.status !== 'offline').length;
-
   return (
-    <header className="sticky top-0 z-30 border-b border-brand-30 bg-brand-30/90 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <button onClick={onOpenSidebar} className="rounded-2xl border border-brand-60 bg-brand-60 p-2 text-brand-dark lg:hidden">
-              <Menu size={18} />
-            </button>
-            <div>
-              <div className="text-sm text-brand-dark/70">{companyName}</div>
-              <div className="text-2xl font-semibold tracking-tight text-brand-dark">
-                {viewTitles[activeView]} <span className="text-base font-normal text-brand-dark/80">for {userName}</span>
-              </div>
-            </div>
-          </div>
+    <header className="sticky top-0 z-30 border-b border-brand-30 bg-brand-30">
+      <div className="flex w-full items-center px-4 py-4 sm:px-6">
+        <button
+          onClick={onOpenSidebar}
+          aria-label="Open dashboard navigation"
+          className="mr-4 rounded-2xl border border-brand-60 bg-brand-60 p-2 text-brand-dark lg:hidden"
+        >
+          <Menu size={18} />
+        </button>
 
-          <div className="hidden items-center gap-3 md:flex">
-            <div className="rounded-2xl border border-brand-60 bg-brand-60 px-3 py-2 text-sm text-brand-dark/80">
-              {activeCount} team members active
-            </div>
-            <button className="rounded-2xl border border-brand-60 bg-brand-60 p-2 text-brand-dark">
-              <Bell size={18} />
-            </button>
-          </div>
-        </div>
+        <label className="flex w-full items-center gap-3 rounded-2xl border border-brand-30 bg-brand-60/50 px-4 py-3 text-brand-dark focus-within:bg-brand-60 focus-within:shadow-sm transition">
+          <Search size={18} className="text-brand-dark/60" />
+          <input
+            value={search}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="Search dashboard..."
+            aria-label="Search dashboard"
+            className="w-full bg-transparent text-sm outline-none placeholder:text-brand-dark/50"
+          />
+        </label>
 
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-          <label className="flex w-full max-w-xl items-center gap-3 rounded-2xl border border-brand-60 bg-brand-60 px-4 py-3 text-brand-dark">
-            <Search size={18} />
-            <input
-              value={search}
-              onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Search customers, project names, or locations"
-              className="w-full bg-transparent text-sm outline-none placeholder:text-brand-dark/50"
-            />
-          </label>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-dark/70">Recently viewed</span>
-            {recentlyViewed.map((customer) => (
-              <button
-                key={customer.id}
-                onClick={() => onOpenCustomer(customer.id)}
-                className="rounded-full border border-brand-60 bg-brand-60 px-3 py-1.5 text-sm text-brand-dark transition hover:bg-brand-30 hover:border-brand-30"
-              >
-                {customer.customerName}
-              </button>
-            ))}
-          </div>
+        <div className="ml-4 shrink-0">
+          <button onClick={onLogout} className="inline-flex items-center gap-2 rounded-2xl border border-brand-dark/10 bg-transparent px-4 py-2.5 text-sm font-medium text-brand-dark hover:bg-brand-dark/5 transition">
+            <LogOut size={16} />
+            <span className="hidden sm:inline">Log out</span>
+          </button>
         </div>
       </div>
     </header>
