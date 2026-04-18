@@ -3,6 +3,11 @@ import type {
   CustomerFilters,
   CustomerProject,
   DashboardView,
+  FinanceEntry,
+  InventoryCondition,
+  InventoryFlag,
+  InventoryItem,
+  InventoryStatus,
   ProjectStage,
   RenderApprovalStatus,
   SiteStatus,
@@ -130,6 +135,44 @@ export const renderApprovalBadgeClass = (status: RenderApprovalStatus) =>
     status === 'draft' && 'bg-[rgba(39,39,87,0.08)] text-[var(--color-brand-dark)]',
     status === 'rejected' && 'bg-[rgba(39,39,87,0.12)] text-[var(--color-brand-dark)]',
   );
+
+export const getInventoryStatus = (
+  currentStock: number,
+  minimumStock: number,
+  condition: InventoryCondition,
+): InventoryStatus => {
+  if (condition === 'aging' || condition === 'damaged') return 'clearance';
+  if (currentStock <= 0) return 'out-of-stock';
+  if (currentStock <= minimumStock) return 'low-stock';
+  return 'in-stock';
+};
+
+export const getInventoryFlags = (item: InventoryItem): InventoryFlag[] => {
+  const flags: InventoryFlag[] = [];
+  const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
+  const lastAudit = item.lastAuditAt ? new Date(item.lastAuditAt).getTime() : 0;
+
+  if (item.currentStock <= item.minimumStock || item.procurementStatus === 'to_order' || item.procurementStatus === 'ordered') {
+    flags.push('needs_purchase');
+  }
+  if (item.status === 'clearance' || item.condition === 'aging' || item.condition === 'damaged') {
+    flags.push('clearance_watch');
+  }
+  if (item.reservedStock > item.currentStock) {
+    flags.push('over_reserved');
+  }
+  if (!lastAudit || lastAudit < ninetyDaysAgo) {
+    flags.push('audit_due');
+  }
+
+  return flags;
+};
+
+export const financeStatusLabel: Record<FinanceEntry['status'], string> = {
+  pending: 'Pending',
+  paid: 'Paid',
+  overdue: 'Overdue',
+};
 
 export const getCustomerOwner = (customer: CustomerProject, team: TeamMember[]) =>
   team.find((member) => member.id === customer.ownerId);

@@ -5,13 +5,16 @@ import { auth } from '../lib/firebase';
 import { authService } from '../lib/authService';
 import { dashboardService } from './services/dashboardService';
 import { dashboardHash, getStageProgress, parseDashboardView } from './utils';
-import type { CustomerFilters, CustomerProject, DashboardData, ProjectStage, TeamMember, ToastItem } from './types';
+import type { CustomerFilters, CustomerProject, DashboardData, FinanceEntry, InventoryItem, ProjectStage, TeamMember, ToastItem } from './types';
 import { DashboardSkeleton } from './components/DashboardSkeleton';
 import { Sidebar } from './components/Sidebar';
 import { Topbar } from './components/Topbar';
 import { OverviewPage } from './pages/OverviewPage';
 import { CustomersPage } from './pages/CustomersPage';
 import { TeamPage } from './pages/TeamPage';
+import { InventoryPage } from './pages/InventoryPage';
+import { BillingPage } from './pages/BillingPage';
+import { CrmPage } from './pages/CrmPage';
 import { CustomerDrawer } from './components/CustomerDrawer';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { ToastStack } from './components/ToastStack';
@@ -467,6 +470,92 @@ export const DashboardApp = () => {
     }
   };
 
+  const handleAddInventoryItem = async (
+    payload: Pick<
+      InventoryItem,
+      | 'name'
+      | 'sku'
+      | 'itemCode'
+      | 'category'
+      | 'unit'
+      | 'currentStock'
+      | 'reservedStock'
+      | 'minimumStock'
+      | 'reorderQuantity'
+      | 'costPerUnit'
+      | 'storageLocation'
+      | 'supplierName'
+      | 'supplierPhone'
+      | 'notes'
+    >,
+  ) => {
+    if (!user) return;
+
+    try {
+      await dashboardService.addInventoryItem(user.uid, payload);
+      pushToast('Inventory item added', `${payload.name} is now available in your stock workspace.`);
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to create this inventory item.');
+    }
+  };
+
+  const handleUpdateInventoryItem = async (itemId: string, patch: Partial<InventoryItem>) => {
+    if (!user) return;
+
+    try {
+      await dashboardService.updateInventoryItem(user.uid, itemId, patch);
+      pushToast('Inventory updated', 'The stock record was saved successfully.');
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to update this inventory item.');
+    }
+  };
+
+  const handleDeleteInventoryItem = async (itemId: string) => {
+    if (!user) return;
+
+    try {
+      await dashboardService.deleteInventoryItem(user.uid, itemId);
+      pushToast('Inventory item deleted', 'The stock record has been removed from your workspace.');
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to delete this inventory item.');
+    }
+  };
+
+  const handleAddFinanceEntry = async (
+    payload: Pick<FinanceEntry, 'title' | 'kind' | 'category' | 'amount' | 'status' | 'dueAt' | 'customerId' | 'projectTitle' | 'notes'>,
+  ) => {
+    if (!user) return;
+
+    try {
+      await dashboardService.addFinanceEntry(user.uid, payload);
+      pushToast('Finance entry added', `${payload.title} was added to the company ledger.`);
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to create this finance entry.');
+    }
+  };
+
+  const handleUpdateFinanceEntry = async (entryId: string, patch: Partial<FinanceEntry>) => {
+    if (!user) return;
+
+    try {
+      await dashboardService.updateFinanceEntry(user.uid, entryId, patch);
+      pushToast('Finance entry updated');
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to update this finance entry.');
+    }
+  };
+
+  const handleDeleteFinanceEntry = async (entryId: string) => {
+    if (!user) return;
+
+    try {
+      await dashboardService.deleteFinanceEntry(user.uid, entryId);
+      pushToast('Finance entry deleted');
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to delete this finance entry.');
+    }
+  };
+
   const handleLogout = async () => {
     await authService.logout();
     window.location.hash = '#login';
@@ -554,6 +643,31 @@ export const DashboardApp = () => {
               onOpenCustomer={handleOpenCustomer}
               onOpenMember={handleOpenTeamMember}
               onAddMember={() => setAddTeamMemberOpen(true)}
+            />
+          ) : activeView === 'inventory' ? (
+            <InventoryPage
+              inventory={data.inventory}
+              customers={data.customers}
+              onAddItem={handleAddInventoryItem}
+              onUpdateItem={handleUpdateInventoryItem}
+              onDeleteItem={handleDeleteInventoryItem}
+            />
+          ) : activeView === 'billing' ? (
+            <BillingPage
+              customers={data.customers}
+              inventory={data.inventory}
+              financeEntries={data.financeEntries}
+              onAddEntry={handleAddFinanceEntry}
+              onUpdateEntry={handleUpdateFinanceEntry}
+              onDeleteEntry={handleDeleteFinanceEntry}
+            />
+          ) : activeView === 'crm' ? (
+            <CrmPage
+              customers={data.customers}
+              team={data.team}
+              onOpenCustomer={handleOpenCustomer}
+              onUpdateCustomer={handleUpdateCustomer}
+              actorName={data.userName}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-brand-dark/50">

@@ -15,6 +15,8 @@ import type {
   CustomerProject,
   DashboardData,
   DeletedCustomerRecord,
+  FinanceEntry,
+  InventoryProcurementStatus,
   NoteItem,
   RenderAsset,
   RenderRequest,
@@ -22,7 +24,7 @@ import type {
   TeamMember,
   InventoryItem,
 } from '../types';
-import { getInitials, getStageProgress, recalculateTeamMetrics, stageProgressMap } from '../utils';
+import { getInitials, getInventoryStatus, getStageProgress, recalculateTeamMetrics, stageProgressMap } from '../utils';
 
 type DashboardSnapshotListener = (data: DashboardData) => void;
 type DashboardErrorListener = (error: Error) => void;
@@ -63,6 +65,7 @@ const customerDoc = (userId: string, customerId: string) => doc(db, 'users', use
 const teamMemberDoc = (userId: string, memberId: string) => doc(db, 'users', userId, 'teamMembers', memberId);
 const taskDoc = (userId: string, taskId: string) => doc(db, 'users', userId, 'tasks', taskId);
 const inventoryItemDoc = (userId: string, itemId: string) => doc(db, 'users', userId, 'inventoryItems', itemId);
+const financeEntryDoc = (userId: string, entryId: string) => doc(db, 'users', userId, 'financeEntries', entryId);
 const deletedCustomerDoc = (userId: string, recordId: string) => doc(db, 'users', userId, 'deletedCustomers', recordId);
 
 const nowIso = () => new Date().toISOString();
@@ -80,6 +83,7 @@ const emptyDashboardData = (user: User, profile?: Partial<UserProfileDoc>): Dash
   userName: profile?.userName?.trim() || getUserName(user),
   team: [],
   inventory: [],
+  financeEntries: [],
   customers: [],
   deletedCustomers: [],
   tasks: [],
@@ -219,14 +223,26 @@ const normalizeInventoryItem = (itemId: string, value: Partial<InventoryItem> | 
   id: itemId,
   name: value?.name || 'Unknown Item',
   sku: value?.sku || `SKU-${itemId.slice(0, 4).toUpperCase()}`,
+  itemCode: value?.itemCode || value?.sku || `ITEM-${itemId.slice(0, 4).toUpperCase()}`,
   category: value?.category || 'Hardware & Tools',
+  unit: value?.unit || 'pcs',
   currentStock: value?.currentStock ?? 0,
+  reservedStock: value?.reservedStock ?? 0,
   minimumStock: value?.minimumStock ?? 5,
-  status: value?.status || 'in-stock',
+  reorderQuantity: value?.reorderQuantity ?? Math.max((value?.minimumStock ?? 5) * 2, 10),
+  status: value?.status || getInventoryStatus(value?.currentStock ?? 0, value?.minimumStock ?? 5, value?.condition || 'new'),
   condition: value?.condition || 'new',
   costPerUnit: value?.costPerUnit ?? 0,
+  storageLocation: value?.storageLocation || 'Main store',
+  supplierName: value?.supplierName || '',
+  supplierPhone: value?.supplierPhone || '',
+  procurementStatus: value?.procurementStatus || 'none',
   lastRestockedAt: value?.lastRestockedAt || nowIso(),
+  lastIssuedAt: value?.lastIssuedAt,
+  lastAuditAt: value?.lastAuditAt,
   assignedTeamIds: value?.assignedTeamIds || [],
+  assignedProjectIds: value?.assignedProjectIds || [],
+  clearanceReason: value?.clearanceReason || '',
   notes: value?.notes || '',
 });
 
@@ -241,6 +257,20 @@ const normalizeDeletedCustomer = (
   deletedAt: value?.deletedAt || nowIso(),
   deletedBy: value?.deletedBy || 'Unknown',
   lastStage: value?.lastStage || 'inquiry',
+});
+
+const normalizeFinanceEntry = (entryId: string, value: Partial<FinanceEntry> | undefined): FinanceEntry => ({
+  id: entryId,
+  title: value?.title || 'Untitled entry',
+  kind: value?.kind || 'expense',
+  category: value?.category || 'operations',
+  amount: value?.amount ?? 0,
+  status: value?.status || 'pending',
+  dueAt: value?.dueAt || nowIso(),
+  createdAt: value?.createdAt || nowIso(),
+  customerId: value?.customerId,
+  projectTitle: value?.projectTitle,
+  notes: value?.notes || '',
 });
 
 const buildCustomerPayload = (
@@ -366,6 +396,7 @@ export const dashboardService = {
     let tasks: TaskItem[] = [];
     let deletedCustomers: DeletedCustomerRecord[] = [];
     let inventory: InventoryItem[] = [];
+    let financeEntries: FinanceEntry[] = [];
 
     const emit = () => {
       const base = emptyDashboardData(user, profile ?? undefined);
@@ -374,6 +405,7 @@ export const dashboardService = {
         customers,
         team: recalculateTeamMetrics(team, customers, tasks),
         inventory,
+        financeEntries,
         tasks,
         deletedCustomers,
       });
@@ -434,6 +466,16 @@ export const dashboardService = {
           inventory = snapshot.docs
             .map((item) => normalizeInventoryItem(item.id, item.data() as Partial<InventoryItem>))
             .sort((left, right) => left.name.localeCompare(right.name));
+          emit();
+        },
+        (error) => onError(error),
+      ),
+      onSnapshot(
+        usersCollection(user.uid, 'financeEntries'),
+        (snapshot) => {
+          financeEntries = snapshot.docs
+            .map((item) => normalizeFinanceEntry(item.id, item.data() as Partial<FinanceEntry>))
+            .sort((left, right) => new Date(right.dueAt).getTime() - new Date(left.dueAt).getTime());
           emit();
         },
         (error) => onError(error),
@@ -548,16 +590,42 @@ export const dashboardService = {
     });
   },
 
-  async addInventoryItem(userId: string, payload: Pick<InventoryItem, 'name' | 'sku' | 'category' | 'currentStock' | 'minimumStock' | 'costPerUnit'>) {
+  async addInventoryItem(
+    userId: string,
+    payload: Pick<
+      InventoryItem,
+      | 'name'
+      | 'sku'
+      | 'itemCode'
+      | 'category'
+      | 'unit'
+      | 'currentStock'
+      | 'reservedStock'
+      | 'minimumStock'
+      | 'reorderQuantity'
+      | 'costPerUnit'
+      | 'storageLocation'
+      | 'supplierName'
+      | 'supplierPhone'
+      | 'notes'
+    >,
+  ) {
     const ref = doc(usersCollection(userId, 'inventoryItems'));
     const timestamp = nowIso();
+    const condition: InventoryItem['condition'] = 'new';
+    const procurementStatus: InventoryProcurementStatus =
+      payload.currentStock <= payload.minimumStock ? 'to_order' : 'none';
     const itemPayload = {
       ...payload,
-      status: payload.currentStock <= payload.minimumStock ? (payload.currentStock === 0 ? 'out-of-stock' : 'low-stock') : 'in-stock',
-      condition: 'new',
+      status: getInventoryStatus(payload.currentStock, payload.minimumStock, condition),
+      condition,
+      procurementStatus,
       lastRestockedAt: timestamp,
+      lastIssuedAt: '',
+      lastAuditAt: timestamp,
       assignedTeamIds: [],
-      notes: '',
+      assignedProjectIds: [],
+      clearanceReason: '',
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -576,6 +644,33 @@ export const dashboardService = {
   async deleteInventoryItem(userId: string, itemId: string) {
     const batch = writeBatch(db);
     batch.delete(inventoryItemDoc(userId, itemId));
+    await batch.commit();
+  },
+
+  async addFinanceEntry(
+    userId: string,
+    payload: Pick<FinanceEntry, 'title' | 'kind' | 'category' | 'amount' | 'status' | 'dueAt' | 'customerId' | 'projectTitle' | 'notes'>,
+  ) {
+    const ref = doc(usersCollection(userId, 'financeEntries'));
+    const timestamp = nowIso();
+    await setDoc(ref, {
+      ...payload,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+    return ref.id;
+  },
+
+  async updateFinanceEntry(userId: string, entryId: string, patch: Partial<FinanceEntry>) {
+    await updateDoc(financeEntryDoc(userId, entryId), {
+      ...patch,
+      updatedAt: nowIso(),
+    });
+  },
+
+  async deleteFinanceEntry(userId: string, entryId: string) {
+    const batch = writeBatch(db);
+    batch.delete(financeEntryDoc(userId, entryId));
     await batch.commit();
   },
 

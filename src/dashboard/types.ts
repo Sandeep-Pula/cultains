@@ -175,6 +175,7 @@ export interface DashboardData {
   deletedCustomers: DeletedCustomerRecord[];
   tasks: TaskItem[];
   inventory: InventoryItem[];
+  financeEntries: FinanceEntry[];
   recentlyViewedIds: string[];
 }
 
@@ -195,18 +196,57 @@ export interface ToastItem {
 export type InventoryCategory = 'Hardware & Tools' | 'Office & Tech' | 'Decor & Lighting' | 'Raw Material' | 'Vehicle';
 export type InventoryStatus = 'in-stock' | 'low-stock' | 'out-of-stock' | 'clearance';
 export type InventoryCondition = 'new' | 'good' | 'fair' | 'aging' | 'damaged';
+export type InventoryUnit = 'pcs' | 'rolls' | 'boxes' | 'sets' | 'sqm' | 'kg' | 'litres';
+export type InventoryProcurementStatus = 'none' | 'to_order' | 'ordered' | 'received';
+export type InventoryFlag = 'needs_purchase' | 'clearance_watch' | 'over_reserved' | 'audit_due';
 
 export interface InventoryItem {
   id: string;
   name: string;
   sku: string;
+  itemCode: string;
   category: InventoryCategory;
+  unit: InventoryUnit;
   currentStock: number;
+  reservedStock: number;
   minimumStock: number;
+  reorderQuantity: number;
   status: InventoryStatus;
   condition: InventoryCondition;
   costPerUnit: number;
+  storageLocation: string;
+  supplierName: string;
+  supplierPhone: string;
+  procurementStatus: InventoryProcurementStatus;
   lastRestockedAt: string;
+  lastIssuedAt?: string;
+  lastAuditAt?: string;
   assignedTeamIds: string[];
+  assignedProjectIds: string[];
+  clearanceReason: string;
+  notes: string;
+}
+
+export type FinanceKind = 'income' | 'expense';
+export type FinanceCategory =
+  | 'client_payment'
+  | 'project_material'
+  | 'labour'
+  | 'salary'
+  | 'vendor'
+  | 'operations';
+export type FinanceStatus = 'pending' | 'paid' | 'overdue';
+
+export interface FinanceEntry {
+  id: string;
+  title: string;
+  kind: FinanceKind;
+  category: FinanceCategory;
+  amount: number;
+  status: FinanceStatus;
+  dueAt: string;
+  createdAt: string;
+  customerId?: string;
+  projectTitle?: string;
   notes: string;
 }
