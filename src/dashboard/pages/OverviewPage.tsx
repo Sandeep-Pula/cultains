@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Smile, FolderKanban, CheckCircle2, Clock } from 'lucide-react';
-import type { CustomerProject, DashboardData, ProjectStage, TaskItem, TeamMember } from '../types';
+import type { DashboardData } from '../types';
 import { InteractiveCalendar } from '../components/InteractiveCalendar';
 import { SmartTaskModal } from '../components/SmartTaskModal';
 import { stageLabels, relativeDate } from '../utils';
@@ -9,8 +9,6 @@ type OverviewPageProps = {
   data: DashboardData;
   onOpenCustomer: (id: string) => void;
   onNavigate: (view: string) => void;
-  onToggleTask: (taskId: string) => void;
-  onAddTask: (title: string, dueAt: string) => void;
   onSaveSmartTask: (
     title: string,
     dueAt: string,
@@ -24,12 +22,9 @@ type OverviewPageProps = {
 export const OverviewPage = ({
   data,
   onOpenCustomer,
-  onToggleTask,
-  onAddTask,
   onSaveSmartTask,
 }: OverviewPageProps) => {
   const [followupFilter, setFollowupFilter] = useState<'day' | 'week' | 'month'>('week');
-  const [analyticsTab, setAnalyticsTab] = useState<'happy' | 'active' | 'completed' | 'pending'>('happy');
   const [smartTaskDate, setSmartTaskDate] = useState<Date | null>(null);
 
   return (
@@ -39,11 +34,7 @@ export const OverviewPage = ({
         <div className="flex flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-sm min-h-[400px]">
           <div className="flex-1 overflow-y-auto mix-blend-multiply hide-scrollbar">
             <InteractiveCalendar
-              customers={data.customers}
               tasks={data.tasks}
-              onOpenCustomer={onOpenCustomer}
-              onToggleTask={onToggleTask}
-              onAddTask={onAddTask}
               onOpenSmartTask={(date) => setSmartTaskDate(date)}
             />
           </div>

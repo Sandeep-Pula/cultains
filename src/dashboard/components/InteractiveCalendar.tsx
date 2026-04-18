@@ -1,14 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { clsx } from 'clsx';
-import type { CustomerProject, TaskItem } from '../types';
+import type { TaskItem } from '../types';
 
 type InteractiveCalendarProps = {
   tasks: TaskItem[];
-  customers: CustomerProject[];
-  onToggleTask: (taskId: string) => void;
-  onAddTask: (title: string, date: string) => void;
-  onOpenCustomer: (customerId: string) => void;
   onOpenSmartTask: (date: Date) => void;
 };
 
@@ -21,10 +17,6 @@ const startOfDay = (value: Date) => new Date(value.getFullYear(), value.getMonth
 
 export const InteractiveCalendar = ({
   tasks,
-  customers,
-  onToggleTask,
-  onAddTask,
-  onOpenCustomer,
   onOpenSmartTask,
 }: InteractiveCalendarProps) => {
   const today = startOfDay(new Date());
@@ -33,7 +25,6 @@ export const InteractiveCalendar = ({
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
-  const monthName = new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric' }).format(currentDate);
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = new Date(year, month, 1).getDay();
 

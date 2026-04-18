@@ -1,4 +1,4 @@
-import { Mail, MapPin, Phone, Pin, Plus, Star, Trash2, Users, Flame, AlertCircle, Archive } from 'lucide-react';
+import { MapPin, Phone, Pin, Plus, Trash2, Users, Flame, AlertCircle, Archive } from 'lucide-react';
 import type { CustomerFilters, CustomerProject, DeletedCustomerRecord, TeamMember } from '../types';
 import { filterCustomers, formatDate, getCustomerOwner, relativeDate, siteBadgeClass, siteStatusLabels } from '../utils';
 import { FilterToolbar } from '../components/FilterToolbar';

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   MapPin,
@@ -8,10 +8,9 @@ import {
   Star,
   UserCircle2,
   X,
-  ChevronDown,
 } from 'lucide-react';
 import type { CustomerProject, NoteItem, ProjectStage, TeamMember, CustomerPriority, SiteStatus } from '../types';
-import { formatCurrency, formatDate, formatDateTime, relativeDate, siteBadgeClass, siteStatusLabels, stageLabels } from '../utils';
+import { formatCurrency, formatDateTime, relativeDate, siteBadgeClass, siteStatusLabels, stageLabels } from '../utils';
 import { StatusBadge } from './StatusBadge';
 import { ProgressTracker } from './ProgressTracker';
 
@@ -27,7 +26,6 @@ type CustomerDrawerProps = {
   onAddNote: (customerId: string, note: string) => void;
   onRequestArchive: (customerId: string) => void;
   onRequestDelete: (customerId: string) => void;
-  onReassignTeam: (customerId: string, teamIds: string[]) => void;
   onUpdateCustomer?: (customerId: string, payload: Partial<CustomerProject>) => void;
 };
 
@@ -46,8 +44,6 @@ const priorityOptions: CustomerPriority[] = ['low', 'medium', 'high'];
 const siteStatusOptions: SiteStatus[] = ['under_construction', 'ready', 'in_progress'];
 const quoteStatusOptions = ['draft', 'sent', 'approved', 'revised'] as const;
 const paymentStageOptions = ['not_started', 'advance_received', 'partial_paid', 'paid'] as const;
-
-const getMember = (team: TeamMember[], id: string) => team.find((member) => member.id === id);
 
 // Generic wrapper for friction-free inline editing. Updates local state instantly, but only hits database onBlur.
 const InlineInput = ({ 
@@ -159,7 +155,6 @@ export const CustomerDrawer = ({
   onAddNote,
   onRequestArchive,
   onRequestDelete,
-  onReassignTeam,
   onUpdateCustomer,
 }: CustomerDrawerProps) => {
   const [draftNote, setDraftNote] = useState('');
@@ -170,12 +165,7 @@ export const CustomerDrawer = ({
 
   if (!customer) return null;
 
-  const owner = getMember(team, customer.ownerId);
-  const leadDesigner = getMember(team, customer.leadDesignerId);
-  const fieldStaff = getMember(team, customer.fieldStaffId);
   const latestActivities = customer.activities.slice(0, 3);
-  const latestMessages = customer.communicationLog.slice(0, 3);
-  const latestRenders = customer.renders.slice(0, 2);
 
   const submitNote = () => {
     if (!draftNote.trim()) return;
@@ -183,13 +173,16 @@ export const CustomerDrawer = ({
     setDraftNote('');
   };
 
-  const handleFieldSave = (field: keyof CustomerProject, value: any) => {
+  const handleFieldSave = <K extends keyof CustomerProject>(field: K, value: CustomerProject[K]) => {
     if (onUpdateCustomer) {
       onUpdateCustomer(customer.id, { [field]: value });
     }
   };
 
-  const handleQuoteSave = (field: keyof CustomerProject['quote'], value: any) => {
+  const handleQuoteSave = <K extends keyof CustomerProject['quote']>(
+    field: K,
+    value: CustomerProject['quote'][K],
+  ) => {
     if (onUpdateCustomer) {
       onUpdateCustomer(customer.id, {
         quote: {

@@ -9,7 +9,6 @@ type TeamPageProps = {
   onOpenCustomer: (customerId: string) => void;
   onOpenMember: (memberId: string) => void;
   onAddMember: () => void;
-  onRemoveMember: (memberId: string) => void;
 };
 
 export const TeamPage = ({
@@ -19,7 +18,6 @@ export const TeamPage = ({
   onOpenCustomer,
   onOpenMember,
   onAddMember,
-  onRemoveMember,
 }: TeamPageProps) => {
   const unassignedProjects = customers.filter((customer) => customer.assignedTeamIds.length === 0);
   const overdueTasks = tasks.filter((task) => !task.done && new Date(task.dueAt).getTime() < Date.now());

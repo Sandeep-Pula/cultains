@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { AlertTriangle, LogOut, Plus } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { auth } from '../lib/firebase';
 import { authService } from '../lib/authService';
 import { dashboardService } from './services/dashboardService';
@@ -141,16 +141,6 @@ export const DashboardApp = () => {
   const selectedCustomer = data?.customers.find((customer) => customer.id === selectedCustomerId) ?? null;
   const selectedTeamMember = data?.team.find((member) => member.id === selectedTeamMemberId) ?? null;
 
-  const recentlyViewed = useMemo(
-    () =>
-      data
-        ? (data.recentlyViewedIds
-            .map((id) => data.customers.find((customer) => customer.id === id))
-            .filter(Boolean) as CustomerProject[])
-        : [],
-    [data],
-  );
-
   const handleNavigate = (nextHash: string) => {
     window.location.hash = nextHash;
   };
@@ -289,29 +279,6 @@ export const DashboardApp = () => {
     }
   };
 
-  const handleToggleTask = async (taskId: string) => {
-    if (!user || !data) return;
-    const task = data.tasks.find((item) => item.id === taskId);
-    if (!task) return;
-
-    try {
-      await dashboardService.toggleTask(user.uid, task);
-    } catch (nextError) {
-      handleMutationError(nextError, 'Unable to update task status.');
-    }
-  };
-
-  const handleAddTask = async (title: string, dueAt: string, customerId: string = '') => {
-    if (!user) return;
-
-    try {
-      await dashboardService.addTask(user.uid, title, dueAt, user.uid, customerId);
-      pushToast('Task added');
-    } catch (nextError) {
-      handleMutationError(nextError, 'Unable to create the task.');
-    }
-  };
-
   const handleSaveSmartTask = async (
     title: string,
     dueAt: string,
@@ -343,18 +310,6 @@ export const DashboardApp = () => {
       pushToast('Task saved', customerOption.isNew ? 'New customer mapped successfully.' : undefined);
     } catch (nextError) {
       handleMutationError(nextError, 'Unable to save smart task.');
-    }
-  };
-
-  const handleReassignTeam = async (customerId: string, teamIds: string[]) => {
-    if (!user) return;
-    try {
-      await dashboardService.updateCustomer(user.uid, customerId, {
-        assignedTeamIds: Array.from(new Set(teamIds.filter(Boolean))),
-      });
-      pushToast('Team assignment updated');
-    } catch (nextError) {
-      handleMutationError(nextError, 'Unable to update team assignment.');
     }
   };
 
@@ -574,8 +529,6 @@ export const DashboardApp = () => {
               data={data}
               onOpenCustomer={handleOpenCustomer}
               onNavigate={handleNavigate}
-              onToggleTask={handleToggleTask}
-              onAddTask={handleAddTask}
               onSaveSmartTask={handleSaveSmartTask}
               onAddCustomer={() => setAddCustomerOpen(true)}
               onAddProject={() => setAddProjectOpen(true)}
@@ -601,7 +554,6 @@ export const DashboardApp = () => {
               onOpenCustomer={handleOpenCustomer}
               onOpenMember={handleOpenTeamMember}
               onAddMember={() => setAddTeamMemberOpen(true)}
-              onRemoveMember={(id) => setDeleteTeamCandidateId(id)}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-brand-dark/50">
@@ -621,9 +573,25 @@ export const DashboardApp = () => {
         onTogglePinned={handleTogglePinned}
         onToggleFollowUp={handleToggleFollowUp}
         onAddNote={handleAddNote}
+        onRequestArchive={(id) => setArchiveCandidateId(id)}
         onRequestDelete={(id) => setDeleteCandidateId(id)}
-        onReassignTeam={handleReassignTeam}
         onUpdateCustomer={handleUpdateCustomer}
+      />
+      <ConfirmDialog
+        open={!!archiveCandidateId}
+        title="Archive this workspace?"
+        description="The customer will move out of the active dashboard and remain available in history."
+        confirmLabel="Archive"
+        onCancel={() => setArchiveCandidateId(null)}
+        onConfirm={handleArchive}
+      />
+      <ConfirmDialog
+        open={!!deleteCandidateId}
+        title="Delete this customer?"
+        description="This will remove the active customer workspace and keep only a history record."
+        confirmLabel="Delete"
+        onCancel={() => setDeleteCandidateId(null)}
+        onConfirm={handleDeleteCustomer}
       />
       <AddCustomerModal 
         open={addCustomerOpen} 
@@ -644,8 +612,7 @@ export const DashboardApp = () => {
         onSubmit={handleAddTeamMember} 
       />
       <TeamMemberDrawer
-        member={data.team.find((m) => m.id === selectedTeamMemberId) || null}
-        team={data.team}
+        member={selectedTeamMember}
         customers={data.customers}
         tasks={data.tasks}
         open={!!selectedTeamMemberId}
@@ -658,6 +625,14 @@ export const DashboardApp = () => {
         onAssignToProject={handleAssignMemberToProject}
         onRemoveFromProject={handleRemoveMemberFromProject}
         onUpdateMember={handleUpdateTeamMember}
+      />
+      <ConfirmDialog
+        open={!!deleteTeamCandidateId}
+        title="Remove this team member?"
+        description="Assignments will be safely moved to the remaining team so project ownership stays intact."
+        confirmLabel="Remove member"
+        onCancel={() => setDeleteTeamCandidateId(null)}
+        onConfirm={handleDeleteTeamMember}
       />
     </div>
   );

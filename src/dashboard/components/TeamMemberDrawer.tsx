@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { BriefcaseBusiness, CalendarClock, Mail, Phone, Trash2, UserPlus2, X } from 'lucide-react';
+import { BriefcaseBusiness, CalendarClock, Mail, Phone, Trash2, X } from 'lucide-react';
 import type { CustomerProject, TaskItem, TeamMember, TeamRole } from '../types';
-import { formatDate, relativeDate } from '../utils';
+import { relativeDate } from '../utils';
 
 type TeamMemberDrawerProps = {
   member: TeamMember | null;
-  team: TeamMember[];
   customers: CustomerProject[];
   tasks: TaskItem[];
   open: boolean;
@@ -58,7 +57,6 @@ const InlineInput = ({
 
 export const TeamMemberDrawer = ({
   member,
-  team,
   customers,
   tasks,
   open,
@@ -84,7 +82,7 @@ export const TeamMemberDrawer = ({
   const memberTasks = tasks.filter((task) => task.ownerId === member.id);
   const overdueTasks = memberTasks.filter((task) => !task.done && new Date(task.dueAt).getTime() < Date.now());
 
-  const handleFieldSave = (field: keyof TeamMember, value: any) => {
+  const handleFieldSave = <K extends keyof TeamMember>(field: K, value: TeamMember[K]) => {
     if (onUpdateMember) {
       onUpdateMember(member.id, { [field]: value });
     }

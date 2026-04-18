@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { clsx } from 'clsx';
 import { X, Search, Calendar, FolderKanban, Plus } from 'lucide-react';
 import type { CustomerProject } from '../types';
 

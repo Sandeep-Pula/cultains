@@ -1,18 +1,16 @@
 import { AlertTriangle, Package, Plus, PackageX, History, DollarSign } from 'lucide-react';
-import type { InventoryItem, TeamMember } from '../types';
+import type { InventoryItem } from '../types';
 import { EmptyStatePanel } from '../components/EmptyStatePanel';
 import { relativeDate } from '../utils';
 
 type InventoryPageProps = {
   inventory: InventoryItem[];
-  team: TeamMember[];
   onOpenItem: (itemId: string) => void;
   onAddItem: () => void;
 };
 
 export const InventoryPage = ({
   inventory,
-  team,
   onOpenItem,
   onAddItem,
 }: InventoryPageProps) => {
@@ -20,9 +18,7 @@ export const InventoryPage = ({
   const outOfStockItems = inventory.filter((item) => item.status === 'out-of-stock');
   const agingStockItems = inventory.filter((item) => item.condition === 'aging' || item.status === 'clearance');
   const totalValue = inventory.reduce((acc, item) => acc + (item.currentStock * item.costPerUnit), 0);
-  
-  const unassignedItems = inventory.filter(item => item.assignedTeamIds.length === 0);
-  
+
   return (
     <div className="flex flex-col gap-5 xl:h-[calc(100vh-8rem)]">
       
