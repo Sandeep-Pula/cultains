@@ -123,7 +123,7 @@ export const TeamMemberDrawer = ({
                       />
                       <select
                         value={member.status}
-                        onChange={(e) => handleFieldSave('status', e.target.value)}
+                        onChange={(e) => handleFieldSave('status', e.target.value as TeamMember['status'])}
                         className={`cursor-pointer appearance-none outline-none border hover:border-brand-30 bg-transparent rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider transition-colors ${member.status === 'online' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-brand-dark/60 bg-brand-30/50 border-brand-30'}`}
                       >
                         <option value="online">Online</option>
@@ -134,7 +134,7 @@ export const TeamMemberDrawer = ({
                     <div className="mt-1 flex items-center gap-2">
                        <select
                         value={member.role}
-                        onChange={(e) => handleFieldSave('role', e.target.value)}
+                        onChange={(e) => handleFieldSave('role', e.target.value as TeamRole)}
                         className="cursor-pointer appearance-none outline-none border border-transparent hover:border-brand-30 bg-transparent focus:bg-white rounded-lg px-2 py-1 -ml-2 text-[15px] font-medium text-brand-dark/80 transition-colors"
                       >
                         {roles.map(r => (

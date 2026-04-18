@@ -16,6 +16,7 @@ import type {
   DashboardData,
   DeletedCustomerRecord,
   NoteItem,
+  RenderAsset,
   RenderRequest,
   TaskItem,
   TeamMember,

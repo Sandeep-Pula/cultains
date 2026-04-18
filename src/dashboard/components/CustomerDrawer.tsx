@@ -9,7 +9,16 @@ import {
   UserCircle2,
   X,
 } from 'lucide-react';
-import type { CustomerProject, NoteItem, ProjectStage, TeamMember, CustomerPriority, SiteStatus } from '../types';
+import type {
+  CustomerProject,
+  NoteItem,
+  ProjectStage,
+  TeamMember,
+  CustomerPriority,
+  SiteStatus,
+  QuoteStatus,
+  PaymentStage,
+} from '../types';
 import { formatCurrency, formatDateTime, relativeDate, siteBadgeClass, siteStatusLabels, stageLabels } from '../utils';
 import { StatusBadge } from './StatusBadge';
 import { ProgressTracker } from './ProgressTracker';
@@ -226,7 +235,7 @@ export const CustomerDrawer = ({
                     
                     <select
                       value={customer.priority}
-                      onChange={(e) => handleFieldSave('priority', e.target.value)}
+                      onChange={(e) => handleFieldSave('priority', e.target.value as CustomerPriority)}
                       className="cursor-pointer appearance-none outline-none border border-brand-30 bg-white hover:bg-brand-30/50 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand-dark transition-colors"
                     >
                       {priorityOptions.map(p => (
@@ -260,7 +269,7 @@ export const CustomerDrawer = ({
                     <div className="flex flex-wrap items-center gap-3">
                       <select
                         value={customer.siteStatus}
-                        onChange={(e) => handleFieldSave('siteStatus', e.target.value)}
+                        onChange={(e) => handleFieldSave('siteStatus', e.target.value as SiteStatus)}
                         className={`${siteBadgeClass(customer.siteStatus)} cursor-pointer appearance-none font-sans`}
                       >
                         {siteStatusOptions.map(p => (
@@ -508,7 +517,7 @@ export const CustomerDrawer = ({
                       <div className="text-xs font-bold uppercase tracking-wider text-brand-dark/60">Quote status</div>
                       <select
                         value={customer.quote.quoteStatus}
-                        onChange={(e) => handleQuoteSave('quoteStatus', e.target.value)}
+                        onChange={(e) => handleQuoteSave('quoteStatus', e.target.value as QuoteStatus)}
                         className="mt-1 w-full bg-transparent text-[15px] cursor-pointer appearance-none font-semibold capitalize text-brand-dark outline-none border border-transparent hover:border-brand-30 rounded-lg -ml-2 px-2 py-1"
                       >
                         {quoteStatusOptions.map(p => (
@@ -520,7 +529,7 @@ export const CustomerDrawer = ({
                       <div className="text-xs font-bold uppercase tracking-wider text-brand-dark/60">Payment stage</div>
                       <select
                         value={customer.quote.paymentStage}
-                        onChange={(e) => handleQuoteSave('paymentStage', e.target.value)}
+                        onChange={(e) => handleQuoteSave('paymentStage', e.target.value as PaymentStage)}
                         className="mt-1 w-full bg-transparent text-[15px] cursor-pointer appearance-none font-semibold capitalize text-brand-dark outline-none border border-transparent hover:border-brand-30 rounded-lg -ml-2 px-2 py-1"
                       >
                         {paymentStageOptions.map(p => (
