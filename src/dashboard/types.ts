@@ -4,6 +4,7 @@ export type DashboardView =
   | 'team'
   | 'inventory'
   | 'billing'
+  | 'ai-tools'
   | 'render-history'
   | 'crm'
   | 'settings'
@@ -167,9 +168,25 @@ export interface TaskItem {
   done: boolean;
 }
 
+export interface WorkspaceProfile {
+  companyName: string;
+  userName: string;
+  email: string;
+  phone: string;
+  city: string;
+  studioAddress: string;
+  gstNumber: string;
+  teamSize: string;
+  website: string;
+  subscriptionPlan: 'freemium';
+  subscriptionStatus: 'active';
+  renewalDate: string;
+}
+
 export interface DashboardData {
   companyName: string;
   userName: string;
+  profile: WorkspaceProfile;
   team: TeamMember[];
   customers: CustomerProject[];
   deletedCustomers: DeletedCustomerRecord[];

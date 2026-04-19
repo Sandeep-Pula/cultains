@@ -1,5 +1,7 @@
 import {
+  browserLocalPersistence,
   createUserWithEmailAndPassword,
+  setPersistence,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
@@ -10,6 +12,7 @@ import { dashboardService } from '../dashboard/services/dashboardService';
 
 export const authService = {
   async signUp(email: string, password: string, name: string) {
+    await setPersistence(auth, browserLocalPersistence);
     const credential = await createUserWithEmailAndPassword(auth, email, password);
 
     if (name.trim()) {
@@ -21,7 +24,9 @@ export const authService = {
   },
 
   async signIn(email: string, password: string) {
+    await setPersistence(auth, browserLocalPersistence);
     const credential = await signInWithEmailAndPassword(auth, email, password);
+    await dashboardService.ensureUserProfile(credential.user);
     return credential.user;
   },
 

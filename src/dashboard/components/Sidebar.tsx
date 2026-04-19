@@ -20,6 +20,7 @@ const items: { view: DashboardView; icon: typeof Home }[] = [
   { view: 'team', icon: UsersRound },
   { view: 'inventory', icon: Package },
   { view: 'billing', icon: CreditCard },
+  { view: 'ai-tools', icon: Sparkles },
   { view: 'render-history', icon: History },
   { view: 'crm', icon: Contact },
 ];
@@ -93,12 +94,19 @@ export const Sidebar = ({ activeView, onNavigate, open, onClose }: SidebarProps)
             <Sparkles size={18} />
           </div>
           <div>
-            <div className="font-medium text-brand-dark">Need a quick render?</div>
-            <div className="text-[13px] text-brand-dark/80">Jump to the try-on tool from here.</div>
+            <div className="font-medium text-brand-dark">AI tool hub</div>
+            <div className="text-[13px] text-brand-dark/80">Open AI tools from one place as you add more workflows.</div>
           </div>
         </div>
-        <a href="#try-once" className="mt-4 flex justify-center rounded-2xl bg-brand-10 px-4 py-2 text-sm font-medium text-brand-dark transition hover:bg-brand-dark hover:text-brand-60">
-          Generate new render
+        <a
+          href={dashboardHash('ai-tools')}
+          onClick={() => {
+            onNavigate('ai-tools');
+            onClose();
+          }}
+          className="mt-4 flex justify-center rounded-2xl bg-brand-10 px-4 py-2 text-sm font-medium text-[#f5f4fb] transition hover:bg-brand-dark hover:text-[#ffffff]"
+        >
+          Open AI tools
         </a>
       </div>
 

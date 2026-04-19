@@ -15,6 +15,8 @@ import { TeamPage } from './pages/TeamPage';
 import { InventoryPage } from './pages/InventoryPage';
 import { BillingPage } from './pages/BillingPage';
 import { CrmPage } from './pages/CrmPage';
+import { AIToolsPage } from './pages/AIToolsPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { CustomerDrawer } from './components/CustomerDrawer';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { ToastStack } from './components/ToastStack';
@@ -138,7 +140,9 @@ export const DashboardApp = () => {
 
   const handleMutationError = (nextError: unknown, fallbackMessage: string) => {
     console.error(nextError);
-    pushToast('Action failed', nextError instanceof Error ? nextError.message : fallbackMessage);
+    const message = nextError instanceof Error ? nextError.message : fallbackMessage;
+    setSyncIssue(message);
+    pushToast('Action failed', message);
   };
 
   const selectedCustomer = data?.customers.find((customer) => customer.id === selectedCustomerId) ?? null;
@@ -561,6 +565,27 @@ export const DashboardApp = () => {
     window.location.hash = '#login';
   };
 
+  const handleSaveWorkspaceProfile = async (profile: {
+    companyName: string;
+    userName: string;
+    email: string;
+    phone: string;
+    city: string;
+    studioAddress: string;
+    gstNumber: string;
+    teamSize: string;
+    website: string;
+  }) => {
+    if (!user) return;
+
+    try {
+      await dashboardService.updateWorkspaceProfile(user.uid, profile);
+      pushToast('Profile updated', 'Your company and workspace details were saved.');
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to update your profile.');
+    }
+  };
+
   if (authLoading || (loading && !data)) {
     return <DashboardSkeleton />;
   }
@@ -613,6 +638,14 @@ export const DashboardApp = () => {
           onLogout={handleLogout}
         />
         <main className="flex-1 p-4 sm:p-6">
+          {syncIssue ? (
+            <div className="mb-4 rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm">
+              <div className="font-semibold">Cloud sync needs attention</div>
+              <div className="mt-1 text-amber-800/90">
+                {syncIssue}
+              </div>
+            </div>
+          ) : null}
           {activeView === 'overview' ? (
             <OverviewPage
               data={data}
@@ -668,6 +701,16 @@ export const DashboardApp = () => {
               onOpenCustomer={handleOpenCustomer}
               onUpdateCustomer={handleUpdateCustomer}
               actorName={data.userName}
+            />
+          ) : activeView === 'ai-tools' ? (
+            <AIToolsPage />
+          ) : activeView === 'profile' ? (
+            <ProfilePage
+              profile={data.profile}
+              totalCustomers={data.customers.length}
+              totalTeamMembers={data.team.length}
+              totalInventoryItems={data.inventory.length}
+              onSaveProfile={handleSaveWorkspaceProfile}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-brand-dark/50">

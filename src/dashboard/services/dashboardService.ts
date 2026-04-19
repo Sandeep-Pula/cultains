@@ -23,6 +23,7 @@ import type {
   TaskItem,
   TeamMember,
   InventoryItem,
+  WorkspaceProfile,
 } from '../types';
 import { getInitials, getInventoryStatus, getStageProgress, recalculateTeamMetrics, stageProgressMap } from '../utils';
 
@@ -34,6 +35,15 @@ type UserProfileDoc = {
   userName: string;
   companyName: string;
   email: string;
+  phone: string;
+  city: string;
+  studioAddress: string;
+  gstNumber: string;
+  teamSize: string;
+  website: string;
+  subscriptionPlan: 'freemium';
+  subscriptionStatus: 'active';
+  renewalDate: string;
   recentlyViewedIds: string[];
   createdAt: string;
   updatedAt: string;
@@ -78,9 +88,25 @@ const getCompanyName = (user: User, preferredName?: string) => {
   return `${baseName} Studio`;
 };
 
+const buildWorkspaceProfile = (user: User, profile?: Partial<UserProfileDoc>): WorkspaceProfile => ({
+  companyName: profile?.companyName?.trim() || getCompanyName(user),
+  userName: profile?.userName?.trim() || getUserName(user),
+  email: profile?.email?.trim() || user.email || '',
+  phone: profile?.phone?.trim() || '',
+  city: profile?.city?.trim() || '',
+  studioAddress: profile?.studioAddress?.trim() || '',
+  gstNumber: profile?.gstNumber?.trim() || '',
+  teamSize: profile?.teamSize?.trim() || '',
+  website: profile?.website?.trim() || '',
+  subscriptionPlan: 'freemium',
+  subscriptionStatus: 'active',
+  renewalDate: profile?.renewalDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+});
+
 const emptyDashboardData = (user: User, profile?: Partial<UserProfileDoc>): DashboardData => ({
   companyName: profile?.companyName?.trim() || getCompanyName(user),
   userName: profile?.userName?.trim() || getUserName(user),
+  profile: buildWorkspaceProfile(user, profile),
   team: [],
   inventory: [],
   financeEntries: [],
@@ -358,6 +384,15 @@ export const dashboardService = {
       userName: getUserName(user, preferredName),
       companyName: getCompanyName(user, preferredName),
       email: user.email || '',
+      phone: '',
+      city: '',
+      studioAddress: '',
+      gstNumber: '',
+      teamSize: '',
+      website: '',
+      subscriptionPlan: 'freemium',
+      subscriptionStatus: 'active',
+      renewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       recentlyViewedIds: [],
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -377,6 +412,15 @@ export const dashboardService = {
         userName: data.userName?.trim() || fallbackProfile.userName,
         companyName: data.companyName?.trim() || fallbackProfile.companyName,
         email: data.email?.trim() || fallbackProfile.email,
+        phone: data.phone?.trim() || fallbackProfile.phone,
+        city: data.city?.trim() || fallbackProfile.city,
+        studioAddress: data.studioAddress?.trim() || fallbackProfile.studioAddress,
+        gstNumber: data.gstNumber?.trim() || fallbackProfile.gstNumber,
+        teamSize: data.teamSize?.trim() || fallbackProfile.teamSize,
+        website: data.website?.trim() || fallbackProfile.website,
+        subscriptionPlan: 'freemium',
+        subscriptionStatus: 'active',
+        renewalDate: data.renewalDate || fallbackProfile.renewalDate,
         recentlyViewedIds: data.recentlyViewedIds ?? [],
         createdAt: data.createdAt || timestamp,
         updatedAt: timestamp,
@@ -493,6 +537,34 @@ export const dashboardService = {
       {
         userId,
         recentlyViewedIds,
+        updatedAt: nowIso(),
+      },
+      { merge: true },
+    );
+  },
+
+  async updateWorkspaceProfile(
+    userId: string,
+    profile: Pick<
+      WorkspaceProfile,
+      | 'companyName'
+      | 'userName'
+      | 'email'
+      | 'phone'
+      | 'city'
+      | 'studioAddress'
+      | 'gstNumber'
+      | 'teamSize'
+      | 'website'
+    >,
+  ) {
+    await setDoc(
+      userDoc(userId),
+      {
+        userId,
+        ...profile,
+        subscriptionPlan: 'freemium',
+        subscriptionStatus: 'active',
         updatedAt: nowIso(),
       },
       { merge: true },

@@ -31,6 +31,7 @@ export const viewTitles: Record<DashboardView, string> = {
   team: 'Team',
   inventory: 'Inventory',
   billing: 'Billing',
+  'ai-tools': 'AI tools',
   'render-history': 'Render History',
   crm: 'CRM',
   settings: 'Settings',
@@ -70,7 +71,7 @@ export const siteStatusLabels: Record<SiteStatus, string> = {
 export const parseDashboardView = (hash: string): DashboardView => {
   const value = hash.replace(/^#dashboard\/?/, '').replace('/', '');
   if (!value) return 'overview';
-  if (['customers', 'team', 'inventory', 'billing', 'render-history', 'crm', 'settings', 'profile'].includes(value)) {
+  if (['customers', 'team', 'inventory', 'billing', 'ai-tools', 'render-history', 'crm', 'settings', 'profile'].includes(value)) {
     return value as DashboardView;
   }
   return 'overview';

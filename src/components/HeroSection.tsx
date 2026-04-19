@@ -4,7 +4,7 @@ import { ArrowRight, CheckCircle2, Smartphone, Sparkles } from 'lucide-react';
 import { MagneticButton } from './MagneticButton';
 import styles from './HeroSection.module.css';
 
-const badges = ['Mobile-first', 'Built for decorators in India', 'No technical setup'];
+const badges = ['CRM + billing + inventory', 'Built for decorators in India', 'AI tools inside your workflow'];
 
 export const HeroSection = () => {
   const ref = useRef<HTMLElement>(null);
@@ -26,7 +26,7 @@ export const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55 }}
           >
-            Interior design visualization SaaS
+            Business operating system for interior decorators
           </motion.span>
 
           <motion.h1
@@ -35,7 +35,7 @@ export const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, delay: 0.08 }}
           >
-            Help clients see the design before the work begins.
+            Run your entire interior decor business from one place.
           </motion.h1>
 
           <motion.p
@@ -44,17 +44,17 @@ export const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, delay: 0.16 }}
           >
-            Upload a room image, apply wallpapers, curtains, and materials visually, then share a realistic
-            preview link that helps you close faster.
+            Cultains brings CRM, inventory, billing, team coordination, salaries, and AI-powered room rendering
+            into a single workspace built for decorators and design studios.
           </motion.p>
 
           <motion.div
-            className={styles.ctaRow}
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.24 }}
-          >
-            <MagneticButton onClick={() => window.location.assign('#contact')}>
+          className={styles.ctaRow}
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.65, delay: 0.24 }}
+        >
+            <MagneticButton onClick={() => window.location.assign('#signup')}>
               Try Free
             </MagneticButton>
             <a href="#contact" className={styles.secondaryCta}>
@@ -69,7 +69,7 @@ export const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
-            No training-heavy workflow. Start with one room and share your first design in minutes.
+            Manage the full business, then open AI tools when it is time to pitch visuals faster and close with confidence.
           </motion.p>
 
           <motion.div
@@ -117,15 +117,15 @@ export const HeroSection = () => {
             <div className={styles.insightStrip}>
               <div className={styles.insightItem}>
                 <Sparkles size={18} />
-                <span>Realistic visual preview</span>
+                <span>AI rendering for client pitches</span>
               </div>
               <div className={styles.insightItem}>
                 <Smartphone size={18} />
-                <span>Works beautifully on mobile</span>
+                <span>Mobile-friendly team workflow</span>
               </div>
               <div className={styles.insightItem}>
                 <CheckCircle2 size={18} />
-                <span>Client-friendly sharing</span>
+                <span>CRM, stock, billing in sync</span>
               </div>
             </div>
           </div>

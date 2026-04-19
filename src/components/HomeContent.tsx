@@ -1,12 +1,15 @@
 import { motion } from 'framer-motion';
 import {
+  BadgeIndianRupee,
+  Bot,
+  Boxes,
+  ClipboardCheck,
   ExternalLink,
   ImageIcon,
-  MonitorSmartphone,
+  LayoutDashboard,
+  ReceiptText,
   Quote,
-  Share2,
-  Smartphone,
-  SwatchBook,
+  ShieldCheck,
   TriangleAlert,
   Users,
 } from 'lucide-react';
@@ -14,54 +17,57 @@ import styles from './HomeContent.module.css';
 
 const pains = [
   {
-    title: 'Clients cannot visualize the final result',
-    description: 'Verbal explanations and sample books make it hard for customers to picture the finished space.',
+    title: 'Decorator teams jump between too many tools',
+    description: 'Leads, projects, materials, finance, and follow-ups often live in different apps, sheets, and chat threads.',
   },
   {
-    title: 'Closing deals takes too long',
-    description: 'Too many back-and-forth discussions slow approvals and reduce confidence during sales conversations.',
+    title: 'Operations become messy as projects grow',
+    description: 'Inventory gaps, pending bills, salary tracking, and customer updates get harder to manage when the business scales.',
   },
   {
-    title: 'Manual samples are hard to manage',
-    description: 'Physical catalogs, screenshots, and repeated mockups create extra work for already busy teams.',
+    title: 'AI tools feel disconnected from execution',
+    description: 'Even when a studio uses rendering tools, the output is often separated from CRM, billing, and the rest of the workflow.',
   },
 ];
 
 const features = [
   {
-    title: 'Visual design preview',
-    description: 'Show decorators and clients a realistic interior view instead of asking them to imagine it.',
-    icon: <ImageIcon size={22} />,
+    title: 'Decorator CRM',
+    description: 'Track leads, active customers, project stages, follow-ups, and collaboration history in one workspace.',
+    icon: <LayoutDashboard size={22} />,
   },
   {
-    title: 'Product catalog',
-    description: 'Keep wallpapers, curtains, and materials ready in one place for faster presentations.',
-    icon: <SwatchBook size={22} />,
+    title: 'Inventory control',
+    description: 'Manage stock, reorder needs, suppliers, issued materials, and project allocations without manual spreadsheets.',
+    icon: <Boxes size={22} />,
   },
   {
-    title: 'Shareable links',
-    description: 'Send clean design previews your clients can open anywhere without technical friction.',
-    icon: <Share2 size={22} />,
+    title: 'Billing and salary workflows',
+    description: 'Stay on top of quotes, payments, expenses, salaries, and project finances with clearer business visibility.',
+    icon: <BadgeIndianRupee size={22} />,
   },
   {
-    title: 'Works on mobile',
-    description: 'Made for decorators and clients who review designs mostly on phones across India.',
-    icon: <MonitorSmartphone size={22} />,
+    title: 'Integrated AI tools',
+    description: 'Use AI room rendering and future AI utilities from inside the dashboard instead of juggling separate tools.',
+    icon: <Bot size={22} />,
   },
 ];
 
-const socialProof = [
+const platformHighlights = [
   {
-    metric: '100+',
-    label: 'decorators and studios using visual previews to pitch better',
+    title: 'Customer pipeline',
+    description: 'Move every inquiry from first call to approved execution with visible progress and ownership.',
+    icon: <ClipboardCheck size={20} />,
   },
   {
-    metric: '3x',
-    label: 'faster concept approvals during early client discussions',
+    title: 'Financial clarity',
+    description: 'Understand receivables, expenses, and team payouts without hunting through separate records.',
+    icon: <ReceiptText size={20} />,
   },
   {
-    metric: '24/7',
-    label: 'client access through mobile-friendly shared links',
+    title: 'Reliable workflows',
+    description: 'Standardize operations so decorators, site teams, and back office staff stay aligned.',
+    icon: <ShieldCheck size={20} />,
   },
 ];
 
@@ -79,10 +85,10 @@ export const HomeContent = () => {
         <div className={styles.container}>
           <motion.div className={styles.sectionIntro} {...fadeUp}>
             <span className={styles.eyebrow}>The problem</span>
-            <h2 className={styles.title}>Interior decorators lose momentum when clients cannot see the vision.</h2>
+            <h2 className={styles.title}>Interior decorators need more than a rendering tool. They need one system to run the business.</h2>
             <p className={styles.lead}>
-              Cultains is built to remove hesitation from the design sales process and help decorators present
-              ideas with more clarity and confidence.
+              Cultains is designed as a one-stop platform for interior decorators managing customers, projects,
+              inventory, billing, salaries, and AI-assisted design workflows.
             </p>
           </motion.div>
 
@@ -110,19 +116,49 @@ export const HomeContent = () => {
           <div className={styles.solutionPanel}>
             <motion.div className={styles.solutionCopy} {...fadeUp}>
               <span className={styles.eyebrow}>Why it works</span>
-              <h2 className={styles.title}>A simple visual workflow that feels premium for you and easy for clients.</h2>
+              <h2 className={styles.title}>Operations and AI live in the same place, so decorators can move faster without losing control.</h2>
               <p className={styles.lead}>
-                Instead of carrying samples everywhere or explaining designs over and over, you can show realistic
-                previews on actual room images and share them instantly.
+                Your team can manage inquiries, assign work, track stock, monitor billing, and then jump into AI room
+                rendering exactly when a project needs a persuasive visual.
               </p>
+
+              <div className={styles.solutionList}>
+                <div className={styles.solutionItem}>
+                  <div className={styles.solutionItemIcon}>
+                    <Users size={18} />
+                  </div>
+                  <div>
+                    <strong>Manage customers and teams</strong>
+                    <p>Keep project ownership, follow-ups, and collaboration visible across the studio.</p>
+                  </div>
+                </div>
+                <div className={styles.solutionItem}>
+                  <div className={styles.solutionItemIcon}>
+                    <Boxes size={18} />
+                  </div>
+                  <div>
+                    <strong>Track stock and billing</strong>
+                    <p>Bring materials, expenses, salary-related workflows, and receivables into one operating layer.</p>
+                  </div>
+                </div>
+                <div className={styles.solutionItem}>
+                  <div className={styles.solutionItemIcon}>
+                    <ImageIcon size={18} />
+                  </div>
+                  <div>
+                    <strong>Activate AI tools from the dashboard</strong>
+                    <p>Use room rendering as part of the workflow instead of treating it like a separate product.</p>
+                  </div>
+                </div>
+              </div>
             </motion.div>
 
             <motion.div className={styles.solutionVisual} {...fadeUp}>
               <div className={styles.phoneFrame}>
                 <div className={styles.phoneScreen}>
                   <div className={styles.mobileTopBar}>
-                    <span>Client preview</span>
-                    <Smartphone size={16} />
+                    <span>Decorator workspace</span>
+                    <LayoutDashboard size={16} />
                   </div>
                   <div className={styles.mobileRoom}>
                     <div className={styles.mobileWallpaper} />
@@ -131,12 +167,12 @@ export const HomeContent = () => {
                     <div className={styles.mobileCurtainRight} />
                     <div className={styles.mobileSofa} />
                     <div className={styles.mobileRug} />
-                    <span className={styles.placeholderText}>Mobile preview placeholder</span>
+                    <span className={styles.placeholderText}>CRM + inventory + AI tools</span>
                   </div>
                   <div className={styles.mobileActions}>
-                    <span className={styles.mobileTag}>Wallpaper: Oak Linen</span>
-                    <span className={styles.mobileTag}>Curtain: Sand Drape</span>
-                    <span className={styles.mobileTag}>Share Link Ready</span>
+                    <span className={styles.mobileTag}>Lead status: consultation done</span>
+                    <span className={styles.mobileTag}>Billing: 60% payment received</span>
+                    <span className={styles.mobileTag}>AI room rendering available</span>
                   </div>
                 </div>
               </div>
@@ -149,7 +185,7 @@ export const HomeContent = () => {
         <div className={styles.container}>
           <motion.div className={styles.sectionIntro} {...fadeUp}>
             <span className={styles.eyebrow}>Feature highlights</span>
-            <h2 className={styles.title}>Everything your team needs to present, explain, and close faster.</h2>
+            <h2 className={styles.title}>Everything your team needs to manage decorators’ operations and deliver a premium client experience.</h2>
           </motion.div>
 
           <div className={styles.featureGrid}>
@@ -173,23 +209,24 @@ export const HomeContent = () => {
         <div className={styles.container}>
           <div className={styles.trustGrid}>
             <motion.div className={styles.trustCopy} {...fadeUp}>
-              <span className={styles.eyebrow}>Social proof</span>
-              <h2 className={styles.title}>Designed to feel trustworthy from the first scroll.</h2>
+              <span className={styles.eyebrow}>Platform value</span>
+              <h2 className={styles.title}>Built for decorator businesses that want tighter operations and smarter selling.</h2>
               <p className={styles.lead}>
-                If you are still early, these blocks can be used as placeholders until real customer quotes and
-                adoption numbers are ready.
+                Cultains is not just about showing a room. It helps decorators organize the full lifecycle from lead
+                capture to billing, while keeping AI capabilities ready for client-facing moments.
               </p>
 
               <div className={styles.metricsGrid}>
-                {socialProof.map((item, index) => (
+                {platformHighlights.map((item, index) => (
                   <motion.div
-                    key={item.metric}
+                    key={item.title}
                     className={styles.metricCard}
                     {...fadeUp}
                     transition={{ duration: 0.6, delay: index * 0.08 }}
                   >
-                    <span className={styles.metricValue}>{item.metric}</span>
-                    <p>{item.label}</p>
+                    <div className={styles.metricIcon}>{item.icon}</div>
+                    <span className={styles.metricTitle}>{item.title}</span>
+                    <p>{item.description}</p>
                   </motion.div>
                 ))}
               </div>
@@ -198,8 +235,8 @@ export const HomeContent = () => {
             <motion.div className={styles.testimonialCard} {...fadeUp}>
               <Quote size={26} className={styles.quoteMark} />
               <p className={styles.testimonialText}>
-                “Cultains helps us show clients exactly how the room can look. It makes presentations smoother
-                and decisions much faster.”
+                “Cultains gives our studio one place to manage customers, teams, stock, billing, and AI previews.
+                It feels much closer to how an interior business actually runs.”
               </p>
               <div className={styles.testimonialMeta}>
                 <span className={styles.avatar}>
@@ -207,7 +244,7 @@ export const HomeContent = () => {
                 </span>
                 <div>
                   <strong>Priya Sharma</strong>
-                  <span>Founder, Studio Placeholder</span>
+                  <span>Founder, Studio Flow</span>
                 </div>
               </div>
             </motion.div>
@@ -219,19 +256,20 @@ export const HomeContent = () => {
         <div className={styles.container}>
           <motion.div className={styles.ctaPanel} {...fadeUp}>
             <span className={styles.eyebrow}>Ready to try it</span>
-            <h2 className={styles.title}>Show one room better and your next client conversation changes immediately.</h2>
+            <h2 className={styles.title}>Run your decorator business from one dashboard and keep AI tools ready inside it.</h2>
             <p className={styles.lead}>
-              Start free to explore the workflow, or book a quick demo if you want help setting up your first project.
+              Start exploring the platform, or book a demo if you want help setting up your CRM, inventory, billing,
+              and AI-assisted design workflow together.
             </p>
 
             <div className={styles.ctaLinks}>
-              <a href="mailto:hello@cultains.com?subject=Try%20Cultains" className={styles.primaryLink}>
-                Try Free
-                <span className={styles.buttonHint}>Start with your first room</span>
+              <a href="#signup" className={styles.primaryLink}>
+                Start Free
+                <span className={styles.buttonHint}>Set up your decorator workspace</span>
               </a>
               <a href="mailto:hello@cultains.com" className={styles.secondaryLink}>
                 Book Demo
-                <span className={styles.buttonHint}>Talk to our team</span>
+                <span className={styles.buttonHint}>See the full platform in action</span>
               </a>
             </div>
           </motion.div>
@@ -245,7 +283,7 @@ export const HomeContent = () => {
               <img src={`${import.meta.env.BASE_URL}cultains-logo-black.png`} alt="Cultains logo" className={styles.footerLogo} />
               <div>
                 <strong>Cultains</strong>
-                <p>Interior visualization for decorators and design firms in India.</p>
+                <p>One-stop operating system for interior decorators and design firms in India.</p>
               </div>
             </div>
 
@@ -261,7 +299,7 @@ export const HomeContent = () => {
                 hello@cultains.com
                 <ExternalLink size={15} />
               </a>
-              <span>Made for mobile-first design sales</span>
+              <span>CRM, inventory, billing, team workflow, and AI tools in one place</span>
             </div>
           </div>
         </div>

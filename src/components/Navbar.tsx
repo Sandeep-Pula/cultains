@@ -46,7 +46,6 @@ export const Navbar = () => {
         <a href="#about" className={styles.link}>Problem</a>
         <a href="#workflow" className={styles.link}>How it works</a>
         <a href="#product" className={styles.link}>Features</a>
-        <a href="#try-once" className={styles.link}>Try once</a>
         
         {user ? (
           <>

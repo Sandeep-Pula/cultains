@@ -1,22 +1,22 @@
 import { motion } from 'framer-motion';
-import { ImagePlus, Paintbrush2, Send } from 'lucide-react';
+import { BriefcaseBusiness, Bot, ClipboardList } from 'lucide-react';
 import styles from './BentoFeatures.module.css';
 
 const steps = [
   {
-    title: 'Upload room',
-    description: 'Use site photos, customer room images, or under-construction spaces as your starting point.',
-    icon: <ImagePlus size={24} />,
+    title: 'Run daily operations',
+    description: 'Track leads, projects, customer communication, inventory, billing, and team responsibilities from one dashboard.',
+    icon: <BriefcaseBusiness size={24} />,
   },
   {
-    title: 'Apply designs',
-    description: 'Layer wallpapers, curtains, and materials visually so clients understand the final look instantly.',
-    icon: <Paintbrush2 size={24} />,
+    title: 'Stay execution ready',
+    description: 'Keep material stock, project follow-ups, and financial visibility aligned so teams can deliver without scattered tools.',
+    icon: <ClipboardList size={24} />,
   },
   {
-    title: 'Share with client',
-    description: 'Send a clean preview link your client can open on mobile and review without any app install.',
-    icon: <Send size={24} />,
+    title: 'Use AI when it matters',
+    description: 'Open AI room rendering from inside the dashboard to create polished visual previews for faster approvals.',
+    icon: <Bot size={24} />,
   },
 ];
 
@@ -31,10 +31,10 @@ export const BentoFeatures = () => {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6 }}
         >
-          <span className={styles.eyebrow}>Simple workflow</span>
-          <h2 className={styles.heading}>From empty room photo to client-ready preview in 3 easy steps.</h2>
+          <span className={styles.eyebrow}>How Cultains works</span>
+          <h2 className={styles.heading}>One platform for managing decorator operations and activating AI tools only when you need them.</h2>
           <p className={styles.subheading}>
-            Built for decorators who want results quickly, not complex tools or long onboarding.
+            Instead of juggling CRM sheets, stock notes, billing files, and design tools, your team works from one connected system.
           </p>
         </motion.div>
 
