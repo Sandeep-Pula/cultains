@@ -1,216 +1,160 @@
-import { useRef } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   ArrowRight,
   BadgeIndianRupee,
   Bot,
   Boxes,
-  Building2,
-  CheckCircle2,
+  ChartNoAxesCombined,
+  CircleCheckBig,
   LayoutDashboard,
-  Users,
+  MessageSquareText,
+  Sparkles,
 } from 'lucide-react';
 import { MagneticButton } from './MagneticButton';
 import styles from './HeroSection.module.css';
 
-const badges = [
-  'CRM + billing + inventory + ERP',
-  'Built for Indian businesses',
-  'Industry AI inside your workflow',
+const trustPills = [
+  'CRM, billing, stock, tax workflows',
+  'Adaptive for different business types',
+  'AI tools inside the same workspace',
 ];
 
-const metrics = [
-  { label: 'Active leads', value: '128', icon: <Users size={16} /> },
-  { label: 'Invoices due', value: '24', icon: <BadgeIndianRupee size={16} /> },
-  { label: 'Low stock alerts', value: '09', icon: <Boxes size={16} /> },
+const ownerSignals = [
+  {
+    label: 'Pending follow-ups',
+    value: '18',
+    note: 'Sales and repeat customers',
+    icon: <MessageSquareText size={18} />,
+  },
+  {
+    label: 'Payments due',
+    value: '₹2.4L',
+    note: 'Invoices waiting this week',
+    icon: <BadgeIndianRupee size={18} />,
+  },
+  {
+    label: 'Stock watch',
+    value: '06',
+    note: 'Items below reorder level',
+    icon: <Boxes size={18} />,
+  },
 ];
 
-const modules = ['CRM', 'Billing', 'Taxes', 'Stock', 'ERP', 'Team Ops'];
-const industries = ['Shoe shop', 'Interior studio', 'Sports store', 'Wholesale', 'Services', 'Retail'];
+const aiUseCases = [
+  'Draft follow-up messages',
+  'Suggest reorder priorities',
+  'Summarize customer calls',
+  'Launch industry AI tools',
+];
 
 export const HeroSection = () => {
-  const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ['start start', 'end start'],
-  });
-
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', '14%']);
-  const opacity = useTransform(scrollYProgress, [0, 0.85], [1, 0.2]);
-
   return (
-    <section id="welcome-home" ref={ref} className={styles.section}>
-      <motion.div className={styles.content} style={{ y, opacity }}>
-        <div className={styles.copyColumn}>
-          <motion.span
-            className={styles.eyebrow}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55 }}
-          >
-            Business operating system for growing Indian companies
-          </motion.span>
+    <section id="welcome-home" className={styles.section}>
+      <div className={styles.bgGlow} />
+      <div className={styles.content}>
+        <motion.div
+          className={styles.copyColumn}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.65 }}
+        >
+          <span className={styles.eyebrow}>Built for business owners who want clarity, not chaos</span>
 
-          <motion.h1
-            className={styles.title}
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.08 }}
-          >
-            Run sales, billing, stock, teams, and AI from one workspace.
-          </motion.h1>
+          <h1 className={styles.title}>
+            One workspace for running the business.
+            <span> One brand that still feels like your own.</span>
+          </h1>
 
-          <motion.p
-            className={styles.subtitle}
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.16 }}
-          >
-            aivyapari helps any business manage customers, invoices, taxes, inventory, operations, and team workflows
-            online, then adds industry-specific AI tools for faster decisions and better service.
-          </motion.p>
+          <p className={styles.subtitle}>
+            aivyapari gives growing businesses a clean operating layer for customers, billing, stock, teams,
+            reporting, and AI tools, without forcing every business into the same template.
+          </p>
 
-          <motion.div
-            className={styles.ctaRow}
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.24 }}
-          >
+          <div className={styles.ctaRow}>
             <MagneticButton onClick={() => window.location.assign('#signup')}>
               Start Free
             </MagneticButton>
             <a href="#product" className={styles.secondaryCta}>
-              Explore Modules
+              See what owners get
               <ArrowRight size={18} />
             </a>
-          </motion.div>
+          </div>
 
-          <motion.p
-            className={styles.microcopy}
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-          >
-            Whether you run a shoe shop, decorator studio, sports shop, distributor, or service business, your data
-            and AI tools stay in one operating layer.
-          </motion.p>
-
-          <motion.div
-            className={styles.badgeRow}
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.36 }}
-          >
-            {badges.map((badge) => (
-              <span key={badge} className={styles.badge}>
-                {badge}
+          <div className={styles.trustRow}>
+            {trustPills.map((pill) => (
+              <span key={pill} className={styles.trustPill}>
+                {pill}
               </span>
             ))}
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
 
         <motion.div
           className={styles.visualColumn}
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.75, delay: 0.16 }}
+          initial={{ opacity: 0, y: 26 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.7, delay: 0.08 }}
         >
-          <div className={styles.mockupCard}>
-            <div className={styles.mockupHeader}>
-              <span className={styles.mockupPill}>aivyapari workspace</span>
-              <span className={styles.mockupPillMuted}>Live business control</span>
+          <div className={styles.commandCard}>
+            <div className={styles.cardHeader}>
+              <div>
+                <span className={styles.cardEyebrow}>Owner dashboard</span>
+                <h2>See what matters first.</h2>
+              </div>
+              <div className={styles.headerBadge}>
+                <LayoutDashboard size={16} />
+                <span>Live workspace</span>
+              </div>
             </div>
 
-            <div className={styles.workspaceShell}>
-              <div className={styles.sidebarRail}>
-                <div className={styles.sidebarHeading}>
-                  <Building2 size={18} />
-                  <span>Ops stack</span>
+            <div className={styles.signalGrid}>
+              {ownerSignals.map((item) => (
+                <div key={item.label} className={styles.signalCard}>
+                  <div className={styles.signalIcon}>{item.icon}</div>
+                  <span className={styles.signalValue}>{item.value}</span>
+                  <strong>{item.label}</strong>
+                  <p>{item.note}</p>
                 </div>
-                <div className={styles.moduleList}>
-                  {modules.map((module) => (
-                    <span key={module} className={styles.moduleChip}>
-                      {module}
-                    </span>
-                  ))}
+              ))}
+            </div>
+
+            <div className={styles.storyGrid}>
+              <div className={styles.storyCardPrimary}>
+                <div className={styles.storyLabel}>
+                  <ChartNoAxesCombined size={16} />
+                  <span>Business snapshot</span>
                 </div>
+                <p>
+                  Sales, receivables, customer movement, team activity, and stock alerts stay on one screen so the
+                  owner can act faster.
+                </p>
               </div>
 
-              <div className={styles.workspaceMain}>
-                <div className={styles.metricGrid}>
-                  {metrics.map((metric) => (
-                    <div key={metric.label} className={styles.metricCard}>
-                      <div className={styles.metricIcon}>{metric.icon}</div>
-                      <span className={styles.metricValue}>{metric.value}</span>
-                      <span className={styles.metricLabel}>{metric.label}</span>
+              <div className={styles.storyCardSecondary}>
+                <div className={styles.storyLabel}>
+                  <Bot size={16} />
+                  <span>AI inside workflow</span>
+                </div>
+                <div className={styles.aiList}>
+                  {aiUseCases.map((item) => (
+                    <div key={item} className={styles.aiItem}>
+                      <Sparkles size={14} />
+                      <span>{item}</span>
                     </div>
                   ))}
-                </div>
-
-                <div className={styles.activityPanel}>
-                  <div className={styles.panelHeader}>
-                    <div>
-                      <span className={styles.panelLabel}>Today</span>
-                      <strong>Business activity</strong>
-                    </div>
-                    <LayoutDashboard size={16} />
-                  </div>
-                  <div className={styles.activityList}>
-                    <div className={styles.activityRow}>
-                      <span className={styles.activityDot} />
-                      <p>3 new CRM leads added from WhatsApp and website forms.</p>
-                    </div>
-                    <div className={styles.activityRow}>
-                      <span className={styles.activityDot} />
-                      <p>2 GST invoices are ready to send and 1 payment is overdue.</p>
-                    </div>
-                    <div className={styles.activityRow}>
-                      <span className={styles.activityDot} />
-                      <p>Stock alert raised for running shoes, curtain fabric, and cricket bats.</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.aiPanel}>
-                  <div className={styles.aiHeader}>
-                    <div className={styles.aiBadge}>
-                      <Bot size={16} />
-                      <span>AI solutions</span>
-                    </div>
-                    <span className={styles.aiHint}>Context-aware by industry</span>
-                  </div>
-                  <p className={styles.aiCopy}>
-                    Launch AI helpers for stock forecasting, follow-up drafts, quotation building, showroom previews,
-                    or catalog assistance without leaving the workspace.
-                  </p>
-                  <div className={styles.industryRow}>
-                    {industries.map((industry) => (
-                      <span key={industry} className={styles.industryChip}>
-                        {industry}
-                      </span>
-                    ))}
-                  </div>
                 </div>
               </div>
             </div>
 
-            <div className={styles.insightStrip}>
-              <div className={styles.insightItem}>
-                <CheckCircle2 size={18} />
-                <span>Single login for operations, finance, and AI</span>
-              </div>
-              <div className={styles.insightItem}>
-                <LayoutDashboard size={18} />
-                <span>Role-based dashboards for owners and staff</span>
-              </div>
-              <div className={styles.insightItem}>
-                <Bot size={18} />
-                <span>Industry-specific AI workflows ready to extend</span>
-              </div>
+            <div className={styles.ownerNote}>
+              <CircleCheckBig size={18} />
+              <span>Owners get one clean control room. Teams get the exact workspace they need.</span>
             </div>
           </div>
         </motion.div>
-      </motion.div>
+      </div>
     </section>
   );
 };

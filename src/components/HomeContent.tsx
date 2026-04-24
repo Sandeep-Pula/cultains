@@ -3,97 +3,67 @@ import {
   BadgeIndianRupee,
   Bot,
   Boxes,
-  Building2,
-  ClipboardCheck,
+  BriefcaseBusiness,
   LayoutDashboard,
   Palette,
-  Quote,
-  ReceiptText,
-  ShieldCheck,
   ShoppingBag,
-  TriangleAlert,
+  Sparkles,
+  Store,
   Trophy,
   Users,
 } from 'lucide-react';
 import styles from './HomeContent.module.css';
 
-const pains = [
+const modules = [
   {
-    title: 'Businesses lose time across too many apps',
-    description: 'Leads, invoices, stock records, taxes, and follow-ups often sit in different tools, sheets, chats, and notebooks.',
+    title: 'Customer and CRM flow',
+    description: 'Leads, follow-ups, notes, ownership, and movement through your sales pipeline.',
+    icon: <Users size={20} />,
   },
   {
-    title: 'Growth creates operational blind spots',
-    description: 'As teams grow, it becomes harder to see pending payments, low stock, team ownership, tax work, and customer status in one place.',
+    title: 'Billing and collections',
+    description: 'Quotations, invoices, due payments, and finance visibility in one place.',
+    icon: <BadgeIndianRupee size={20} />,
   },
   {
-    title: 'AI tools feel impressive but disconnected',
-    description: 'Many businesses try AI in isolation, but the results rarely connect back to CRM, billing, inventory, or daily execution.',
-  },
-];
-
-const features = [
-  {
-    title: 'CRM and customer pipeline',
-    description: 'Capture leads, manage follow-ups, assign owners, and move every customer through a clear sales journey.',
-    icon: <LayoutDashboard size={22} />,
+    title: 'Inventory and operations',
+    description: 'Products, stock movement, reorder watch, and daily execution without spreadsheet mess.',
+    icon: <Boxes size={20} />,
   },
   {
-    title: 'Inventory and stock control',
-    description: 'Track products, stock levels, reorder needs, and issued items without relying on messy manual spreadsheets.',
-    icon: <Boxes size={22} />,
-  },
-  {
-    title: 'Billing, taxes, and money flow',
-    description: 'Stay on top of quotations, invoices, receivables, expenses, and tax-ready financial records in one system.',
-    icon: <BadgeIndianRupee size={22} />,
-  },
-  {
-    title: 'Business AI tools',
-    description: 'Use AI for sales support, catalog help, forecasting, industry workflows, and future automations directly from the dashboard.',
-    icon: <Bot size={22} />,
-  },
-];
-
-const platformHighlights = [
-  {
-    title: 'Shared visibility',
-    description: 'Owners, admins, sales, and operations teams work from the same real-time view instead of duplicate files.',
-    icon: <ClipboardCheck size={20} />,
-  },
-  {
-    title: 'Financial clarity',
-    description: 'Understand receivables, expenses, billing health, and working capital without hunting across separate tools.',
-    icon: <ReceiptText size={20} />,
-  },
-  {
-    title: 'Reliable execution',
-    description: 'Standardize work so store teams, field staff, finance, and back-office operators stay aligned every day.',
-    icon: <ShieldCheck size={20} />,
+    title: 'AI tool layer',
+    description: 'Search, favorite, and use AI tools that match your business without changing your main workflow.',
+    icon: <Bot size={20} />,
   },
 ];
 
 const industries = [
   {
-    title: 'Shoe shops',
-    description: 'Track fast-moving inventory, repeat customers, seasonal offers, and smarter restocking.',
-    icon: <ShoppingBag size={22} />,
+    title: 'Retail stores',
+    description: 'For shoe shops, sports stores, fashion stores, and growing local retail brands.',
+    icon: <ShoppingBag size={20} />,
   },
   {
-    title: 'Interior decorators',
-    description: 'Manage leads, projects, materials, billing, and AI-supported previews in one operating flow.',
-    icon: <Palette size={22} />,
+    title: 'Interior businesses',
+    description: 'For decorators, design studios, and execution teams managing leads, materials, and billing.',
+    icon: <Palette size={20} />,
   },
   {
-    title: 'Sports shops',
-    description: 'Monitor product movement, supplier orders, team performance, and local demand with better visibility.',
-    icon: <Trophy size={22} />,
+    title: 'Trading and wholesale',
+    description: 'For businesses that need tighter stock visibility, payment tracking, and repeat order control.',
+    icon: <Store size={20} />,
   },
   {
-    title: 'Growing business teams',
-    description: 'Use a modular system that fits retail, wholesale, distribution, and service businesses without rebuilding everything.',
-    icon: <Building2 size={22} />,
+    title: 'Service companies',
+    description: 'For teams that manage customers, staff, jobs, and recurring follow-ups every day.',
+    icon: <BriefcaseBusiness size={20} />,
   },
+];
+
+const promisePoints = [
+  'Your business logo and title stay primary inside the workspace',
+  'Pages adapt to your business type instead of showing generic labels',
+  'AI stays optional while core operations remain clean and practical',
 ];
 
 const fadeUp = {
@@ -108,150 +78,65 @@ export const HomeContent = () => {
     <>
       <section id="about" className={styles.section}>
         <div className={styles.container}>
-          <motion.div className={styles.sectionIntro} {...fadeUp}>
-            <span className={styles.eyebrow}>The problem</span>
-            <h2 className={styles.title}>Most businesses do not need more software. They need one place where the business actually runs.</h2>
-            <p className={styles.lead}>
-              aivyapari is designed as a one-stop platform for businesses that want CRM, billing, taxes, stock
-              management, ERP-style workflows, and AI solutions under one roof.
-            </p>
-          </motion.div>
-
-          <div className={styles.problemGrid}>
-            {pains.map((pain, index) => (
-              <motion.div
-                key={pain.title}
-                className={styles.problemCard}
-                {...fadeUp}
-                transition={{ duration: 0.6, delay: index * 0.08 }}
-              >
-                <div className={styles.problemIcon}>
-                  <TriangleAlert size={20} />
-                </div>
-                <h3>{pain.title}</h3>
-                <p>{pain.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className={styles.sectionAlt}>
-        <div className={styles.container}>
-          <div className={styles.solutionPanel}>
-            <motion.div className={styles.solutionCopy} {...fadeUp}>
-              <span className={styles.eyebrow}>Why it works</span>
-              <h2 className={styles.title}>Operations and AI live together, so businesses move faster without losing control.</h2>
+          <div className={styles.valueGrid}>
+            <motion.div className={styles.valueIntro} {...fadeUp}>
+              <span className={styles.eyebrow}>Why owners care</span>
+              <h2 className={styles.title}>The product should reduce decision fatigue, not add another dashboard to ignore.</h2>
               <p className={styles.lead}>
-                Your team can manage inquiries, assign work, track stock, monitor invoices, review taxes, and launch
-                AI workflows without breaking context or switching products.
+                Aivyapari is designed for owners who want one dependable business system that feels organized,
+                credible, and adaptable to the way their company actually works.
               </p>
 
-              <div className={styles.solutionList}>
-                <div className={styles.solutionItem}>
-                  <div className={styles.solutionItemIcon}>
-                    <Users size={18} />
-                  </div>
-                  <div>
-                    <strong>Manage customers and teams</strong>
-                    <p>Keep lead ownership, follow-ups, tasks, and accountability visible across the company.</p>
-                  </div>
-                </div>
-                <div className={styles.solutionItem}>
-                  <div className={styles.solutionItemIcon}>
-                    <Boxes size={18} />
-                  </div>
-                  <div>
-                    <strong>Track stock, billing, and operations</strong>
-                    <p>Bring inventory, invoices, receivables, purchasing, and routine workflows into one operating layer.</p>
-                  </div>
-                </div>
-                <div className={styles.solutionItem}>
-                  <div className={styles.solutionItemIcon}>
-                    <Bot size={18} />
-                  </div>
-                  <div>
-                    <strong>Activate AI tools from the dashboard</strong>
-                    <p>Use industry AI as part of the workflow instead of treating it like a separate experiment.</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div className={styles.solutionVisual} {...fadeUp}>
-              <div className={styles.commandCenter}>
-                <div className={styles.commandHeader}>
-                  <span>Control center</span>
+              <div className={styles.promisePanel}>
+                <div className={styles.promiseLabel}>
                   <LayoutDashboard size={16} />
+                  <span>Owner-first promise</span>
                 </div>
-                <div className={styles.commandBody}>
-                  <div className={styles.commandBlock}>
-                    <strong>Morning priorities</strong>
-                    <span>8 follow-ups due</span>
-                    <span>3 invoices pending</span>
-                    <span>2 stock alerts active</span>
-                  </div>
-                  <div className={styles.commandBlock}>
-                    <strong>AI copilots</strong>
-                    <span>Draft quote for showroom order</span>
-                    <span>Suggest fast-selling SKUs</span>
-                    <span>Summarize customer conversation</span>
-                  </div>
-                  <div className={styles.commandBlockWide}>
-                    <strong>Business snapshot</strong>
-                    <p>Sales, finance, operations, and AI recommendations are visible in one place for faster decisions.</p>
-                  </div>
+                <div className={styles.promiseList}>
+                  {promisePoints.map((item) => (
+                    <div key={item} className={styles.promiseItem}>
+                      <Sparkles size={14} />
+                      <span>{item}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </motion.div>
+
+            <div id="product" className={styles.moduleGrid}>
+              {modules.map((module, index) => (
+                <motion.div
+                  key={module.title}
+                  className={styles.moduleCard}
+                  {...fadeUp}
+                  transition={{ duration: 0.55, delay: index * 0.08 }}
+                >
+                  <div className={styles.moduleIcon}>{module.icon}</div>
+                  <h3>{module.title}</h3>
+                  <p>{module.description}</p>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <section id="product" className={styles.section}>
+      <section id="industries" className={styles.section}>
         <div className={styles.container}>
           <motion.div className={styles.sectionIntro} {...fadeUp}>
-            <span className={styles.eyebrow}>Feature highlights</span>
-            <h2 className={styles.title}>Core modules for running the business, not just tracking tasks.</h2>
+            <span className={styles.eyebrow}>Different businesses, same clarity</span>
+            <h2 className={styles.title}>A strong core for many businesses, with room to adapt for each one.</h2>
           </motion.div>
 
-          <div className={styles.featureGrid}>
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                className={styles.featureCard}
-                {...fadeUp}
-                transition={{ duration: 0.6, delay: index * 0.08 }}
-              >
-                <div className={styles.featureIcon}>{feature.icon}</div>
-                <h3>{feature.title}</h3>
-                <p>{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="industries" className={styles.sectionAlt}>
-        <div className={styles.container}>
-          <motion.div className={styles.sectionIntro} {...fadeUp}>
-            <span className={styles.eyebrow}>Industry fit</span>
-            <h2 className={styles.title}>Built to adapt across different business types instead of forcing one template on everyone.</h2>
-            <p className={styles.lead}>
-              aivyapari starts as a strong business core and grows into industry-specific workflows for retail,
-              interiors, sports, trading, and service businesses.
-            </p>
-          </motion.div>
-
-          <div className={styles.featureGrid}>
+          <div className={styles.industryGrid}>
             {industries.map((industry, index) => (
               <motion.div
                 key={industry.title}
-                className={styles.featureCard}
+                className={styles.industryCard}
                 {...fadeUp}
-                transition={{ duration: 0.6, delay: index * 0.08 }}
+                transition={{ duration: 0.55, delay: index * 0.08 }}
               >
-                <div className={styles.featureIcon}>{industry.icon}</div>
+                <div className={styles.moduleIcon}>{industry.icon}</div>
                 <h3>{industry.title}</h3>
                 <p>{industry.description}</p>
               </motion.div>
@@ -260,47 +145,30 @@ export const HomeContent = () => {
         </div>
       </section>
 
-      <section id="ai" className={styles.sectionAlt}>
+      <section id="ai" className={styles.section}>
         <div className={styles.container}>
-          <div className={styles.trustGrid}>
-            <motion.div className={styles.trustCopy} {...fadeUp}>
-              <span className={styles.eyebrow}>AI + operations</span>
-              <h2 className={styles.title}>AI becomes useful when it is connected to your business data and daily workflow.</h2>
+          <div className={styles.aiGrid}>
+            <motion.div className={styles.aiCardPrimary} {...fadeUp}>
+              <span className={styles.eyebrow}>AI that stays useful</span>
+              <h2 className={styles.title}>AI should support the business, not distract from it.</h2>
               <p className={styles.lead}>
-                aivyapari is built so AI can assist real business jobs: drafting quotes, summarizing leads, forecasting
-                stock, organizing catalogs, and powering industry-specific tools when the team needs them.
+                Use AI for summaries, follow-ups, forecasts, catalogs, and industry-specific help right from the same
+                workspace your team already uses.
               </p>
-
-              <div className={styles.metricsGrid}>
-                {platformHighlights.map((item, index) => (
-                  <motion.div
-                    key={item.title}
-                    className={styles.metricCard}
-                    {...fadeUp}
-                    transition={{ duration: 0.6, delay: index * 0.08 }}
-                  >
-                    <div className={styles.metricIcon}>{item.icon}</div>
-                    <span className={styles.metricTitle}>{item.title}</span>
-                    <p>{item.description}</p>
-                  </motion.div>
-                ))}
-              </div>
             </motion.div>
 
-            <motion.div className={styles.testimonialCard} {...fadeUp}>
-              <Quote size={26} className={styles.quoteMark} />
-              <p className={styles.testimonialText}>
-                “aivyapari feels like the operating layer we were missing. Our team can handle customers, inventory,
-                billing, and AI workflows without juggling separate apps all day.”
-              </p>
-              <div className={styles.testimonialMeta}>
-                <span className={styles.avatar}>
-                  <Users size={18} />
-                </span>
-                <div>
-                  <strong>Rohan Mehta</strong>
-                  <span>Founder, multi-store retail business</span>
-                </div>
+            <motion.div className={styles.aiCardSecondary} {...fadeUp}>
+              <div className={styles.aiMetric}>
+                <Bot size={18} />
+                <span>Search suitable AI tools</span>
+              </div>
+              <div className={styles.aiMetric}>
+                <Trophy size={18} />
+                <span>Favorite the ones that matter</span>
+              </div>
+              <div className={styles.aiMetric}>
+                <ShoppingBag size={18} />
+                <span>Keep the rest of the dashboard business-specific</span>
               </div>
             </motion.div>
           </div>
@@ -310,30 +178,15 @@ export const HomeContent = () => {
       <section id="contact" className={styles.ctaSection}>
         <div className={styles.container}>
           <motion.div className={styles.ctaPanel} {...fadeUp}>
-            <span className={styles.eyebrow}>Ready to build on it</span>
-            <h2 className={styles.title}>Launch aivyapari as the digital control room for your business.</h2>
+            <span className={styles.eyebrow}>Start your workspace</span>
+            <h2 className={styles.title}>Bring your business online with a dashboard that feels like it belongs to you.</h2>
             <p className={styles.lead}>
-              Start with CRM, stock, billing, tax workflows, and team operations now. Add AI solutions business by
-              business as the platform grows.
+              Set up your brand, invite your team, and start using a clean operational system that can grow with your business.
             </p>
 
             <div className={styles.buttonRow}>
-              <a href="#signup" className={styles.primaryButton}>
-                <span className={styles.buttonHint}>Set up your business workspace</span>
-                <span className={styles.buttonText}>Create account</span>
-              </a>
-              <a href="#login" className={styles.secondaryButton}>
-                <span className={styles.buttonHint}>Already have access?</span>
-                <span className={styles.buttonText}>Log in</span>
-              </a>
-            </div>
-
-            <div className={styles.footerBrand}>
-              <img src={`${import.meta.env.BASE_URL}aivyapari-logo.png`} alt="aivyapari logo" className={styles.footerLogo} />
-              <div>
-                <strong>aivyapari</strong>
-                <p>One-stop business operating system with AI-ready workflows for modern Indian companies.</p>
-              </div>
+              <a href="#signup" className={styles.primaryButton}>Create account</a>
+              <a href="#login" className={styles.secondaryButton}>Log in</a>
             </div>
           </motion.div>
         </div>
