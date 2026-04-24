@@ -1423,8 +1423,16 @@ export const BarcodeDeskPage = ({
         >
           <div className="grid gap-5 lg:grid-cols-[1fr_0.9fr]">
             <div className="overflow-hidden rounded-[28px] border border-brand-30 bg-brand-60/25">
-              <div className="aspect-[4/3] bg-brand-dark/95">
+              <div className="relative aspect-[4/3] bg-brand-dark/95">
                 <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
+                <div className="pointer-events-none absolute inset-0">
+                  <div className="absolute inset-x-[10%] top-1/2 -translate-y-1/2">
+                    <div className="relative h-0.5 rounded-full bg-emerald-400 shadow-[0_0_0_1px_rgba(16,185,129,0.3),0_0_18px_rgba(16,185,129,0.85)]" />
+                    <div className="mt-3 text-center text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200 drop-shadow">
+                      Align barcode with green line
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="border-t border-brand-30 px-4 py-4">
                 <div className="flex flex-wrap gap-2">
