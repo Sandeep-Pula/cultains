@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser';
+import { BrowserCodeReader, BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser';
 import { BarcodeFormat, DecodeHintType, NotFoundException } from '@zxing/library';
 import { jsPDF } from 'jspdf';
 import {
@@ -182,6 +182,7 @@ export const BarcodeDeskPage = ({
   const [lastScanned, setLastScanned] = useState<InventoryItem | null>(null);
   const [lookupItem, setLookupItem] = useState<InventoryItem | null>(null);
   const [scannerRunning, setScannerRunning] = useState(false);
+  const [scannerStatus, setScannerStatus] = useState('Scanner idle');
   const [scannerError, setScannerError] = useState<string | null>(null);
   const [invoiceError, setInvoiceError] = useState<string | null>(null);
   const [isSavingInvoice, setIsSavingInvoice] = useState(false);
@@ -262,6 +263,7 @@ export const BarcodeDeskPage = ({
       videoRef.current.srcObject = null;
     }
     setScannerRunning(false);
+    setScannerStatus('Scanner idle');
   };
 
   useEffect(() => () => stopScanner(), []);
@@ -367,6 +369,7 @@ export const BarcodeDeskPage = ({
   const startScanner = useCallback(async () => {
     stopScanner();
     setScannerError(null);
+    setScannerStatus('Starting camera...');
 
     if (!window.isSecureContext && window.location.hostname !== 'localhost') {
       setScannerError('Camera scanning needs HTTPS on mobile browsers. Open the deployed HTTPS site and allow camera access.');
@@ -384,21 +387,32 @@ export const BarcodeDeskPage = ({
     }
 
     try {
-      const hints = new Map<DecodeHintType, BarcodeFormat[]>();
-      hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.CODE_128]);
+      const devices = await BrowserCodeReader.listVideoInputDevices().catch(() => []);
+      const preferredDevice =
+        devices.find((device) => /back|rear|environment/i.test(device.label))?.deviceId || devices[0]?.deviceId;
+
+      const hints = new Map();
+      hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+        BarcodeFormat.CODE_128,
+        BarcodeFormat.CODE_39,
+        BarcodeFormat.CODE_93,
+        BarcodeFormat.CODABAR,
+        BarcodeFormat.ITF,
+        BarcodeFormat.EAN_13,
+        BarcodeFormat.EAN_8,
+        BarcodeFormat.UPC_A,
+        BarcodeFormat.UPC_E,
+      ]);
+      hints.set(DecodeHintType.TRY_HARDER, true);
       const reader = new BrowserMultiFormatReader(hints);
       scannerReaderRef.current = reader;
 
-      const controls = await reader.decodeFromConstraints(
-        {
-          audio: false,
-          video: {
-            facingMode: { ideal: 'environment' },
-          },
-        },
+      const controls = await reader.decodeFromVideoDevice(
+        preferredDevice,
         videoRef.current,
         (result, error) => {
           if (result) {
+            setScannerStatus(`Barcode detected: ${result.getText()}`);
             handleBarcodeMatch(result.getText());
             return;
           }
@@ -406,12 +420,18 @@ export const BarcodeDeskPage = ({
           if (error && !(error instanceof NotFoundException)) {
             const message = error instanceof Error ? error.message : 'Unable to read the barcode from the camera.';
             setScannerError(message);
+            setScannerStatus('Scanner needs attention');
           }
         },
       );
 
       scannerControlsRef.current = controls;
       setScannerRunning(true);
+      setScannerStatus(
+        preferredDevice
+          ? 'Camera live. Use the rear camera and hold the barcode steady 10-15 cm away.'
+          : 'Camera live. Hold the barcode steady and keep it centered in the frame.',
+      );
     } catch (error) {
       console.error(error);
       const message =
@@ -419,6 +439,7 @@ export const BarcodeDeskPage = ({
           ? error.message
           : 'Unable to access the camera. Check permission settings and try again.';
       setScannerError(message);
+      setScannerStatus('Scanner failed to start');
       stopScanner();
     }
   }, [handleBarcodeMatch]);
@@ -1333,6 +1354,9 @@ export const BarcodeDeskPage = ({
                   >
                     Back to {scanTarget === 'bill' ? 'bill' : 'studio'}
                   </button>
+                </div>
+                <div className="mt-3 rounded-2xl border border-brand-30 bg-white px-4 py-3 text-sm text-brand-dark/70">
+                  {scannerStatus}
                 </div>
                 {scannerError ? (
                   <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
