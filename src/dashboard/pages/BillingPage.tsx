@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ArrowDownCircle, ArrowUpCircle, BadgeIndianRupee, CreditCard, Plus, Wallet } from 'lucide-react';
 import type { CustomerProject, FinanceEntry, InventoryItem } from '../types';
+import type { WorkspaceBusinessConfig } from '../businessConfig';
 import { AddFinanceEntryModal } from '../components/AddFinanceEntryModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyStatePanel } from '../components/EmptyStatePanel';
@@ -10,6 +11,7 @@ type BillingPageProps = {
   customers: CustomerProject[];
   inventory: InventoryItem[];
   financeEntries: FinanceEntry[];
+  businessConfig: WorkspaceBusinessConfig;
   onAddEntry: (payload: Pick<FinanceEntry, 'title' | 'kind' | 'category' | 'amount' | 'status' | 'dueAt' | 'customerId' | 'projectTitle' | 'notes'>) => Promise<void>;
   onUpdateEntry: (entryId: string, patch: Partial<FinanceEntry>) => Promise<void>;
   onDeleteEntry: (entryId: string) => Promise<void>;
@@ -30,6 +32,7 @@ export const BillingPage = ({
   customers,
   inventory,
   financeEntries,
+  businessConfig,
   onAddEntry,
   onUpdateEntry,
   onDeleteEntry,
@@ -77,9 +80,7 @@ export const BillingPage = ({
       <div className="shrink-0 flex flex-col gap-3 md:flex-row md:items-end md:justify-between px-2">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight text-brand-dark">Billing workspace</h1>
-          <p className="mt-1 max-w-3xl text-[15px] text-brand-dark/80">
-            Your finance landing page for project billing, customer invoices, vendor/material expenses, salary outflow, and overall company cash movement.
-          </p>
+          <p className="mt-1 max-w-3xl text-[15px] text-brand-dark/80">{businessConfig.billingIntro}</p>
         </div>
         <button
           onClick={() => setEntryModalOpen(true)}
@@ -124,8 +125,8 @@ export const BillingPage = ({
       <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[1.15fr_0.95fr]">
         <section className="flex min-h-0 flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-sm">
           <div className="shrink-0 border-b border-brand-30 bg-brand-60/35 px-5 py-4">
-            <h2 className="text-xl font-semibold tracking-tight text-brand-dark">Project invoices</h2>
-            <p className="mt-0.5 text-xs text-brand-dark/60">Material and labour visibility per customer project so invoice generation becomes easier later.</p>
+            <h2 className="text-xl font-semibold tracking-tight text-brand-dark">{businessConfig.workLabel} invoices</h2>
+            <p className="mt-0.5 text-xs text-brand-dark/60">Cost and revenue visibility per {businessConfig.workLabel.toLowerCase()} so invoicing stays clear.</p>
           </div>
           <div className="min-h-0 flex-1 overflow-auto">
             {invoiceProjects.length ? (
@@ -159,7 +160,7 @@ export const BillingPage = ({
                 <EmptyStatePanel
                   icon={CreditCard}
                   title="No billing records yet"
-                  description="Once you start linking customer payments, labour, vendor costs, and project materials, this table becomes your invoice-ready project view."
+                  description={`Once you start linking payments, labour, vendor costs, and ${businessConfig.workLabel.toLowerCase()} materials, this table becomes your invoice-ready view.`}
                   actions={[{ label: 'Add finance entry', onClick: () => setEntryModalOpen(true), emphasis: 'primary' }]}
                 />
               </div>
@@ -170,7 +171,7 @@ export const BillingPage = ({
         <section className="flex min-h-0 flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-sm">
           <div className="shrink-0 border-b border-brand-30 bg-brand-60/35 px-5 py-4">
             <h2 className="text-xl font-semibold tracking-tight text-brand-dark">Company ledger</h2>
-            <p className="mt-0.5 text-xs text-brand-dark/60">Track all incoming and outgoing money including salary, labour, vendor, and operations.</p>
+            <p className="mt-0.5 text-xs text-brand-dark/60">Track all incoming and outgoing money including vendor payouts, salaries, and operations.</p>
           </div>
           <div className="min-h-0 flex-1 overflow-auto">
             {financeEntries.length ? (

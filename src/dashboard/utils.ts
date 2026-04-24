@@ -32,7 +32,7 @@ export const viewTitles: Record<DashboardView, string> = {
   inventory: 'Inventory',
   billing: 'Billing',
   'ai-tools': 'AI tools',
-  'render-history': 'Render History',
+  'render-history': 'Operations',
   crm: 'CRM',
   settings: 'Settings',
   profile: 'Profile',

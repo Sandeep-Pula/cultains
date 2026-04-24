@@ -246,7 +246,7 @@ export const TeamMemberDrawer = ({
                       ))
                     ) : (
                       <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-brand-30 bg-brand-60/50 p-5 text-center text-[15px] font-medium text-brand-dark/50">
-                        No active maps assigned. Use customer workspaces or quick actions to assign this member.
+                        No active assignments yet. Use records or quick actions to assign this member.
                       </div>
                     )}
                   </div>

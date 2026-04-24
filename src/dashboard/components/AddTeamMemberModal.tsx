@@ -1,15 +1,17 @@
 import { useMemo, useState } from 'react';
 import type { TeamMember, TeamRole } from '../types';
+import type { WorkspaceBusinessConfig } from '../businessConfig';
 import { getInitials } from '../utils';
 
 type AddTeamMemberModalProps = {
   open: boolean;
   existingTeam: TeamMember[];
+  businessConfig: WorkspaceBusinessConfig;
   onClose: () => void;
   onSubmit: (payload: Pick<TeamMember, 'name' | 'role' | 'email' | 'phone' | 'status'>) => void;
 };
 
-const roles: TeamRole[] = ['Lead Designer', 'Visualizer', 'Site Coordinator', 'Sales Owner', 'Field Staff'];
+const roles: TeamRole[] = ['Sales Owner', 'Lead Designer', 'Visualizer', 'Site Coordinator', 'Field Staff'];
 
 const initialState: {
   name: string;
@@ -25,12 +27,12 @@ const initialState: {
   status: 'online' as const,
 };
 
-export const AddTeamMemberModal = ({ open, existingTeam, onClose, onSubmit }: AddTeamMemberModalProps) => {
+export const AddTeamMemberModal = ({ open, existingTeam, businessConfig, onClose, onSubmit }: AddTeamMemberModalProps) => {
   const [form, setForm] = useState(initialState);
 
   const defaultEmail = useMemo(() => {
     if (!form.name.trim()) return '';
-    return `${form.name.trim().toLowerCase().replace(/\s+/g, '.')}@cultains.com`;
+    return `${form.name.trim().toLowerCase().replace(/\s+/g, '.')}@mydandha.work`;
   }, [form.name]);
 
   if (!open) return null;
@@ -50,7 +52,7 @@ export const AddTeamMemberModal = ({ open, existingTeam, onClose, onSubmit }: Ad
         <div className="flex items-center justify-between border-b border-brand-30 px-6 py-4">
           <div>
             <h3 className="text-2xl font-semibold text-brand-dark">Add team member</h3>
-            <p className="mt-1 text-sm text-brand-dark/80">Create a new teammate profile and make them available for assignments immediately.</p>
+            <p className="mt-1 text-sm text-brand-dark/80">Create a new teammate profile and make them available for assignments immediately inside this {businessConfig.label.toLowerCase()} workspace.</p>
           </div>
           <button onClick={onClose} className="rounded-2xl border border-brand-30 px-3 py-2 text-sm text-brand-dark">
             Close
@@ -92,7 +94,7 @@ export const AddTeamMemberModal = ({ open, existingTeam, onClose, onSubmit }: Ad
                   value={form.email}
                   onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
                   className="rounded-2xl border border-brand-30 bg-white px-3 py-2.5 outline-none text-brand-dark"
-                  placeholder={defaultEmail || 'designer@cultains.com'}
+                  placeholder={defaultEmail || 'teammate@mydandha.work'}
                 />
               </label>
 
@@ -131,7 +133,7 @@ export const AddTeamMemberModal = ({ open, existingTeam, onClose, onSubmit }: Ad
             <div className="mt-1 text-sm text-brand-dark/80">{form.role}</div>
             <div className="mt-6 rounded-2xl bg-white p-4 text-sm text-brand-dark/80">
               <div>{existingTeam.length} team members currently active in the dashboard.</div>
-              <div className="mt-2">New members can be assigned from team cards, customer drawers, and project ownership controls.</div>
+              <div className="mt-2">New members can be assigned from team cards, account drawers, and work ownership controls.</div>
             </div>
           </div>
 

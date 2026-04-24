@@ -1,13 +1,13 @@
 import type { CustomerFilters, TeamMember } from '../types';
-import { stageLabels } from '../utils';
 
 type FilterToolbarProps = {
   filters: CustomerFilters;
   team: TeamMember[];
+  stageLabels: Record<string, string>;
   onChange: (next: Partial<CustomerFilters>) => void;
 };
 
-export const FilterToolbar = ({ filters, team, onChange }: FilterToolbarProps) => (
+export const FilterToolbar = ({ filters, team, stageLabels, onChange }: FilterToolbarProps) => (
   <div className="flex flex-col gap-3 rounded-3xl border border-brand-30 bg-white/90 p-4 shadow-sm xl:flex-row xl:items-center xl:justify-between">
     <div className="grid gap-3 md:grid-cols-4 xl:flex">
       <select

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import type { CustomerProject, TeamMember } from '../types';
+import type { WorkspaceBusinessConfig } from '../businessConfig';
 
 type AddProjectModalProps = {
   open: boolean;
   team: TeamMember[];
+  businessConfig: WorkspaceBusinessConfig;
   onClose: () => void;
   onSubmit: (payload: Pick<
     CustomerProject,
@@ -37,7 +39,7 @@ const initialState = {
   notes: '',
 };
 
-export const AddProjectModal = ({ open, team, onClose, onSubmit }: AddProjectModalProps) => {
+export const AddProjectModal = ({ open, team, businessConfig, onClose, onSubmit }: AddProjectModalProps) => {
   const [form, setForm] = useState(initialState);
 
   if (!open) return null;
@@ -63,10 +65,10 @@ export const AddProjectModal = ({ open, team, onClose, onSubmit }: AddProjectMod
         <div className="flex items-center justify-between border-b border-brand-30 px-6 py-4">
           <div>
             <div className="inline-flex rounded-full bg-brand-30/40 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-brand-dark/65">
-              New project workspace
+              New {businessConfig.workLabel.toLowerCase()} workspace
             </div>
-            <h3 className="mt-3 text-2xl font-semibold text-brand-dark">Create a highlighted project intake</h3>
-            <p className="mt-1 text-sm text-brand-dark/80">Use this when a decorator wants to start a new customer job and assign ownership from day one.</p>
+            <h3 className="mt-3 text-2xl font-semibold text-brand-dark">Create a highlighted {businessConfig.workLabel.toLowerCase()} intake</h3>
+            <p className="mt-1 text-sm text-brand-dark/80">Use this when a new {businessConfig.workLabel.toLowerCase()} should start with ownership, notes, and workflow visibility from day one.</p>
           </div>
           <button onClick={onClose} className="rounded-2xl border border-brand-30 px-3 py-2 text-sm text-brand-dark">
             Close
@@ -76,11 +78,11 @@ export const AddProjectModal = ({ open, team, onClose, onSubmit }: AddProjectMod
         <form onSubmit={handleSubmit} className="grid gap-5 px-6 py-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="grid gap-4 md:grid-cols-2">
             {[
-              ['Customer / firm name', 'customerName'],
-              ['Project title', 'title'],
+              [`${businessConfig.customerLabel} / company name`, 'customerName'],
+              [businessConfig.titleLabel, 'title'],
               ['Phone', 'phone'],
               ['Email', 'email'],
-              ['Location', 'location'],
+              [businessConfig.locationLabel, 'location'],
               ['Address', 'address'],
             ].map(([label, key]) => (
               <label key={key} className="grid gap-2 text-sm text-brand-dark/80">
@@ -95,36 +97,36 @@ export const AddProjectModal = ({ open, team, onClose, onSubmit }: AddProjectMod
             ))}
 
             <label className="grid gap-2 text-sm text-brand-dark/80">
-              <span className="font-medium text-brand-dark">Project type</span>
+              <span className="font-medium text-brand-dark">{businessConfig.workLabel} type</span>
               <select
                 value={form.projectType}
                 onChange={(event) => setForm((current) => ({ ...current, projectType: event.target.value as typeof form.projectType }))}
                 className="rounded-2xl border border-brand-30 bg-white px-3 py-2.5 text-brand-dark"
               >
-                <option value="living_room">Living room</option>
-                <option value="bedroom">Bedroom</option>
-                <option value="office">Office</option>
-                <option value="full_home">Full home</option>
-                <option value="kitchen">Kitchen</option>
-                <option value="retail">Retail</option>
+                <option value="living_room">{businessConfig.projectTypeLabels.living_room}</option>
+                <option value="bedroom">{businessConfig.projectTypeLabels.bedroom}</option>
+                <option value="office">{businessConfig.projectTypeLabels.office}</option>
+                <option value="full_home">{businessConfig.projectTypeLabels.full_home}</option>
+                <option value="kitchen">{businessConfig.projectTypeLabels.kitchen}</option>
+                <option value="retail">{businessConfig.projectTypeLabels.retail}</option>
               </select>
             </label>
 
             <label className="grid gap-2 text-sm text-brand-dark/80">
-              <span className="font-medium text-brand-dark">Site status</span>
+              <span className="font-medium text-brand-dark">{businessConfig.statusLabel}</span>
               <select
                 value={form.siteStatus}
                 onChange={(event) => setForm((current) => ({ ...current, siteStatus: event.target.value as typeof form.siteStatus }))}
                 className="rounded-2xl border border-brand-30 bg-white px-3 py-2.5 text-brand-dark"
               >
-                <option value="in_progress">In progress</option>
-                <option value="ready">Ready</option>
-                <option value="under_construction">Under construction</option>
+                <option value="in_progress">{businessConfig.siteStatusLabels.in_progress}</option>
+                <option value="ready">{businessConfig.siteStatusLabels.ready}</option>
+                <option value="under_construction">{businessConfig.siteStatusLabels.under_construction}</option>
               </select>
             </label>
 
             <label className="grid gap-2 text-sm text-brand-dark/80">
-              <span className="font-medium text-brand-dark">Sales owner</span>
+              <span className="font-medium text-brand-dark">{businessConfig.ownerLabel}</span>
               <select
                 value={form.ownerId}
                 onChange={(event) => setForm((current) => ({ ...current, ownerId: event.target.value }))}
@@ -140,13 +142,13 @@ export const AddProjectModal = ({ open, team, onClose, onSubmit }: AddProjectMod
             </label>
 
             <label className="grid gap-2 text-sm text-brand-dark/80">
-              <span className="font-medium text-brand-dark">Lead designer</span>
+              <span className="font-medium text-brand-dark">{businessConfig.specialistLabel}</span>
               <select
                 value={form.leadDesignerId}
                 onChange={(event) => setForm((current) => ({ ...current, leadDesignerId: event.target.value }))}
                 className="rounded-2xl border border-brand-30 bg-white px-3 py-2.5 text-brand-dark"
               >
-                <option value="">Select designer</option>
+                <option value="">Select {businessConfig.specialistLabel.toLowerCase()}</option>
                 {team.map((member) => (
                   <option key={member.id} value={member.id}>
                     {member.name} • {member.role}
@@ -156,12 +158,12 @@ export const AddProjectModal = ({ open, team, onClose, onSubmit }: AddProjectMod
             </label>
 
             <label className="grid gap-2 text-sm text-brand-dark/80 md:col-span-2">
-              <span className="font-medium text-brand-dark">Project notes</span>
+              <span className="font-medium text-brand-dark">{businessConfig.workLabel} notes</span>
               <textarea
                 value={form.notes}
                 onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
                 className="min-h-28 rounded-2xl border border-brand-30 bg-white px-3 py-2.5 outline-none text-brand-dark"
-                placeholder="Budget cues, site context, preferred materials, approvals needed"
+                placeholder="Context, approvals, dependencies, budget cues, or delivery notes"
               />
             </label>
           </div>
@@ -170,9 +172,9 @@ export const AddProjectModal = ({ open, team, onClose, onSubmit }: AddProjectMod
             <div className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-dark/65">What happens next</div>
             <div className="mt-4 space-y-4">
               {[
-                'Project appears in the pipeline board immediately.',
-                'Customer workspace is opened so notes and assignments can continue.',
-                'Follow-up reminders and render queue start from this record.',
+                `${businessConfig.workLabel} appears in the pipeline board immediately.`,
+                `${businessConfig.customerLabel} workspace opens so notes and assignments can continue.`,
+                'Follow-up reminders and workflow tracking start from this record.',
               ].map((item) => (
                 <div key={item} className="rounded-2xl bg-white/85 px-4 py-3 text-sm text-brand-dark/85 shadow-sm">
                   {item}
@@ -181,7 +183,7 @@ export const AddProjectModal = ({ open, team, onClose, onSubmit }: AddProjectMod
             </div>
 
             <div className="mt-6 rounded-2xl bg-brand-10 px-4 py-4 text-sm text-brand-60">
-              Highlighted action: use this modal for all new job intake so your team always starts with ownership, customer info, and project stage in one place.
+              Highlighted action: use this modal for all new intake so your team always starts with ownership, customer info, and workflow stage in one place.
             </div>
           </div>
 
@@ -190,7 +192,7 @@ export const AddProjectModal = ({ open, team, onClose, onSubmit }: AddProjectMod
               Cancel
             </button>
             <button type="submit" className="rounded-2xl bg-brand-10 px-4 py-2.5 text-sm font-medium text-brand-60 shadow-sm">
-              Create project
+              Create {businessConfig.workLabel}
             </button>
           </div>
         </form>

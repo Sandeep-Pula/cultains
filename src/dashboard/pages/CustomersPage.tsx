@@ -1,6 +1,7 @@
 import { MapPin, Phone, Pin, Plus, Trash2, Users, Flame, AlertCircle, Archive } from 'lucide-react';
 import type { CustomerFilters, CustomerProject, DeletedCustomerRecord, TeamMember } from '../types';
-import { filterCustomers, formatDate, getCustomerOwner, relativeDate, siteBadgeClass, siteStatusLabels } from '../utils';
+import type { WorkspaceBusinessConfig } from '../businessConfig';
+import { filterCustomers, formatDate, getCustomerOwner, relativeDate, siteBadgeClass } from '../utils';
 import { FilterToolbar } from '../components/FilterToolbar';
 import { StatusBadge } from '../components/StatusBadge';
 import { EmptyStatePanel } from '../components/EmptyStatePanel';
@@ -9,6 +10,7 @@ type CustomersPageProps = {
   customers: CustomerProject[];
   deletedCustomers: DeletedCustomerRecord[];
   team: TeamMember[];
+  businessConfig: WorkspaceBusinessConfig;
   filters: CustomerFilters;
   onFiltersChange: (next: Partial<CustomerFilters>) => void;
   onOpenCustomer: (customerId: string) => void;
@@ -21,6 +23,7 @@ export const CustomersPage = ({
   customers,
   deletedCustomers,
   team,
+  businessConfig,
   filters,
   onFiltersChange,
   onOpenCustomer,
@@ -39,32 +42,32 @@ export const CustomersPage = ({
           <div className="flex items-center justify-between border-b border-brand-30 bg-brand-60/40 px-6 py-5 shrink-0">
             <div>
               <h1 className="text-xl font-semibold tracking-tight text-brand-dark">Active Roster</h1>
-              <p className="mt-0.5 text-xs text-brand-dark/80">{filteredCustomers.length} records mapped in your database</p>
+              <p className="mt-0.5 text-xs text-brand-dark/80">{filteredCustomers.length} {businessConfig.customerPlural.toLowerCase()} mapped in your workspace</p>
             </div>
             <button onClick={onAddCustomer} className="inline-flex items-center gap-2 rounded-2xl bg-brand-10 px-4 py-2 text-sm font-medium text-brand-60 transition hover:bg-brand-dark hover:text-white">
               <Plus size={16} />
-              Add Customer
+              Add {businessConfig.customerLabel}
             </button>
           </div>
           
           <div className="shrink-0 border-b border-brand-30 bg-white px-4 py-3">
-            <FilterToolbar filters={filters} team={team} onChange={onFiltersChange} />
+            <FilterToolbar filters={filters} team={team} stageLabels={businessConfig.stageLabels} onChange={onFiltersChange} />
           </div>
 
           <div className="flex-1 overflow-y-auto bg-white p-4 space-y-3 hide-scrollbar">
             {customers.length === 0 ? (
               <EmptyStatePanel
                 icon={Plus}
-                title="No customers yet"
-                description="Start with your first customer record so you can track project status, notes, renders, and follow-ups in one place."
+                title={`No ${businessConfig.customerPlural.toLowerCase()} yet`}
+                description={`Start with your first ${businessConfig.customerLabel.toLowerCase()} record so you can track ${businessConfig.workLabel.toLowerCase()} status, notes, and follow-ups in one place.`}
                 actions={[
-                  { label: 'Create first customer', onClick: onAddCustomer, emphasis: 'primary' },
-                  { label: 'Upload room image', onClick: () => (window.location.hash = '#try-once') },
+                  { label: `Create first ${businessConfig.customerLabel.toLowerCase()}`, onClick: onAddCustomer, emphasis: 'primary' },
+                  { label: 'Open AI tools', onClick: () => (window.location.hash = '#dashboard/ai-tools') },
                 ]}
               />
             ) : filteredCustomers.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-brand-30 bg-brand-60/50 p-10 text-center">
-                <div className="text-lg font-semibold text-brand-dark">No customers found</div>
+                <div className="text-lg font-semibold text-brand-dark">No {businessConfig.customerPlural.toLowerCase()} found</div>
                 <p className="mt-1 text-sm text-brand-dark/80">Try a different search or clear some filters.</p>
                 <button onClick={() => onFiltersChange({ search: '', stage: 'all', ownerId: 'all', completion: 'all', sortBy: 'latest' })} className="mt-4 rounded-2xl bg-white border border-brand-30 px-4 py-2 text-sm font-medium text-brand-dark">
                   Reset filters
@@ -115,7 +118,7 @@ export const CustomersPage = ({
                         <div className="space-y-2">
                           <StatusBadge stage={customer.stage} />
                           <div className="flex flex-wrap gap-2 text-[11px] mt-2">
-                            <span className={siteBadgeClass(customer.siteStatus)}>{siteStatusLabels[customer.siteStatus]}</span>
+                            <span className={siteBadgeClass(customer.siteStatus)}>{businessConfig.siteStatusLabels[customer.siteStatus]}</span>
                             {customer.needsFollowUp ? <span className="rounded-full bg-amber-100 px-2 py-1 text-amber-700 font-medium">Needs follow-up</span> : null}
                             {customer.renderPending ? <span className="rounded-full bg-sky-100 px-2 py-1 text-sky-700 font-medium">Render pending</span> : null}
                           </div>
@@ -146,7 +149,7 @@ export const CustomersPage = ({
         <div className="flex flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-sm min-h-[400px]">
           <div className="flex items-center justify-between border-b border-brand-30 bg-brand-60/40 px-6 py-5 shrink-0">
             <div>
-              <h2 className="text-lg font-semibold text-brand-dark">Customer cleanup</h2>
+              <h2 className="text-lg font-semibold text-brand-dark">{businessConfig.customerLabel} cleanup</h2>
               <p className="mt-0.5 text-xs text-brand-dark/60">Archived or removed records</p>
             </div>
           </div>
@@ -180,7 +183,7 @@ export const CustomersPage = ({
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4 lg:gap-6 shrink-0 h-auto sm:h-36">
         <div className="group flex flex-col items-center justify-center rounded-[28px] border border-brand-30 bg-white p-6 shadow-sm hover:shadow transition">
           <Users size={24} className="mb-2 text-brand-10 transition-transform group-hover:scale-110" />
-          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-dark/70 text-center">Total Database</div>
+          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-dark/70 text-center">Total {businessConfig.customerPlural}</div>
           <div className="mt-1 text-3xl font-semibold text-brand-dark">{customers.length}</div>
         </div>
         <div className="group flex flex-col items-center justify-center rounded-[28px] border border-brand-30 bg-white p-6 shadow-sm hover:shadow transition">
@@ -195,7 +198,7 @@ export const CustomersPage = ({
         </div>
         <div className="group flex flex-col items-center justify-center rounded-[28px] border border-brand-30 bg-white p-6 shadow-sm hover:shadow transition">
           <Archive size={24} className="mb-2 text-brand-10 transition-transform group-hover:scale-110" />
-          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-dark/70 text-center">Archived Projects</div>
+          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-dark/70 text-center">Archived {businessConfig.workPlural}</div>
           <div className="mt-1 text-3xl font-semibold text-brand-dark">{deletedCustomers.length}</div>
         </div>
       </div>

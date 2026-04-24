@@ -4,8 +4,9 @@ import { AlertTriangle } from 'lucide-react';
 import { auth } from '../lib/firebase';
 import { authService } from '../lib/authService';
 import { dashboardService } from './services/dashboardService';
+import { getBusinessConfig } from './businessConfig';
 import { dashboardHash, getStageProgress, parseDashboardView } from './utils';
-import type { CustomerFilters, CustomerProject, DashboardData, FinanceEntry, InventoryItem, ProjectStage, TeamMember, ToastItem } from './types';
+import type { BusinessType, CustomerFilters, CustomerProject, DashboardData, FinanceEntry, InventoryItem, ProjectStage, TeamMember, ToastItem } from './types';
 import { DashboardSkeleton } from './components/DashboardSkeleton';
 import { Sidebar } from './components/Sidebar';
 import { Topbar } from './components/Topbar';
@@ -24,6 +25,7 @@ import { AddCustomerModal } from './components/AddCustomerModal';
 import { AddProjectModal } from './components/AddProjectModal';
 import { AddTeamMemberModal } from './components/AddTeamMemberModal';
 import { TeamMemberDrawer } from './components/TeamMemberDrawer';
+import { OperationsPage } from './pages/OperationsPage';
 
 const defaultFilters: CustomerFilters = {
   search: '',
@@ -137,6 +139,7 @@ export const DashboardApp = () => {
   }, [toasts]);
 
   const activeView = parseDashboardView(hash);
+  const businessConfig = getBusinessConfig(data?.profile.businessType ?? 'general_business');
 
   const handleMutationError = (nextError: unknown, fallbackMessage: string) => {
     console.error(nextError);
@@ -329,7 +332,7 @@ export const DashboardApp = () => {
       await dashboardService.archiveCustomer(user.uid, customer, data.userName);
       setSelectedCustomerId(null);
       setArchiveCandidateId(null);
-      pushToast('Project archived', 'The customer workspace has been moved to history.');
+      pushToast('Record archived', 'The active record has been moved to history.');
     } catch (nextError) {
       handleMutationError(nextError, 'Unable to archive this project.');
     }
@@ -568,6 +571,8 @@ export const DashboardApp = () => {
   const handleSaveWorkspaceProfile = async (profile: {
     companyName: string;
     userName: string;
+    businessType: BusinessType;
+    workspaceLogoUrl: string;
     email: string;
     phone: string;
     city: string;
@@ -628,10 +633,19 @@ export const DashboardApp = () => {
 
   return (
     <div className="min-h-screen bg-brand-60 text-brand-dark">
-      <Sidebar activeView={activeView} onNavigate={(view) => handleNavigate(dashboardHash(view))} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar
+        activeView={activeView}
+        companyName={data.profile.companyName}
+        workspaceLogoUrl={data.profile.workspaceLogoUrl}
+        businessConfig={businessConfig}
+        onNavigate={(view) => handleNavigate(dashboardHash(view))}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       <div className="lg:pl-72 flex flex-col min-h-screen">
         <Topbar
           activeView={activeView}
+          businessConfig={businessConfig}
           search={filters.search}
           onSearchChange={(value) => setFilters((current) => ({ ...current, search: value }))}
           onOpenSidebar={() => setSidebarOpen(true)}
@@ -649,6 +663,7 @@ export const DashboardApp = () => {
           {activeView === 'overview' ? (
             <OverviewPage
               data={data}
+              businessConfig={businessConfig}
               onOpenCustomer={handleOpenCustomer}
               onNavigate={handleNavigate}
               onSaveSmartTask={handleSaveSmartTask}
@@ -661,6 +676,7 @@ export const DashboardApp = () => {
               customers={data.customers}
               deletedCustomers={data.deletedCustomers}
               team={data.team}
+              businessConfig={businessConfig}
               filters={filters}
               onFiltersChange={(next) => setFilters((current) => ({ ...current, ...next }))}
               onOpenCustomer={handleOpenCustomer}
@@ -673,6 +689,7 @@ export const DashboardApp = () => {
               team={data.team}
               customers={data.customers}
               tasks={data.tasks}
+              businessConfig={businessConfig}
               onOpenCustomer={handleOpenCustomer}
               onOpenMember={handleOpenTeamMember}
               onAddMember={() => setAddTeamMemberOpen(true)}
@@ -681,6 +698,7 @@ export const DashboardApp = () => {
             <InventoryPage
               inventory={data.inventory}
               customers={data.customers}
+              businessConfig={businessConfig}
               onAddItem={handleAddInventoryItem}
               onUpdateItem={handleUpdateInventoryItem}
               onDeleteItem={handleDeleteInventoryItem}
@@ -690,23 +708,35 @@ export const DashboardApp = () => {
               customers={data.customers}
               inventory={data.inventory}
               financeEntries={data.financeEntries}
+              businessConfig={businessConfig}
               onAddEntry={handleAddFinanceEntry}
               onUpdateEntry={handleUpdateFinanceEntry}
               onDeleteEntry={handleDeleteFinanceEntry}
+            />
+          ) : activeView === 'render-history' ? (
+            <OperationsPage
+              businessConfig={businessConfig}
+              customers={data.customers}
+              tasks={data.tasks}
+              inventory={data.inventory}
+              financeEntries={data.financeEntries}
+              onOpenCustomer={handleOpenCustomer}
             />
           ) : activeView === 'crm' ? (
             <CrmPage
               customers={data.customers}
               team={data.team}
+              businessConfig={businessConfig}
               onOpenCustomer={handleOpenCustomer}
               onUpdateCustomer={handleUpdateCustomer}
               actorName={data.userName}
             />
           ) : activeView === 'ai-tools' ? (
-            <AIToolsPage />
+            <AIToolsPage businessConfig={businessConfig} />
           ) : activeView === 'profile' ? (
             <ProfilePage
               profile={data.profile}
+              businessConfig={businessConfig}
               totalCustomers={data.customers.length}
               totalTeamMembers={data.team.length}
               totalInventoryItems={data.inventory.length}
@@ -723,6 +753,7 @@ export const DashboardApp = () => {
       <CustomerDrawer
         customer={selectedCustomer}
         team={data.team}
+        businessConfig={businessConfig}
         open={!!selectedCustomerId}
         onClose={() => setSelectedCustomerId(null)}
         onStageChange={handleStageChange}
@@ -745,7 +776,7 @@ export const DashboardApp = () => {
       <ConfirmDialog
         open={!!deleteCandidateId}
         title="Delete this customer?"
-        description="This will remove the active customer workspace and keep only a history record."
+        description="This will remove the active record and keep only a history entry."
         confirmLabel="Delete"
         onCancel={() => setDeleteCandidateId(null)}
         onConfirm={handleDeleteCustomer}
@@ -753,18 +784,21 @@ export const DashboardApp = () => {
       <AddCustomerModal 
         open={addCustomerOpen} 
         team={data.team} 
+        businessConfig={businessConfig}
         onClose={() => setAddCustomerOpen(false)} 
         onSubmit={handleAddCustomer} 
       />
       <AddProjectModal 
         open={addProjectOpen} 
-        team={data.team} 
+        team={data.team}
+        businessConfig={businessConfig}
         onClose={() => setAddProjectOpen(false)} 
         onSubmit={handleAddProject} 
       />
       <AddTeamMemberModal 
         open={addTeamMemberOpen} 
         existingTeam={data.team} 
+        businessConfig={businessConfig}
         onClose={() => setAddTeamMemberOpen(false)} 
         onSubmit={handleAddTeamMember} 
       />

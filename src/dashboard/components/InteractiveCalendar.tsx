@@ -5,6 +5,7 @@ import type { TaskItem } from '../types';
 
 type InteractiveCalendarProps = {
   tasks: TaskItem[];
+  title?: string;
   onOpenSmartTask: (date: Date) => void;
 };
 
@@ -17,6 +18,7 @@ const startOfDay = (value: Date) => new Date(value.getFullYear(), value.getMonth
 
 export const InteractiveCalendar = ({
   tasks,
+  title = 'Operations Calendar',
   onOpenSmartTask,
 }: InteractiveCalendarProps) => {
   const today = startOfDay(new Date());
@@ -117,7 +119,7 @@ export const InteractiveCalendar = ({
       <div className="mb-4 flex items-center justify-between pl-2">
         <h2 className="flex items-center gap-2 text-lg font-semibold text-brand-dark">
           <CalendarDays size={18} className="text-brand-10" />
-          Operations Calendar
+          {title}
         </h2>
         <div className="flex items-center gap-4 text-brand-dark">
           <div className="flex items-center gap-1.5">

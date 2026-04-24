@@ -12,7 +12,7 @@ export const Navbar = () => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
     };
-    
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -35,18 +35,20 @@ export const Navbar = () => {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
     >
-      <a href="#top" className={styles.logo} aria-label="Cultains home">
+      <a href="#top" className={styles.logo} aria-label="mydandha home">
         <span className={styles.logoBadge}>
-          <img src={`${import.meta.env.BASE_URL}cultains-logo-black.png`} alt="Cultains logo" className={styles.logoMark} />
+          <img src={`${import.meta.env.BASE_URL}mydandha-logo.png`} alt="mydandha logo" className={styles.logoMark} />
         </span>
-        <span className={styles.logoText}>Cultains</span>
+        <span className={styles.logoText}>mydandha</span>
       </a>
 
       <div className={styles.links}>
-        <a href="#about" className={styles.link}>Problem</a>
-        <a href="#workflow" className={styles.link}>How it works</a>
-        <a href="#product" className={styles.link}>Features</a>
-        
+        <a href="#about" className={styles.link}>Platform</a>
+        <a href="#workflow" className={styles.link}>Workflow</a>
+        <a href="#product" className={styles.link}>Modules</a>
+        <a href="#industries" className={styles.link}>Industries</a>
+        <a href="#ai" className={styles.link}>AI</a>
+
         {user ? (
           <>
             <a href="#dashboard" className={styles.link}>Dashboard</a>
@@ -58,8 +60,8 @@ export const Navbar = () => {
             <a href="#signup" className={styles.link}>Sign up</a>
           </>
         )}
-        
-        <a href="#contact" className={styles.ctaLink}>Book Demo</a>
+
+        <a href="#contact" className={styles.ctaLink}>Start Free</a>
       </div>
     </motion.nav>
   );

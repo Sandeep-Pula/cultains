@@ -7,6 +7,7 @@ type SmartTaskModalProps = {
   onClose: () => void;
   initialDate: Date | null;
   customers: CustomerProject[];
+  customerLabel?: string;
   onSave: (
     title: string,
     dueAt: string,
@@ -14,7 +15,7 @@ type SmartTaskModalProps = {
   ) => Promise<void>;
 };
 
-export const SmartTaskModal = ({ open, onClose, initialDate, customers, onSave }: SmartTaskModalProps) => {
+export const SmartTaskModal = ({ open, onClose, initialDate, customers, customerLabel = 'Customer', onSave }: SmartTaskModalProps) => {
   const [title, setTitle] = useState('');
   const [search, setSearch] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerProject | null>(null);
@@ -123,7 +124,7 @@ export const SmartTaskModal = ({ open, onClose, initialDate, customers, onSave }
 
               <div>
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-brand-dark/70">
-                  Link to Customer
+                  Link to {customerLabel}
                 </label>
                 {!selectedCustomer && !isCreatingNew ? (
                   <div className="relative">
@@ -133,7 +134,7 @@ export const SmartTaskModal = ({ open, onClose, initialDate, customers, onSave }
                       type="text"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search existing customers or type to add new..."
+                      placeholder={`Search existing ${customerLabel.toLowerCase()}s or type to add new...`}
                       className="w-full rounded-2xl border border-brand-30 pl-10 pr-4 py-3 text-sm text-brand-dark outline-none focus:border-brand-10 focus:ring-1 focus:ring-brand-10"
                     />
                     
@@ -161,7 +162,7 @@ export const SmartTaskModal = ({ open, onClose, initialDate, customers, onSave }
                           className="flex w-full items-center gap-2 border-t border-brand-30 px-4 py-3 text-sm font-medium text-brand-10 hover:bg-brand-60"
                         >
                           <Plus size={16} />
-                          Create as new customer
+                          Create as new {customerLabel.toLowerCase()}
                         </button>
                       </div>
                     )}
@@ -186,7 +187,7 @@ export const SmartTaskModal = ({ open, onClose, initialDate, customers, onSave }
                 ) : (
                   <div className="rounded-2xl border border-brand-30 bg-brand-60/50 p-4 space-y-4">
                     <div className="flex items-center justify-between">
-                      <div className="text-sm font-semibold text-brand-dark">New Customer Profile</div>
+                    <div className="text-sm font-semibold text-brand-dark">New {customerLabel} Profile</div>
                       <button
                         type="button"
                         onClick={() => {

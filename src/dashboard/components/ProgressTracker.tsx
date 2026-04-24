@@ -1,20 +1,21 @@
 import clsx from 'clsx';
-import { stageLabels, stageOrder } from '../utils';
+import { stageLabels as defaultStageLabels, stageOrder } from '../utils';
 import type { ProjectStage } from '../types';
 
 type ProgressTrackerProps = {
   stage: ProjectStage;
   progress: number;
   compact?: boolean;
+  labels?: Record<ProjectStage, string>;
 };
 
-export const ProgressTracker = ({ stage, progress, compact = false }: ProgressTrackerProps) => {
+export const ProgressTracker = ({ stage, progress, compact = false, labels = defaultStageLabels }: ProgressTrackerProps) => {
   const currentIndex = stageOrder.indexOf(stage);
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between text-sm text-brand-dark/75">
-        <span>{stageLabels[stage]}</span>
+        <span>{labels[stage]}</span>
         <span>{progress}%</span>
       </div>
       <div className="h-2 rounded-full bg-brand-30/40">
@@ -32,7 +33,7 @@ export const ProgressTracker = ({ stage, progress, compact = false }: ProgressTr
                   active ? 'bg-brand-30 text-brand-dark' : 'bg-brand-60 text-brand-dark/45',
                 )}
               >
-                {stageLabels[step]}
+                {labels[step]}
               </div>
             );
           })}

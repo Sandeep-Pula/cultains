@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   BadgeCheck,
   Building2,
@@ -12,21 +12,24 @@ import {
   UsersRound,
 } from 'lucide-react';
 import type { WorkspaceProfile } from '../types';
+import type { WorkspaceBusinessConfig } from '../businessConfig';
 import { formatDate } from '../utils';
 
 type ProfilePageProps = {
   profile: WorkspaceProfile;
+  businessConfig: WorkspaceBusinessConfig;
   totalCustomers: number;
   totalTeamMembers: number;
   totalInventoryItems: number;
   onSaveProfile: (profile: Pick<
     WorkspaceProfile,
-    'companyName' | 'userName' | 'email' | 'phone' | 'city' | 'studioAddress' | 'gstNumber' | 'teamSize' | 'website'
+    'companyName' | 'userName' | 'businessType' | 'workspaceLogoUrl' | 'email' | 'phone' | 'city' | 'studioAddress' | 'gstNumber' | 'teamSize' | 'website'
   >) => Promise<void>;
 };
 
 export const ProfilePage = ({
   profile,
+  businessConfig,
   totalCustomers,
   totalTeamMembers,
   totalInventoryItems,
@@ -35,6 +38,8 @@ export const ProfilePage = ({
   const [form, setForm] = useState({
     companyName: profile.companyName,
     userName: profile.userName,
+    businessType: profile.businessType,
+    workspaceLogoUrl: profile.workspaceLogoUrl,
     email: profile.email,
     phone: profile.phone,
     city: profile.city,
@@ -44,11 +49,15 @@ export const ProfilePage = ({
     website: profile.website,
   });
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setForm({
       companyName: profile.companyName,
       userName: profile.userName,
+      businessType: profile.businessType,
+      workspaceLogoUrl: profile.workspaceLogoUrl,
       email: profile.email,
       phone: profile.phone,
       city: profile.city,
@@ -61,6 +70,26 @@ export const ProfilePage = ({
 
   const updateField = (field: keyof typeof form, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingLogo(true);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      setForm((current) => ({ ...current, workspaceLogoUrl: dataUrl }));
+    } finally {
+      setUploadingLogo(false);
+      event.target.value = '';
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -91,7 +120,7 @@ export const ProfilePage = ({
 
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
               <div className="rounded-[24px] border border-white/80 bg-white/85 p-4">
-                <div className="text-xs uppercase tracking-[0.14em] text-brand-dark/50">Active clients</div>
+                <div className="text-xs uppercase tracking-[0.14em] text-brand-dark/50">{businessConfig.customerPlural}</div>
                 <div className="mt-2 text-3xl font-semibold text-brand-dark">{totalCustomers}</div>
               </div>
               <div className="rounded-[24px] border border-white/80 bg-white/85 p-4">
@@ -133,7 +162,7 @@ export const ProfilePage = ({
                 <ShieldCheck size={17} className="mt-0.5 shrink-0" />
                 <div>
                   <div className="font-medium">Included workspace</div>
-                  <div className="text-brand-60/72">Access your CRM, inventory, billing, team workflows, and dashboard AI tools from the same account.</div>
+                  <div className="text-brand-60/72">Access your CRM, inventory, billing, operations, and AI tools from the same account.</div>
                 </div>
               </div>
             </div>
@@ -151,7 +180,7 @@ export const ProfilePage = ({
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-2xl font-semibold tracking-tight text-brand-dark">Company and account details</h2>
-              <p className="mt-2 text-sm text-brand-dark/65">These fields are stored in your workspace profile so you can keep the dashboard aligned with your business.</p>
+              <p className="mt-2 text-sm text-brand-dark/65">These fields are stored in your workspace profile so the dashboard can adapt to your business type and identity.</p>
             </div>
             <button
               type="submit"
@@ -173,6 +202,51 @@ export const ProfilePage = ({
               <input value={form.userName} onChange={(event) => updateField('userName', event.target.value)} className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none transition focus:border-brand-10 focus:bg-white" />
             </label>
             <label className="grid gap-2 text-sm text-brand-dark/75">
+              <span>Business type</span>
+              <select value={form.businessType} onChange={(event) => updateField('businessType', event.target.value)} className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none transition focus:border-brand-10 focus:bg-white">
+                <option value="general_business">General business</option>
+                <option value="interior_decorator">Interior decorator</option>
+                <option value="shoe_shop">Shoe shop</option>
+                <option value="sports_shop">Sports shop</option>
+                <option value="retail_store">Retail store</option>
+                <option value="service_business">Service business</option>
+              </select>
+            </label>
+            <div className="grid gap-2 text-sm text-brand-dark/75">
+              <span>Workspace logo</span>
+              <div className="rounded-[24px] border border-brand-30 bg-brand-60/35 p-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-brand-30 bg-white shadow-sm">
+                    {form.workspaceLogoUrl ? (
+                      <img src={form.workspaceLogoUrl} alt="Workspace logo preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-xs font-bold uppercase text-brand-dark/45">No logo</span>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="rounded-2xl bg-brand-10 px-4 py-2 text-sm font-medium text-brand-60 transition hover:bg-brand-dark"
+                    >
+                      {uploadingLogo ? 'Uploading...' : 'Upload logo'}
+                    </button>
+                    {form.workspaceLogoUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => updateField('workspaceLogoUrl', '')}
+                        className="block text-xs font-semibold text-rose-600"
+                      >
+                        Remove logo
+                      </button>
+                    ) : null}
+                    <p className="text-xs text-brand-dark/55">This image is saved in the user&apos;s Firestore profile and reused across the dashboard.</p>
+                  </div>
+                </div>
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+              </div>
+            </div>
+            <label className="grid gap-2 text-sm text-brand-dark/75">
               <span>Email</span>
               <input type="email" value={form.email} onChange={(event) => updateField('email', event.target.value)} className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none transition focus:border-brand-10 focus:bg-white" />
             </label>
@@ -189,7 +263,7 @@ export const ProfilePage = ({
               <input value={form.teamSize} onChange={(event) => updateField('teamSize', event.target.value)} placeholder="e.g. 12 people" className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none transition focus:border-brand-10 focus:bg-white" />
             </label>
             <label className="grid gap-2 text-sm text-brand-dark/75 md:col-span-2">
-              <span>Studio address</span>
+              <span>Business address</span>
               <textarea value={form.studioAddress} onChange={(event) => updateField('studioAddress', event.target.value)} rows={4} className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none transition focus:border-brand-10 focus:bg-white" />
             </label>
             <label className="grid gap-2 text-sm text-brand-dark/75">
@@ -218,7 +292,7 @@ export const ProfilePage = ({
                 <Phone size={17} className="mt-0.5 shrink-0 text-brand-10" />
                 <div>
                   <div className="font-medium text-brand-dark">Phone</div>
-                  <div>{profile.phone || 'Add a phone number for the studio.'}</div>
+                  <div>{profile.phone || 'Add a phone number for the workspace.'}</div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -232,7 +306,7 @@ export const ProfilePage = ({
                 <Globe size={17} className="mt-0.5 shrink-0 text-brand-10" />
                 <div>
                   <div className="font-medium text-brand-dark">Website</div>
-                  <div>{profile.website || 'Add your website or portfolio link.'}</div>
+                  <div>{profile.website || 'Add your website or business link.'}</div>
                 </div>
               </div>
             </div>
@@ -251,9 +325,9 @@ export const ProfilePage = ({
               <div className="flex items-center justify-between rounded-2xl bg-brand-60/35 px-4 py-3">
                 <div className="flex items-center gap-3 text-sm text-brand-dark">
                   <Building2 size={16} className="text-brand-10" />
-                  GST registration
+                  Business type
                 </div>
-                <span className="font-medium text-brand-dark">{profile.gstNumber || 'Not added'}</span>
+                <span className="font-medium capitalize text-brand-dark">{profile.businessType.replace(/_/g, ' ')}</span>
               </div>
               <div className="flex items-center justify-between rounded-2xl bg-brand-60/35 px-4 py-3">
                 <div className="flex items-center gap-3 text-sm text-brand-dark">

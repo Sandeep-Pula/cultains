@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import type { CustomerProject, TeamMember } from '../types';
+import type { WorkspaceBusinessConfig } from '../businessConfig';
 
 type AddCustomerModalProps = {
   open: boolean;
   team: TeamMember[];
+  businessConfig: WorkspaceBusinessConfig;
   onClose: () => void;
   onSubmit: (payload: Pick<
     CustomerProject,
@@ -37,7 +39,7 @@ const initialState = {
   notes: '',
 };
 
-export const AddCustomerModal = ({ open, team, onClose, onSubmit }: AddCustomerModalProps) => {
+export const AddCustomerModal = ({ open, team, businessConfig, onClose, onSubmit }: AddCustomerModalProps) => {
   const [form, setForm] = useState(initialState);
 
   if (!open) return null;
@@ -62,7 +64,7 @@ export const AddCustomerModal = ({ open, team, onClose, onSubmit }: AddCustomerM
         <div className="flex items-center justify-between border-b border-brand-30 px-6 py-4">
           <div>
             <h3 className="text-2xl font-semibold text-brand-dark">Add new customer</h3>
-            <p className="mt-1 text-sm text-brand-dark/80">Create a new customer and assign the project owner immediately.</p>
+            <p className="mt-1 text-sm text-brand-dark/80">Create a new {businessConfig.customerLabel.toLowerCase()} record and assign the {businessConfig.ownerLabel.toLowerCase()} immediately.</p>
           </div>
           <button onClick={onClose} className="rounded-2xl border border-brand-30 px-3 py-2 text-sm text-brand-dark">
             Close
@@ -71,11 +73,11 @@ export const AddCustomerModal = ({ open, team, onClose, onSubmit }: AddCustomerM
 
         <form onSubmit={handleSubmit} className="grid gap-4 px-6 py-6 md:grid-cols-2">
           {[
-            ['Customer name', 'customerName'],
+            [`${businessConfig.customerLabel} name`, 'customerName'],
             ['Phone', 'phone'],
             ['Email', 'email'],
-            ['Project title', 'title'],
-            ['Location', 'location'],
+            [businessConfig.titleLabel, 'title'],
+            [businessConfig.locationLabel, 'location'],
             ['Address', 'address'],
           ].map(([label, key]) => (
             <label key={key} className="grid gap-2 text-sm text-brand-dark/80">
@@ -90,36 +92,36 @@ export const AddCustomerModal = ({ open, team, onClose, onSubmit }: AddCustomerM
           ))}
 
           <label className="grid gap-2 text-sm text-brand-dark/80">
-            <span className="font-medium text-brand-dark">Project type</span>
+            <span className="font-medium text-brand-dark">{businessConfig.workLabel} type</span>
             <select
               value={form.projectType}
               onChange={(event) => setForm((current) => ({ ...current, projectType: event.target.value as typeof form.projectType }))}
               className="rounded-2xl border border-brand-30 bg-brand-30/40 px-3 py-2.5 text-brand-dark"
             >
-              <option value="living_room">Living room</option>
-              <option value="bedroom">Bedroom</option>
-              <option value="office">Office</option>
-              <option value="full_home">Full home</option>
-              <option value="kitchen">Kitchen</option>
-              <option value="retail">Retail</option>
+              <option value="living_room">{businessConfig.projectTypeLabels.living_room}</option>
+              <option value="bedroom">{businessConfig.projectTypeLabels.bedroom}</option>
+              <option value="office">{businessConfig.projectTypeLabels.office}</option>
+              <option value="full_home">{businessConfig.projectTypeLabels.full_home}</option>
+              <option value="kitchen">{businessConfig.projectTypeLabels.kitchen}</option>
+              <option value="retail">{businessConfig.projectTypeLabels.retail}</option>
             </select>
           </label>
 
           <label className="grid gap-2 text-sm text-brand-dark/80">
-            <span className="font-medium text-brand-dark">Site status</span>
+            <span className="font-medium text-brand-dark">{businessConfig.statusLabel}</span>
             <select
               value={form.siteStatus}
               onChange={(event) => setForm((current) => ({ ...current, siteStatus: event.target.value as typeof form.siteStatus }))}
               className="rounded-2xl border border-brand-30 bg-brand-30/40 px-3 py-2.5 text-brand-dark"
             >
-              <option value="ready">Ready</option>
-              <option value="in_progress">In progress</option>
-              <option value="under_construction">Under construction</option>
+              <option value="ready">{businessConfig.siteStatusLabels.ready}</option>
+              <option value="in_progress">{businessConfig.siteStatusLabels.in_progress}</option>
+              <option value="under_construction">{businessConfig.siteStatusLabels.under_construction}</option>
             </select>
           </label>
 
           <label className="grid gap-2 text-sm text-brand-dark/80">
-            <span className="font-medium text-brand-dark">Owner</span>
+            <span className="font-medium text-brand-dark">{businessConfig.ownerLabel}</span>
             <select
               value={form.ownerId}
               onChange={(event) => setForm((current) => ({ ...current, ownerId: event.target.value }))}
@@ -135,13 +137,13 @@ export const AddCustomerModal = ({ open, team, onClose, onSubmit }: AddCustomerM
           </label>
 
           <label className="grid gap-2 text-sm text-brand-dark/80">
-            <span className="font-medium text-brand-dark">Lead designer</span>
+            <span className="font-medium text-brand-dark">{businessConfig.specialistLabel}</span>
             <select
               value={form.leadDesignerId}
               onChange={(event) => setForm((current) => ({ ...current, leadDesignerId: event.target.value }))}
               className="rounded-2xl border border-brand-30 bg-brand-30/40 px-3 py-2.5 text-brand-dark"
             >
-              <option value="">Select lead designer</option>
+              <option value="">Select {businessConfig.specialistLabel.toLowerCase()}</option>
               {team.map((member) => (
                 <option key={member.id} value={member.id}>
                   {member.name}
@@ -151,13 +153,13 @@ export const AddCustomerModal = ({ open, team, onClose, onSubmit }: AddCustomerM
           </label>
 
           <label className="grid gap-2 text-sm text-brand-dark/80">
-            <span className="font-medium text-brand-dark">Field staff</span>
+            <span className="font-medium text-brand-dark">{businessConfig.fieldLeadLabel}</span>
             <select
               value={form.fieldStaffId}
               onChange={(event) => setForm((current) => ({ ...current, fieldStaffId: event.target.value }))}
               className="rounded-2xl border border-brand-30 bg-brand-30/40 px-3 py-2.5 text-brand-dark"
             >
-              <option value="">Select field staff</option>
+              <option value="">Select {businessConfig.fieldLeadLabel.toLowerCase()}</option>
               {team.map((member) => (
                 <option key={member.id} value={member.id}>
                   {member.name}
@@ -172,7 +174,7 @@ export const AddCustomerModal = ({ open, team, onClose, onSubmit }: AddCustomerM
               value={form.notes}
               onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
               className="min-h-24 rounded-2xl border border-brand-30 bg-brand-30/40 px-3 py-2.5 outline-none text-brand-dark"
-              placeholder="Project context, preferences, or sales notes"
+              placeholder={`Context, preferences, or ${businessConfig.touchpointLabel.toLowerCase()} notes`}
             />
           </label>
 
@@ -181,7 +183,7 @@ export const AddCustomerModal = ({ open, team, onClose, onSubmit }: AddCustomerM
               Cancel
             </button>
             <button type="submit" className="rounded-2xl bg-brand-10 px-4 py-2.5 text-sm font-medium text-brand-60">
-              Create customer
+              Create {businessConfig.customerLabel}
             </button>
           </div>
         </form>

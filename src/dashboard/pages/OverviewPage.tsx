@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Smile, FolderKanban, CheckCircle2, Clock } from 'lucide-react';
 import type { DashboardData } from '../types';
+import type { WorkspaceBusinessConfig } from '../businessConfig';
 import { InteractiveCalendar } from '../components/InteractiveCalendar';
 import { SmartTaskModal } from '../components/SmartTaskModal';
-import { stageLabels, relativeDate } from '../utils';
+import { relativeDate } from '../utils';
 
 type OverviewPageProps = {
   data: DashboardData;
+  businessConfig: WorkspaceBusinessConfig;
   onOpenCustomer: (id: string) => void;
   onNavigate: (view: string) => void;
   onSaveSmartTask: (
@@ -21,6 +23,7 @@ type OverviewPageProps = {
 
 export const OverviewPage = ({
   data,
+  businessConfig,
   onOpenCustomer,
   onSaveSmartTask,
 }: OverviewPageProps) => {
@@ -35,6 +38,7 @@ export const OverviewPage = ({
           <div className="flex-1 overflow-y-auto mix-blend-multiply hide-scrollbar">
             <InteractiveCalendar
               tasks={data.tasks}
+              title={`${businessConfig.label} calendar`}
               onOpenSmartTask={(date) => setSmartTaskDate(date)}
             />
           </div>
@@ -45,7 +49,7 @@ export const OverviewPage = ({
           <div className="flex items-center justify-between border-b border-brand-30 bg-brand-60/40 px-6 py-5">
             <div>
               <h2 className="text-lg font-semibold text-brand-dark">Follow-up Center</h2>
-              <p className="text-xs text-brand-dark/60 mt-0.5">Projects expecting engagement</p>
+              <p className="text-xs text-brand-dark/60 mt-0.5">{businessConfig.workPlural} expecting engagement</p>
             </div>
             <div className="flex bg-brand-30/50 rounded-full p-1 border border-brand-30/50">
               {(['day', 'week', 'month'] as const).map((f) => (
@@ -66,7 +70,7 @@ export const OverviewPage = ({
           <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-white">
             {data.customers.length === 0 ? (
               <div className="flex h-32 items-center justify-center text-sm text-brand-dark/50 border-2 border-dashed border-brand-30 rounded-2xl">
-                No active projects to follow up with.
+                No active {businessConfig.workPlural.toLowerCase()} to follow up with.
               </div>
             ) : null}
             {data.customers.map((customer) => (
@@ -80,7 +84,7 @@ export const OverviewPage = ({
                     <div className="mt-1 text-sm text-brand-dark/70 font-medium">{customer.title}</div>
                   </div>
                   <span className="inline-flex rounded-full bg-brand-30/50 px-2.5 py-1 text-[11px] font-medium text-brand-dark">
-                    {stageLabels[customer.stage] || customer.stage}
+                    {businessConfig.stageLabels[customer.stage] || customer.stage}
                   </span>
                 </div>
                 <div className="mt-4 flex items-center justify-between border-t border-brand-30 pt-3">
@@ -91,7 +95,7 @@ export const OverviewPage = ({
                     onClick={() => onOpenCustomer(customer.id)}
                     className="text-sm font-semibold text-brand-10 hover:underline underline-offset-4"
                   >
-                    View workspace
+                    Open record
                   </button>
                 </div>
               </div>
@@ -104,22 +108,22 @@ export const OverviewPage = ({
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4 lg:gap-6 shrink-0 h-auto sm:h-36">
         <div className="group flex flex-col items-center justify-center rounded-[28px] border border-brand-30 bg-white p-6 shadow-sm hover:shadow transition">
           <Smile size={24} className="mb-2 text-brand-10 transition-transform group-hover:scale-110" />
-          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-dark/70 text-center">Total Happy Customers</div>
-          <div className="mt-1 text-3xl font-semibold text-brand-dark">{data.customers.length * 4}</div>
+          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-dark/70 text-center">{businessConfig.primaryMetricLabel}</div>
+          <div className="mt-1 text-3xl font-semibold text-brand-dark">{data.customers.length}</div>
         </div>
         <div className="group flex flex-col items-center justify-center rounded-[28px] border border-brand-30 bg-white p-6 shadow-sm hover:shadow transition">
           <FolderKanban size={24} className="mb-2 text-brand-10 transition-transform group-hover:scale-110" />
-          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-dark/70 text-center">Active Projects</div>
+          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-dark/70 text-center">{businessConfig.secondaryMetricLabel}</div>
           <div className="mt-1 text-3xl font-semibold text-brand-dark">{data.customers.filter((c) => c.stage !== 'completed').length}</div>
         </div>
         <div className="group flex flex-col items-center justify-center rounded-[28px] border border-brand-30 bg-white p-6 shadow-sm hover:shadow transition">
           <CheckCircle2 size={24} className="mb-2 text-brand-10 transition-transform group-hover:scale-110" />
-          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-dark/70 text-center">Completed Jobs</div>
+          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-dark/70 text-center">{businessConfig.tertiaryMetricLabel}</div>
           <div className="mt-1 text-3xl font-semibold text-brand-dark">{data.customers.filter((c) => c.stage === 'completed').length}</div>
         </div>
         <div className="group flex flex-col items-center justify-center rounded-[28px] border border-brand-30 bg-white p-6 shadow-sm hover:shadow transition">
           <Clock size={24} className="mb-2 text-brand-10 transition-transform group-hover:scale-110" />
-          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-dark/70 text-center">Pending Jobs</div>
+          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-dark/70 text-center">{businessConfig.quaternaryMetricLabel}</div>
           <div className="mt-1 text-3xl font-semibold text-brand-dark">{data.tasks.filter((t) => !t.done).length}</div>
         </div>
       </div>
@@ -129,6 +133,7 @@ export const OverviewPage = ({
         onClose={() => setSmartTaskDate(null)}
         initialDate={smartTaskDate}
         customers={data.customers}
+        customerLabel={businessConfig.customerLabel}
         onSave={onSaveSmartTask}
       />
     </div>

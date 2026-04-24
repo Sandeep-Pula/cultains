@@ -11,6 +11,7 @@ import {
 import { db } from '../../lib/firebase';
 import type {
   ActivityItem,
+  BusinessType,
   CommunicationLog,
   CustomerProject,
   DashboardData,
@@ -34,6 +35,8 @@ type UserProfileDoc = {
   userId: string;
   userName: string;
   companyName: string;
+  businessType: BusinessType;
+  workspaceLogoUrl: string;
   email: string;
   phone: string;
   city: string;
@@ -85,12 +88,14 @@ const getUserName = (user: User, preferredName?: string) =>
 
 const getCompanyName = (user: User, preferredName?: string) => {
   const baseName = preferredName?.trim() || user.displayName?.trim() || user.email?.split('@')[0] || 'Workspace';
-  return `${baseName} Studio`;
+  return `${baseName} Workspace`;
 };
 
 const buildWorkspaceProfile = (user: User, profile?: Partial<UserProfileDoc>): WorkspaceProfile => ({
   companyName: profile?.companyName?.trim() || getCompanyName(user),
   userName: profile?.userName?.trim() || getUserName(user),
+  businessType: profile?.businessType || 'general_business',
+  workspaceLogoUrl: profile?.workspaceLogoUrl?.trim() || '',
   email: profile?.email?.trim() || user.email || '',
   phone: profile?.phone?.trim() || '',
   city: profile?.city?.trim() || '',
@@ -383,6 +388,8 @@ export const dashboardService = {
       userId: user.uid,
       userName: getUserName(user, preferredName),
       companyName: getCompanyName(user, preferredName),
+      businessType: 'general_business',
+      workspaceLogoUrl: '',
       email: user.email || '',
       phone: '',
       city: '',
@@ -411,6 +418,8 @@ export const dashboardService = {
         userId: user.uid,
         userName: data.userName?.trim() || fallbackProfile.userName,
         companyName: data.companyName?.trim() || fallbackProfile.companyName,
+        businessType: data.businessType || fallbackProfile.businessType,
+        workspaceLogoUrl: data.workspaceLogoUrl?.trim() || fallbackProfile.workspaceLogoUrl,
         email: data.email?.trim() || fallbackProfile.email,
         phone: data.phone?.trim() || fallbackProfile.phone,
         city: data.city?.trim() || fallbackProfile.city,
@@ -549,6 +558,8 @@ export const dashboardService = {
       WorkspaceProfile,
       | 'companyName'
       | 'userName'
+      | 'businessType'
+      | 'workspaceLogoUrl'
       | 'email'
       | 'phone'
       | 'city'

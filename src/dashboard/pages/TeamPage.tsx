@@ -1,11 +1,13 @@
 import { AlertTriangle, Plus, Users2 } from 'lucide-react';
 import type { CustomerProject, TaskItem, TeamMember } from '../types';
+import type { WorkspaceBusinessConfig } from '../businessConfig';
 import { EmptyStatePanel } from '../components/EmptyStatePanel';
 
 type TeamPageProps = {
   team: TeamMember[];
   customers: CustomerProject[];
   tasks: TaskItem[];
+  businessConfig: WorkspaceBusinessConfig;
   onOpenCustomer: (customerId: string) => void;
   onOpenMember: (memberId: string) => void;
   onAddMember: () => void;
@@ -15,6 +17,7 @@ export const TeamPage = ({
   team,
   customers,
   tasks,
+  businessConfig,
   onOpenCustomer,
   onOpenMember,
   onAddMember,
@@ -29,8 +32,8 @@ export const TeamPage = ({
       {/* Header - Fixed */}
       <div className="shrink-0 flex flex-col gap-3 md:flex-row md:items-end md:justify-between px-2">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-brand-dark">Team Management</h1>
-          <p className="mt-1 text-brand-dark/80 max-w-2xl text-[15px]">Keep ownership clear, balance current workloads, and dive into member-specific task handling natively inside this workspace.</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-brand-dark">Team management</h1>
+          <p className="mt-1 max-w-2xl text-[15px] text-brand-dark/80">{businessConfig.teamIntro}</p>
         </div>
         <button
           onClick={onAddMember}
@@ -48,7 +51,7 @@ export const TeamPage = ({
           <div className="mt-2 text-3xl font-semibold text-brand-dark">{team.length}</div>
         </div>
         <div className="rounded-[24px] border border-brand-30 bg-white p-5 shadow-sm">
-          <div className="text-xs font-bold uppercase tracking-wider text-brand-dark/50">Projects needing assignment</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-brand-dark/50">{businessConfig.workPlural} needing assignment</div>
           <div className="mt-2 text-3xl font-semibold text-brand-dark">{unassignedProjects.length}</div>
         </div>
         <div className="rounded-[24px] border border-brand-30 bg-white p-5 shadow-sm">
@@ -64,7 +67,7 @@ export const TeamPage = ({
             <EmptyStatePanel
               icon={Users2}
               title="No team members yet"
-              description="Add your first teammate when you want to securely delegate ownership, design, or field work. We'll track their specific load."
+              description={`Add your first teammate when you want to securely delegate ownership and execution across ${businessConfig.workPlural.toLowerCase()}.`}
               actions={[
                 { label: 'Create new team member profile', onClick: onAddMember, emphasis: 'primary' },
               ]}
@@ -101,7 +104,7 @@ export const TeamPage = ({
                         </button>
 
                         <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-brand-dark cursor-default shrink-0">
-                          <span className="rounded-full border border-brand-30/50 bg-white px-3 py-1 text-brand-dark/70 drop-shadow-sm">{member.activeProjects} active maps</span>
+                          <span className="rounded-full border border-brand-30/50 bg-white px-3 py-1 text-brand-dark/70 drop-shadow-sm">{member.activeProjects} active assignments</span>
                           <span className="rounded-full border border-brand-30/50 bg-white px-3 py-1 drop-shadow-sm">{member.workload}% load</span>
                           {memberOverdueTasks.length ? (
                             <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700 drop-shadow-sm">{memberOverdueTasks.length} overdue flag</span>

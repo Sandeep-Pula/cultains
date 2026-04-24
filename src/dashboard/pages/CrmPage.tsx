@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { BellRing, Clock3, MessageSquareMore, PhoneCall, Plus, Sparkles } from 'lucide-react';
 import type { CommunicationChannel, CustomerProject, TeamMember } from '../types';
+import type { WorkspaceBusinessConfig } from '../businessConfig';
 import { EmptyStatePanel } from '../components/EmptyStatePanel';
 import { StatusBadge } from '../components/StatusBadge';
 import { AddCrmTouchpointModal } from '../components/AddCrmTouchpointModal';
@@ -9,6 +10,7 @@ import { relativeDate } from '../utils';
 type CrmPageProps = {
   customers: CustomerProject[];
   team: TeamMember[];
+  businessConfig: WorkspaceBusinessConfig;
   onOpenCustomer: (customerId: string) => void;
   onUpdateCustomer: (customerId: string, payload: Partial<CustomerProject>) => Promise<void> | void;
   actorName: string;
@@ -33,6 +35,7 @@ const channelIcons: Record<CommunicationChannel, typeof PhoneCall> = {
 export const CrmPage = ({
   customers,
   team,
+  businessConfig,
   onOpenCustomer,
   onUpdateCustomer,
   actorName,
@@ -121,9 +124,7 @@ export const CrmPage = ({
       <div className="shrink-0 flex flex-col gap-3 md:flex-row md:items-end md:justify-between px-2">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight text-brand-dark">CRM workspace</h1>
-          <p className="mt-1 max-w-3xl text-[15px] text-brand-dark/80">
-            Track follow-ups, render approvals, client conversations, and sales confidence from one working page.
-          </p>
+          <p className="mt-1 max-w-3xl text-[15px] text-brand-dark/80">{businessConfig.crmIntro}</p>
         </div>
         <button
           onClick={() => setSelectedCustomerId(crmCustomers[0]?.id ?? null)}
@@ -140,7 +141,7 @@ export const CrmPage = ({
           <div className="mt-2 text-3xl font-semibold text-brand-dark">{followUpQueue.length}</div>
         </div>
         <div className="rounded-[24px] border border-brand-30 bg-white p-5 shadow-sm">
-          <div className="text-xs font-bold uppercase tracking-wider text-sky-700/70">Render pending</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-sky-700/70">Workflow pending</div>
           <div className="mt-2 text-3xl font-semibold text-sky-700">{renderQueue.length}</div>
         </div>
         <div className="rounded-[24px] border border-brand-30 bg-white p-5 shadow-sm">
@@ -157,7 +158,7 @@ export const CrmPage = ({
         <section className="flex min-h-0 flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-sm">
           <div className="shrink-0 border-b border-brand-30 bg-brand-60/35 px-5 py-4">
             <h2 className="text-xl font-semibold tracking-tight text-brand-dark">Customer action queue</h2>
-            <p className="mt-0.5 text-xs text-brand-dark/60">The most urgent customers bubble to the top automatically.</p>
+            <p className="mt-0.5 text-xs text-brand-dark/60">The most urgent {businessConfig.customerPlural.toLowerCase()} bubble to the top automatically.</p>
           </div>
           <div className="min-h-0 flex-1 overflow-auto">
             {crmCustomers.length ? (
@@ -182,7 +183,7 @@ export const CrmPage = ({
                           <div className="font-semibold text-brand-dark">{customer.customerName}</div>
                           <div className="mt-1 text-sm text-brand-dark/60">{customer.title}</div>
                         </td>
-                        <td className="border-b border-brand-30/70 px-5 py-4"><StatusBadge stage={customer.stage} /></td>
+                        <td className="border-b border-brand-30/70 px-5 py-4"><StatusBadge stage={customer.stage} labels={businessConfig.stageLabels} /></td>
                         <td className="border-b border-brand-30/70 px-5 py-4 text-sm text-brand-dark/75">{owner?.name ?? 'Unassigned'}</td>
                         <td className="border-b border-brand-30/70 px-5 py-4 text-sm text-brand-dark/65">{relativeDate(customer.lastContactedAt)}</td>
                         <td className="border-b border-brand-30/70 px-5 py-4 text-sm text-brand-dark/65">{relativeDate(customer.nextFollowUpAt)}</td>
@@ -190,7 +191,7 @@ export const CrmPage = ({
                         <td className="border-b border-brand-30/70 px-5 py-4">
                           <div className="flex flex-wrap gap-1.5">
                             {customer.needsFollowUp ? <span className="rounded-full bg-amber-100 px-2 py-1 text-[11px] font-medium text-amber-700">Follow-up</span> : null}
-                            {customer.renderPending ? <span className="rounded-full bg-sky-100 px-2 py-1 text-[11px] font-medium text-sky-700">Render pending</span> : null}
+                            {customer.renderPending ? <span className="rounded-full bg-sky-100 px-2 py-1 text-[11px] font-medium text-sky-700">Workflow pending</span> : null}
                             {customer.priority === 'high' ? <span className="rounded-full bg-rose-100 px-2 py-1 text-[11px] font-medium text-rose-700">High priority</span> : null}
                           </div>
                         </td>

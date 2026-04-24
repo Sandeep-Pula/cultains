@@ -272,7 +272,7 @@ export const AddInventoryItemModal = ({
             <div className="mt-4 space-y-4">
               {[
                 'Items automatically move into purchase alerts when stock falls to the minimum.',
-                'You can assign stock to team members and link it to project workspaces later.',
+                'You can assign stock to team members and link it to work records later.',
                 'Aging or damaged stock can be pushed to clearance without leaving the page.',
               ].map((item) => (
                 <div key={item} className="rounded-2xl bg-white/85 px-4 py-3 text-sm text-brand-dark/85 shadow-sm">

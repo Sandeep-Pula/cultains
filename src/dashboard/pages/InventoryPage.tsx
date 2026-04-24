@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { AlertTriangle, Boxes, Package, Plus, ShieldAlert, Warehouse } from 'lucide-react';
 import type { CustomerProject, InventoryItem } from '../types';
+import type { WorkspaceBusinessConfig } from '../businessConfig';
 import { EmptyStatePanel } from '../components/EmptyStatePanel';
 import { AddInventoryItemModal } from '../components/AddInventoryItemModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -9,6 +10,7 @@ import { formatCurrency, getInventoryFlags, relativeDate } from '../utils';
 type InventoryPageProps = {
   inventory: InventoryItem[];
   customers: CustomerProject[];
+  businessConfig: WorkspaceBusinessConfig;
   onAddItem: (payload: Pick<
     InventoryItem,
     | 'name'
@@ -78,6 +80,7 @@ const flagStyles = {
 export const InventoryPage = ({
   inventory,
   customers,
+  businessConfig,
   onAddItem,
   onUpdateItem,
   onDeleteItem,
@@ -132,9 +135,7 @@ export const InventoryPage = ({
       <div className="shrink-0 flex flex-col gap-3 md:flex-row md:items-end md:justify-between px-2">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight text-brand-dark">Inventory workspace</h1>
-          <p className="mt-1 max-w-3xl text-[15px] text-brand-dark/80">
-            Track stock, purchase pressure, supplier details, and click any row to edit the full record.
-          </p>
+          <p className="mt-1 max-w-3xl text-[15px] text-brand-dark/80">{businessConfig.inventoryIntro}</p>
         </div>
         <button
           onClick={() => setAddModalOpen(true)}
@@ -182,7 +183,7 @@ export const InventoryPage = ({
             <EmptyStatePanel
               icon={Package}
               title="Inventory is empty"
-              description="Create your first stock record to track current units, reorder thresholds, supplier details, and project usage in one table."
+              description={`Create your first stock record to track current units, reorder thresholds, supplier details, and ${businessConfig.workLabel.toLowerCase()} usage in one table.`}
               actions={[
                 { label: 'Create first item', onClick: () => setAddModalOpen(true), emphasis: 'primary' },
                 { label: 'Open customers', onClick: () => (window.location.hash = '#dashboard/customers') },

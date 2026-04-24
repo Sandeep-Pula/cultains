@@ -5,6 +5,7 @@ import { auth } from './lib/firebase';
 import { HeroSection } from './components/HeroSection';
 import { BentoFeatures } from './components/BentoFeatures';
 import { HomeContent } from './components/HomeContent';
+import { WelcomeSplash } from './components/WelcomeSplash';
 import { AuthPage } from './components/AuthPage';
 import { AIInteriorDesigner } from './components/AIInteriorDesigner';
 import { Dashboard } from './components/Dashboard';
@@ -84,6 +85,7 @@ function App() {
           <AuthPage mode={isSignupPage ? 'signup' : 'login'} />
         ) : (
           <>
+          <WelcomeSplash />
           <HeroSection />
           <BentoFeatures />
           <HomeContent />

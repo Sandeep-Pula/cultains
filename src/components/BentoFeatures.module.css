@@ -8,7 +8,7 @@
 }
 
 .headingBlock {
-  max-width: 720px;
+  max-width: 760px;
 }
 
 .eyebrow {
@@ -38,7 +38,7 @@
 
 .stepsGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
   margin-top: 2rem;
 }
@@ -79,6 +79,12 @@
 .cardDescription {
   margin-top: 0.7rem;
   color: var(--color-body);
+}
+
+@media (max-width: 960px) {
+  .stepsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 760px) {

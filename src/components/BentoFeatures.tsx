@@ -1,22 +1,27 @@
 import { motion } from 'framer-motion';
-import { BriefcaseBusiness, Bot, ClipboardList } from 'lucide-react';
+import { Bot, BriefcaseBusiness, LayoutDashboard, Store } from 'lucide-react';
 import styles from './BentoFeatures.module.css';
 
 const steps = [
   {
-    title: 'Run daily operations',
-    description: 'Track leads, projects, customer communication, inventory, billing, and team responsibilities from one dashboard.',
+    title: 'Set up your business system',
+    description: 'Create your workspace, add teams, customers, inventory, and finance flows without stitching together five separate tools.',
+    icon: <Store size={24} />,
+  },
+  {
+    title: 'Run daily operations online',
+    description: 'Manage CRM, billing, GST and tax records, stock alerts, tasks, and reporting from one shared dashboard.',
     icon: <BriefcaseBusiness size={24} />,
   },
   {
-    title: 'Stay execution ready',
-    description: 'Keep material stock, project follow-ups, and financial visibility aligned so teams can deliver without scattered tools.',
-    icon: <ClipboardList size={24} />,
+    title: 'Turn on AI for your industry',
+    description: 'Add business-specific AI for retail, interiors, sports, wholesale, and service workflows right where your team already works.',
+    icon: <Bot size={24} />,
   },
   {
-    title: 'Use AI when it matters',
-    description: 'Open AI room rendering from inside the dashboard to create polished visual previews for faster approvals.',
-    icon: <Bot size={24} />,
+    title: 'Scale without rebuilding everything',
+    description: 'As your business grows, keep adding modules and automations instead of migrating to a new stack each year.',
+    icon: <LayoutDashboard size={24} />,
   },
 ];
 
@@ -31,10 +36,11 @@ export const BentoFeatures = () => {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6 }}
         >
-          <span className={styles.eyebrow}>How Cultains works</span>
-          <h2 className={styles.heading}>One platform for managing decorator operations and activating AI tools only when you need them.</h2>
+          <span className={styles.eyebrow}>How mydandha works</span>
+          <h2 className={styles.heading}>Start with core business operations, then layer in AI and advanced workflows as you grow.</h2>
           <p className={styles.subheading}>
-            Instead of juggling CRM sheets, stock notes, billing files, and design tools, your team works from one connected system.
+            Instead of juggling CRM sheets, billing apps, stock notes, tax records, and disconnected AI tools, your
+            team works from one connected system.
           </p>
         </motion.div>
 

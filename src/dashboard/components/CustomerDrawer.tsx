@@ -19,6 +19,7 @@ import type {
   QuoteStatus,
   PaymentStage,
 } from '../types';
+import type { WorkspaceBusinessConfig } from '../businessConfig';
 import { formatCurrency, formatDateTime, relativeDate, siteBadgeClass, siteStatusLabels, stageLabels } from '../utils';
 import { StatusBadge } from './StatusBadge';
 import { ProgressTracker } from './ProgressTracker';
@@ -26,6 +27,7 @@ import { ProgressTracker } from './ProgressTracker';
 type CustomerDrawerProps = {
   customer: CustomerProject | null;
   team: TeamMember[];
+  businessConfig: WorkspaceBusinessConfig;
   open: boolean;
   onClose: () => void;
   onStageChange: (customerId: string, stage: ProjectStage) => void;
@@ -155,6 +157,7 @@ const InlineCurrencyInput = ({ value, onSave, className }: { value: number; onSa
 export const CustomerDrawer = ({
   customer,
   team,
+  businessConfig,
   open,
   onClose,
   onStageChange,
@@ -231,7 +234,7 @@ export const CustomerDrawer = ({
                       className="text-2xl font-semibold tracking-tight text-brand-dark max-w-sm sm:max-w-md font-sans"
                       placeholder="Customer Name"
                     />
-                    <StatusBadge stage={customer.stage} />
+                    <StatusBadge stage={customer.stage} labels={businessConfig.stageLabels} />
                     
                     <select
                       value={customer.priority}
@@ -273,7 +276,7 @@ export const CustomerDrawer = ({
                         className={`${siteBadgeClass(customer.siteStatus)} cursor-pointer appearance-none font-sans`}
                       >
                         {siteStatusOptions.map(p => (
-                          <option key={p} value={p}>{siteStatusLabels[p]}</option>
+                          <option key={p} value={p}>{businessConfig.siteStatusLabels[p] || siteStatusLabels[p]}</option>
                         ))}
                       </select>
                       
@@ -292,7 +295,7 @@ export const CustomerDrawer = ({
                       </button>
                     </div>
                     <div className="mt-6">
-                      <ProgressTracker stage={customer.stage} progress={customer.progress} compact />
+                      <ProgressTracker stage={customer.stage} progress={customer.progress} compact labels={businessConfig.stageLabels} />
                     </div>
                   </div>
 
@@ -392,7 +395,7 @@ export const CustomerDrawer = ({
                     >
                       {stageOptions.map((stage) => (
                         <option key={stage} value={stage}>
-                          {stageLabels[stage]}
+                          {businessConfig.stageLabels[stage] || stageLabels[stage]}
                         </option>
                       ))}
                     </select>

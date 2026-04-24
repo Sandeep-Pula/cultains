@@ -8,15 +8,15 @@ type AuthPageProps = {
 };
 
 const benefitPoints = [
-  'Create visual room previews faster',
-  'Share client-ready links from your phone',
-  'Keep materials and room photos organized',
+  'Manage customers, stock, billing, and workflows',
+  'Give your team one shared business dashboard',
+  'Unlock AI tools inside the same workspace',
 ];
 
 export const AuthPage = ({ mode }: AuthPageProps) => {
   const [isSignup, setIsSignup] = useState(mode === 'signup');
   const [isForgotPassword, setIsForgotPassword] = useState(false);
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -24,7 +24,6 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Sync mode changes from parent if user navigates via hash
   if (mode === 'signup' && !isSignup && !isForgotPassword) setIsSignup(true);
   if (mode === 'login' && isSignup && !isForgotPassword) setIsSignup(false);
 
@@ -38,7 +37,6 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
       if (isForgotPassword) {
         await authService.requestPasswordReset(email);
         setSuccessMsg('A password reset link has been sent to your email.');
-        // Don't redirect immediately so they see the message
       } else if (isSignup) {
         await authService.signUp(email, password, name);
         window.location.hash = '#dashboard';
@@ -60,7 +58,7 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
 
   const getTitle = () => {
     if (isForgotPassword) return 'Reset your password.';
-    return isSignup ? 'Start your first room preview in minutes.' : 'Log in to continue your design workflow.';
+    return isSignup ? 'Start running your business online.' : 'Log in to continue your business workflow.';
   };
 
   const getFormTitle = () => {
@@ -81,15 +79,15 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
         <div className={styles.panel}>
           <div className={styles.copyColumn}>
             <span className={styles.eyebrow}>
-              {isForgotPassword ? 'Recovery' : (isSignup ? 'Create account' : 'Welcome back')}
+              {isForgotPassword ? 'Recovery' : isSignup ? 'Create account' : 'Welcome back'}
             </span>
             <h1 className={styles.title}>{getTitle()}</h1>
             <p className={styles.subtitle}>
-              {isForgotPassword 
+              {isForgotPassword
                 ? 'Enter the email associated with your account and we will send you a reset link.'
-                : (isSignup
-                  ? 'Built for decorators and design firms that want a simpler way to present ideas and close faster.'
-                  : 'Pick up where you left off and continue sharing polished interior previews with your clients.')}
+                : isSignup
+                  ? 'Built for businesses that want CRM, billing, stock management, team workflows, and AI in one place.'
+                  : 'Pick up where you left off and continue running customers, operations, and finances from one dashboard.'}
             </p>
 
             <div className={styles.benefits}>
@@ -106,9 +104,9 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
             <div className={styles.formCard}>
               <h2 className={styles.formTitle}>{getFormTitle()}</h2>
               <p className={styles.formText}>
-                {isForgotPassword 
-                  ? 'We will email you further instructions.' 
-                  : (isSignup ? 'Use your email to create an account.' : 'Enter your email and password to continue.')}
+                {isForgotPassword
+                  ? 'We will email you further instructions.'
+                  : isSignup ? 'Use your email to create an account.' : 'Enter your email and password to continue.'}
               </p>
 
               {error && (
@@ -129,9 +127,9 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
                 {isSignup && !isForgotPassword ? (
                   <label className={styles.field}>
                     <span>Full name</span>
-                    <input 
-                      type="text" 
-                      placeholder="Your name" 
+                    <input
+                      type="text"
+                      placeholder="Your name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required={isSignup}
@@ -141,9 +139,9 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
 
                 <label className={styles.field}>
                   <span>Email address</span>
-                  <input 
-                    type="email" 
-                    placeholder="you@company.com" 
+                  <input
+                    type="email"
+                    placeholder="you@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -153,9 +151,9 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
                 {!isForgotPassword && (
                   <label className={styles.field}>
                     <span>Password</span>
-                    <input 
-                      type="password" 
-                      placeholder="Enter password" 
+                    <input
+                      type="password"
+                      placeholder="Enter password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
@@ -164,13 +162,13 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
                 )}
 
                 <button type="submit" className={styles.submitButton} disabled={loading}>
-                  {loading ? 'Processing...' : (isForgotPassword ? 'Send Reset Link' : (isSignup ? 'Create account' : 'Login'))}
+                  {loading ? 'Processing...' : isForgotPassword ? 'Send Reset Link' : isSignup ? 'Create account' : 'Login'}
                 </button>
               </form>
 
               {!isForgotPassword && !isSignup && (
                 <p className={styles.switchText} style={{ marginTop: '1rem' }}>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setIsForgotPassword(true)}
                     style={{ background: 'none', border: 'none', color: 'inherit', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
@@ -181,9 +179,9 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
               )}
 
               <p className={styles.switchText}>
-                {isForgotPassword ? 'Remembered your password?' : (isSignup ? 'Already have an account?' : 'New to Cultains?')}
+                {isForgotPassword ? 'Remembered your password?' : isSignup ? 'Already have an account?' : 'New to mydandha?'}
                 {' '}
-                <button 
+                <button
                   type="button"
                   onClick={() => {
                     setIsForgotPassword(false);
@@ -197,7 +195,7 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
                   }}
                   style={{ background: 'none', border: 'none', fontWeight: 600, cursor: 'pointer', padding: 0 }}
                 >
-                  {isForgotPassword ? 'Login here' : (isSignup ? 'Login' : 'Create account')}
+                  {isForgotPassword ? 'Login here' : isSignup ? 'Login' : 'Create account'}
                 </button>
               </p>
             </div>
