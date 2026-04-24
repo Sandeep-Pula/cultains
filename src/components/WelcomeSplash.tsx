@@ -100,7 +100,7 @@ export const WelcomeSplash = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.12 }}
         >
-          <img src={`${import.meta.env.BASE_URL}aivyapari-logo.png`} alt="aivyapari logo" className={styles.logo} />
+          <img src={`${import.meta.env.BASE_URL}aivyapari-logo.png`} alt="AIvyapari logo" className={styles.logo} />
         </motion.div>
 
         <motion.h1
@@ -109,7 +109,7 @@ export const WelcomeSplash = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.18 }}
         >
-          aivyapari.com
+          AIvyapari.com
         </motion.h1>
 
         <motion.p

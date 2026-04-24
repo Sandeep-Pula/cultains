@@ -32,7 +32,7 @@ export const BentoFeatures = () => {
           transition={{ duration: 0.6 }}
         >
           <span className={styles.eyebrow}>Simple flow</span>
-          <h2 className={styles.heading}>AI vyapari should feel easy on day one, then grow deeper with your business.</h2>
+          <h2 className={styles.heading}>AIvyapari should feel easy on day one, then grow deeper with your business.</h2>
         </motion.div>
 
         <div className={styles.stepsGrid}>

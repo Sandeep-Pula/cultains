@@ -35,11 +35,11 @@ export const Navbar = () => {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
     >
-      <a href="#top" className={styles.logo} aria-label="aivyapari home">
+      <a href="#top" className={styles.logo} aria-label="AIvyapari home">
         <span className={styles.logoBadge}>
-          <img src={`${import.meta.env.BASE_URL}aivyapari-logo.png`} alt="aivyapari logo" className={styles.logoMark} />
+          <img src={`${import.meta.env.BASE_URL}aivyapari-logo.png`} alt="AIvyapari logo" className={styles.logoMark} />
         </span>
-        <span className={styles.logoText}>aivyapari</span>
+        <span className={styles.logoText}>AIvyapari</span>
       </a>
 
       <div className={styles.links}>

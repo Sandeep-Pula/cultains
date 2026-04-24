@@ -67,7 +67,7 @@ export const HeroSection = () => {
           </h1>
 
           <p className={styles.subtitle}>
-            aivyapari gives growing businesses a clean operating layer for customers, billing, stock, teams,
+            AIvyapari gives growing businesses a clean operating layer for customers, billing, stock, teams,
             reporting, and AI tools, without forcing every business into the same template.
           </p>
 
