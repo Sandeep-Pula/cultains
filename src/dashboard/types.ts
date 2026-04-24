@@ -3,6 +3,7 @@ export type DashboardView =
   | 'customers'
   | 'team'
   | 'inventory'
+  | 'barcode-desk'
   | 'billing'
   | 'ai-tools'
   | 'render-history'
@@ -203,6 +204,7 @@ export interface DashboardData {
   tasks: TaskItem[];
   inventory: InventoryItem[];
   financeEntries: FinanceEntry[];
+  salesInvoices: SalesInvoice[];
   recentlyViewedIds: string[];
 }
 
@@ -232,6 +234,8 @@ export interface InventoryItem {
   name: string;
   sku: string;
   itemCode: string;
+  barcodeValue: string;
+  barcodeBusinessKey: string;
   category: InventoryCategory;
   unit: InventoryUnit;
   currentStock: number;
@@ -241,6 +245,7 @@ export interface InventoryItem {
   status: InventoryStatus;
   condition: InventoryCondition;
   costPerUnit: number;
+  sellingPrice: number;
   storageLocation: string;
   supplierName: string;
   supplierPhone: string;
@@ -275,5 +280,34 @@ export interface FinanceEntry {
   createdAt: string;
   customerId?: string;
   projectTitle?: string;
+  sourceInvoiceId?: string;
   notes: string;
+}
+
+export type InvoicePaymentStatus = 'pending' | 'paid';
+
+export interface SalesInvoiceLineItem {
+  inventoryItemId: string;
+  barcodeValue: string;
+  itemName: string;
+  sku: string;
+  quantity: number;
+  unitPrice: number;
+  lineSubtotal: number;
+}
+
+export interface SalesInvoice {
+  id: string;
+  invoiceNumber: string;
+  businessBarcodeKey: string;
+  customerName: string;
+  paymentStatus: InvoicePaymentStatus;
+  lineItems: SalesInvoiceLineItem[];
+  subtotal: number;
+  taxRate: number;
+  taxAmount: number;
+  totalAmount: number;
+  notes: string;
+  billedBy: string;
+  createdAt: string;
 }

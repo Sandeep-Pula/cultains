@@ -6,7 +6,19 @@ import { authService } from '../lib/authService';
 import { dashboardService } from './services/dashboardService';
 import { getBusinessConfig } from './businessConfig';
 import { dashboardHash, getStageProgress, parseDashboardView } from './utils';
-import type { BusinessType, CustomerFilters, CustomerProject, DashboardData, FinanceEntry, InventoryItem, ProjectStage, TeamMember, ToastItem } from './types';
+import type {
+  BusinessType,
+  CustomerFilters,
+  CustomerProject,
+  DashboardData,
+  FinanceEntry,
+  InventoryItem,
+  InvoicePaymentStatus,
+  ProjectStage,
+  SalesInvoiceLineItem,
+  TeamMember,
+  ToastItem,
+} from './types';
 import { DashboardSkeleton } from './components/DashboardSkeleton';
 import { Sidebar } from './components/Sidebar';
 import { Topbar } from './components/Topbar';
@@ -14,6 +26,7 @@ import { OverviewPage } from './pages/OverviewPage';
 import { CustomersPage } from './pages/CustomersPage';
 import { TeamPage } from './pages/TeamPage';
 import { InventoryPage } from './pages/InventoryPage';
+import { BarcodeDeskPage } from './pages/BarcodeDeskPage';
 import { BillingPage } from './pages/BillingPage';
 import { CrmPage } from './pages/CrmPage';
 import { AIToolsPage } from './pages/AIToolsPage';
@@ -498,13 +511,14 @@ export const DashboardApp = () => {
       | 'minimumStock'
       | 'reorderQuantity'
       | 'costPerUnit'
+      | 'sellingPrice'
       | 'storageLocation'
       | 'supplierName'
       | 'supplierPhone'
       | 'notes'
     >,
   ) => {
-    if (!user) return;
+    if (!user || !data) return;
 
     try {
       await dashboardService.addInventoryItem(user.uid, payload);
@@ -596,6 +610,28 @@ export const DashboardApp = () => {
       pushToast('Profile updated', 'Your company and workspace details were saved.');
     } catch (nextError) {
       handleMutationError(nextError, 'Unable to update your profile.');
+    }
+  };
+
+  const handleFinalizeBarcodeSale = async (payload: {
+    customerName: string;
+    paymentStatus: InvoicePaymentStatus;
+    taxRate: number;
+    notes: string;
+    billedBy: string;
+    lineItems: SalesInvoiceLineItem[];
+  }) => {
+    if (!user) {
+      throw new Error('Please log in again before finalizing the sale.');
+    }
+
+    try {
+      const result = await dashboardService.completeBarcodeSale(user.uid, payload);
+      pushToast('Invoice created', `${result.invoiceNumber} is ready to print.`);
+      return result;
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to finalize this sale.');
+      throw nextError;
     }
   };
 
@@ -710,6 +746,14 @@ export const DashboardApp = () => {
               onAddItem={handleAddInventoryItem}
               onUpdateItem={handleUpdateInventoryItem}
               onDeleteItem={handleDeleteInventoryItem}
+            />
+          ) : activeView === 'barcode-desk' ? (
+            <BarcodeDeskPage
+              companyName={data.profile.companyName}
+              billedBy={data.profile.userName}
+              inventory={data.inventory}
+              salesInvoices={data.salesInvoices}
+              onFinalizeSale={handleFinalizeBarcodeSale}
             />
           ) : activeView === 'billing' ? (
             <BillingPage

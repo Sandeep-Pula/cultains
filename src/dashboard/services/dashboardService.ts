@@ -17,16 +17,20 @@ import type {
   DashboardData,
   DeletedCustomerRecord,
   FinanceEntry,
+  InvoicePaymentStatus,
   InventoryProcurementStatus,
   NoteItem,
   RenderAsset,
   RenderRequest,
+  SalesInvoice,
+  SalesInvoiceLineItem,
   TaskItem,
   TeamMember,
   InventoryItem,
   WorkspaceProfile,
 } from '../types';
 import { getInitials, getInventoryStatus, getStageProgress, recalculateTeamMetrics, stageProgressMap } from '../utils';
+import { buildBusinessBarcodeKey, buildInventoryBarcodeValue, buildInvoiceNumber } from '../barcodeUtils';
 
 type DashboardSnapshotListener = (data: DashboardData) => void;
 type DashboardErrorListener = (error: Error) => void;
@@ -87,6 +91,7 @@ const teamMemberDoc = (userId: string, memberId: string) => doc(requireDb(), 'us
 const taskDoc = (userId: string, taskId: string) => doc(requireDb(), 'users', userId, 'tasks', taskId);
 const inventoryItemDoc = (userId: string, itemId: string) => doc(requireDb(), 'users', userId, 'inventoryItems', itemId);
 const financeEntryDoc = (userId: string, entryId: string) => doc(requireDb(), 'users', userId, 'financeEntries', entryId);
+const salesInvoiceDoc = (userId: string, invoiceId: string) => doc(requireDb(), 'users', userId, 'salesInvoices', invoiceId);
 const deletedCustomerDoc = (userId: string, recordId: string) => doc(requireDb(), 'users', userId, 'deletedCustomers', recordId);
 
 const nowIso = () => new Date().toISOString();
@@ -123,6 +128,7 @@ const emptyDashboardData = (user: User, profile?: Partial<UserProfileDoc>): Dash
   team: [],
   inventory: [],
   financeEntries: [],
+  salesInvoices: [],
   customers: [],
   deletedCustomers: [],
   tasks: [],
@@ -263,6 +269,8 @@ const normalizeInventoryItem = (itemId: string, value: Partial<InventoryItem> | 
   name: value?.name || 'Unknown Item',
   sku: value?.sku || `SKU-${itemId.slice(0, 4).toUpperCase()}`,
   itemCode: value?.itemCode || value?.sku || `ITEM-${itemId.slice(0, 4).toUpperCase()}`,
+  barcodeValue: value?.barcodeValue || '',
+  barcodeBusinessKey: value?.barcodeBusinessKey || '',
   category: value?.category || 'Hardware & Tools',
   unit: value?.unit || 'pcs',
   currentStock: value?.currentStock ?? 0,
@@ -272,6 +280,7 @@ const normalizeInventoryItem = (itemId: string, value: Partial<InventoryItem> | 
   status: value?.status || getInventoryStatus(value?.currentStock ?? 0, value?.minimumStock ?? 5, value?.condition || 'new'),
   condition: value?.condition || 'new',
   costPerUnit: value?.costPerUnit ?? 0,
+  sellingPrice: value?.sellingPrice ?? value?.costPerUnit ?? 0,
   storageLocation: value?.storageLocation || 'Main store',
   supplierName: value?.supplierName || '',
   supplierPhone: value?.supplierPhone || '',
@@ -309,7 +318,34 @@ const normalizeFinanceEntry = (entryId: string, value: Partial<FinanceEntry> | u
   createdAt: value?.createdAt || nowIso(),
   customerId: value?.customerId,
   projectTitle: value?.projectTitle,
+  sourceInvoiceId: value?.sourceInvoiceId,
   notes: value?.notes || '',
+});
+
+const normalizeSalesInvoiceLine = (value: Partial<SalesInvoiceLineItem> | undefined): SalesInvoiceLineItem => ({
+  inventoryItemId: value?.inventoryItemId || '',
+  barcodeValue: value?.barcodeValue || '',
+  itemName: value?.itemName || 'Unknown item',
+  sku: value?.sku || '',
+  quantity: value?.quantity ?? 1,
+  unitPrice: value?.unitPrice ?? 0,
+  lineSubtotal: value?.lineSubtotal ?? 0,
+});
+
+const normalizeSalesInvoice = (invoiceId: string, value: Partial<SalesInvoice> | undefined): SalesInvoice => ({
+  id: invoiceId,
+  invoiceNumber: value?.invoiceNumber || `INV-${invoiceId.slice(0, 8).toUpperCase()}`,
+  businessBarcodeKey: value?.businessBarcodeKey || '',
+  customerName: value?.customerName || 'Walk-in customer',
+  paymentStatus: value?.paymentStatus || 'pending',
+  lineItems: (value?.lineItems ?? []).map(normalizeSalesInvoiceLine),
+  subtotal: value?.subtotal ?? 0,
+  taxRate: value?.taxRate ?? 0,
+  taxAmount: value?.taxAmount ?? 0,
+  totalAmount: value?.totalAmount ?? 0,
+  notes: value?.notes || '',
+  billedBy: value?.billedBy || 'System',
+  createdAt: value?.createdAt || nowIso(),
 });
 
 const buildCustomerPayload = (
@@ -458,6 +494,7 @@ export const dashboardService = {
     let deletedCustomers: DeletedCustomerRecord[] = [];
     let inventory: InventoryItem[] = [];
     let financeEntries: FinanceEntry[] = [];
+    let salesInvoices: SalesInvoice[] = [];
 
     const emit = () => {
       const base = emptyDashboardData(user, profile ?? undefined);
@@ -467,6 +504,7 @@ export const dashboardService = {
         team: recalculateTeamMetrics(team, customers, tasks),
         inventory,
         financeEntries,
+        salesInvoices,
         tasks,
         deletedCustomers,
       });
@@ -525,7 +563,16 @@ export const dashboardService = {
         usersCollection(user.uid, 'inventoryItems'),
         (snapshot) => {
           inventory = snapshot.docs
-            .map((item) => normalizeInventoryItem(item.id, item.data() as Partial<InventoryItem>))
+            .map((item) => {
+              const normalized = normalizeInventoryItem(item.id, item.data() as Partial<InventoryItem>);
+              const sku = normalized.sku;
+              const itemCode = normalized.itemCode;
+              return {
+                ...normalized,
+                barcodeBusinessKey: normalized.barcodeBusinessKey || buildBusinessBarcodeKey(user.uid),
+                barcodeValue: normalized.barcodeValue || buildInventoryBarcodeValue(user.uid, item.id, sku, itemCode),
+              };
+            })
             .sort((left, right) => left.name.localeCompare(right.name));
           emit();
         },
@@ -537,6 +584,16 @@ export const dashboardService = {
           financeEntries = snapshot.docs
             .map((item) => normalizeFinanceEntry(item.id, item.data() as Partial<FinanceEntry>))
             .sort((left, right) => new Date(right.dueAt).getTime() - new Date(left.dueAt).getTime());
+          emit();
+        },
+        (error) => onError(error),
+      ),
+      onSnapshot(
+        usersCollection(user.uid, 'salesInvoices'),
+        (snapshot) => {
+          salesInvoices = snapshot.docs
+            .map((item) => normalizeSalesInvoice(item.id, item.data() as Partial<SalesInvoice>))
+            .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
           emit();
         },
         (error) => onError(error),
@@ -695,6 +752,7 @@ export const dashboardService = {
       | 'minimumStock'
       | 'reorderQuantity'
       | 'costPerUnit'
+      | 'sellingPrice'
       | 'storageLocation'
       | 'supplierName'
       | 'supplierPhone'
@@ -706,8 +764,12 @@ export const dashboardService = {
     const condition: InventoryItem['condition'] = 'new';
     const procurementStatus: InventoryProcurementStatus =
       payload.currentStock <= payload.minimumStock ? 'to_order' : 'none';
+    const barcodeBusinessKey = buildBusinessBarcodeKey(userId);
+    const barcodeValue = buildInventoryBarcodeValue(userId, ref.id, payload.sku, payload.itemCode);
     const itemPayload = {
       ...payload,
+      barcodeValue,
+      barcodeBusinessKey,
       status: getInventoryStatus(payload.currentStock, payload.minimumStock, condition),
       condition,
       procurementStatus,
@@ -750,6 +812,114 @@ export const dashboardService = {
       updatedAt: timestamp,
     });
     return ref.id;
+  },
+
+  async completeBarcodeSale(
+    userId: string,
+    payload: {
+      customerName: string;
+      paymentStatus: InvoicePaymentStatus;
+      taxRate: number;
+      notes: string;
+      billedBy: string;
+      lineItems: SalesInvoiceLineItem[];
+    },
+  ) {
+    if (!payload.lineItems.length) {
+      throw new Error('Add at least one item before finalizing the bill.');
+    }
+
+    const timestamp = nowIso();
+    const invoiceRef = doc(usersCollection(userId, 'salesInvoices'));
+    const financeRef = doc(usersCollection(userId, 'financeEntries'));
+    const businessBarcodeKey = buildBusinessBarcodeKey(userId);
+    const lineItems: SalesInvoiceLineItem[] = [];
+    const inventorySnapshots: InventoryItem[] = [];
+
+    for (const line of payload.lineItems) {
+      const inventoryRef = inventoryItemDoc(userId, line.inventoryItemId);
+      const snapshot = await getDoc(inventoryRef);
+      if (!snapshot.exists()) {
+        throw new Error(`One of the scanned items is no longer available in inventory.`);
+      }
+
+      const item = normalizeInventoryItem(line.inventoryItemId, snapshot.data() as Partial<InventoryItem>);
+      const nextStock = item.currentStock - line.quantity;
+      if (nextStock < 0) {
+        throw new Error(`Insufficient stock for ${item.name}. Available quantity is ${item.currentStock}.`);
+      }
+
+      inventorySnapshots.push(item);
+      lineItems.push({
+        inventoryItemId: item.id,
+        barcodeValue: item.barcodeValue || line.barcodeValue,
+        itemName: item.name,
+        sku: item.sku,
+        quantity: line.quantity,
+        unitPrice: item.sellingPrice,
+        lineSubtotal: item.sellingPrice * line.quantity,
+      });
+    }
+
+    const subtotal = lineItems.reduce((sum, line) => sum + line.lineSubtotal, 0);
+    const taxAmount = Number(((subtotal * payload.taxRate) / 100).toFixed(2));
+    const totalAmount = subtotal + taxAmount;
+    const invoiceNumber = buildInvoiceNumber(userId, invoiceRef.id, timestamp);
+    const batch = writeBatch(requireDb());
+
+    lineItems.forEach((line, index) => {
+      const item = inventorySnapshots[index];
+      const nextStock = Math.max(0, item.currentStock - line.quantity);
+      batch.update(inventoryItemDoc(userId, line.inventoryItemId), {
+        currentStock: nextStock,
+        lastIssuedAt: timestamp,
+        updatedAt: timestamp,
+        status: getInventoryStatus(nextStock, item.minimumStock, item.condition),
+        procurementStatus: nextStock <= item.minimumStock ? 'to_order' : 'none',
+      });
+    });
+
+    batch.set(salesInvoiceDoc(userId, invoiceRef.id), {
+      invoiceNumber,
+      businessBarcodeKey,
+      customerName: payload.customerName.trim() || 'Walk-in customer',
+      paymentStatus: payload.paymentStatus,
+      lineItems,
+      subtotal,
+      taxRate: payload.taxRate,
+      taxAmount,
+      totalAmount,
+      notes: payload.notes.trim(),
+      billedBy: payload.billedBy,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+
+    batch.set(financeEntryDoc(userId, financeRef.id), {
+      title: invoiceNumber,
+      kind: 'income',
+      category: 'client_payment',
+      amount: totalAmount,
+      status: payload.paymentStatus,
+      dueAt: timestamp,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      projectTitle: 'Barcode desk sale',
+      sourceInvoiceId: invoiceRef.id,
+      notes: payload.notes.trim() || `Generated from barcode billing for ${payload.customerName.trim() || 'Walk-in customer'}.`,
+    });
+
+    await batch.commit();
+
+    return {
+      invoiceId: invoiceRef.id,
+      invoiceNumber,
+      subtotal,
+      taxAmount,
+      totalAmount,
+      lineItems,
+      createdAt: timestamp,
+    };
   },
 
   async updateFinanceEntry(userId: string, entryId: string, patch: Partial<FinanceEntry>) {

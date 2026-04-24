@@ -23,6 +23,7 @@ type InventoryPageProps = {
     | 'minimumStock'
     | 'reorderQuantity'
     | 'costPerUnit'
+    | 'sellingPrice'
     | 'storageLocation'
     | 'supplierName'
     | 'supplierPhone'
@@ -101,6 +102,7 @@ export const InventoryPage = ({
           item.name.toLowerCase().includes(lowered) ||
           item.sku.toLowerCase().includes(lowered) ||
           item.itemCode.toLowerCase().includes(lowered) ||
+          item.barcodeValue.toLowerCase().includes(lowered) ||
           item.storageLocation.toLowerCase().includes(lowered) ||
           item.supplierName.toLowerCase().includes(lowered);
 
@@ -233,7 +235,7 @@ export const InventoryPage = ({
               <table className="min-w-full border-separate border-spacing-0">
                 <thead className="sticky top-0 z-10 bg-white">
                   <tr className="text-left text-xs font-bold uppercase tracking-wider text-brand-dark/55">
-                    {['Item', 'Code', 'Category', 'Stock', 'Reserved', 'Reorder', 'Supplier', 'Flags', 'Status', 'Updated'].map((label) => (
+                    {['Item', 'Code', 'Price', 'Category', 'Stock', 'Reserved', 'Reorder', 'Supplier', 'Flags', 'Status', 'Updated'].map((label) => (
                       <th key={label} className="border-b border-brand-30 px-5 py-4">
                         {label}
                       </th>
@@ -264,6 +266,11 @@ export const InventoryPage = ({
                           <td className="border-b border-brand-30/70 px-5 py-4 text-sm text-brand-dark/75">
                             <div>{item.sku}</div>
                             <div className="mt-1 text-xs text-brand-dark/50">{item.itemCode}</div>
+                            <div className="mt-1 text-[11px] text-brand-dark/40">{item.barcodeValue}</div>
+                          </td>
+                          <td className="border-b border-brand-30/70 px-5 py-4 text-sm text-brand-dark/75">
+                            <div className="font-semibold text-brand-dark">{formatCurrency(item.sellingPrice)}</div>
+                            <div className="mt-1 text-xs text-brand-dark/50">Cost {formatCurrency(item.costPerUnit)}</div>
                           </td>
                           <td className="border-b border-brand-30/70 px-5 py-4 text-sm text-brand-dark/75">{item.category}</td>
                           <td className="border-b border-brand-30/70 px-5 py-4">
@@ -313,7 +320,7 @@ export const InventoryPage = ({
                     })
                   ) : (
                     <tr>
-                      <td colSpan={10} className="px-5 py-16 text-center text-sm text-brand-dark/55">
+                      <td colSpan={11} className="px-5 py-16 text-center text-sm text-brand-dark/55">
                         No inventory items match this filter.
                       </td>
                     </tr>

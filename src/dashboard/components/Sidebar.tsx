@@ -1,5 +1,6 @@
 import clsx from 'clsx';
 import {
+  Barcode,
   Contact,
   CreditCard,
   History,
@@ -20,6 +21,7 @@ const items: { view: DashboardView; icon: typeof Home }[] = [
   { view: 'customers', icon: Users },
   { view: 'team', icon: UsersRound },
   { view: 'inventory', icon: Package },
+  { view: 'barcode-desk', icon: Barcode },
   { view: 'billing', icon: CreditCard },
   { view: 'render-history', icon: History },
   { view: 'ai-tools', icon: Sparkles },

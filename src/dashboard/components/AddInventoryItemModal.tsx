@@ -14,6 +14,7 @@ type InventoryFormPayload = Pick<
   | 'minimumStock'
   | 'reorderQuantity'
   | 'costPerUnit'
+  | 'sellingPrice'
   | 'storageLocation'
   | 'supplierName'
   | 'supplierPhone'
@@ -52,6 +53,7 @@ const initialState = {
   minimumStock: '10',
   reorderQuantity: '20',
   costPerUnit: '0',
+  sellingPrice: '0',
   storageLocation: '',
   supplierName: '',
   supplierPhone: '',
@@ -69,6 +71,7 @@ const toFormState = (item?: InventoryItem | null) => ({
   minimumStock: String(item?.minimumStock ?? initialState.minimumStock),
   reorderQuantity: String(item?.reorderQuantity ?? initialState.reorderQuantity),
   costPerUnit: String(item?.costPerUnit ?? initialState.costPerUnit),
+  sellingPrice: String(item?.sellingPrice ?? item?.costPerUnit ?? initialState.sellingPrice),
   storageLocation: item?.storageLocation ?? initialState.storageLocation,
   supplierName: item?.supplierName ?? initialState.supplierName,
   supplierPhone: item?.supplierPhone ?? initialState.supplierPhone,
@@ -83,6 +86,7 @@ const helpText: Record<string, string> = {
   minimumStock: 'When stock drops to this level, the item should enter the purchase watch list.',
   reorderQuantity: 'Suggested quantity to buy when you restock this item.',
   costPerUnit: 'Purchase cost for one unit. This helps estimate total stock value.',
+  sellingPrice: 'Selling price used when this item is scanned at the billing counter.',
 };
 
 const Hint = ({ text }: { text: string }) => (
@@ -124,7 +128,7 @@ export const AddInventoryItemModal = ({
   };
 
   const setNumberField = (
-    field: 'currentStock' | 'reservedStock' | 'minimumStock' | 'reorderQuantity' | 'costPerUnit',
+    field: 'currentStock' | 'reservedStock' | 'minimumStock' | 'reorderQuantity' | 'costPerUnit' | 'sellingPrice',
     value: string,
   ) => {
     if (!/^\d*$/.test(value)) return;
@@ -141,6 +145,7 @@ export const AddInventoryItemModal = ({
       minimumStock: Number(form.minimumStock || '0'),
       reorderQuantity: Number(form.reorderQuantity || '0'),
       costPerUnit: Number(form.costPerUnit || '0'),
+      sellingPrice: Number(form.sellingPrice || '0'),
       itemCode: form.itemCode.trim() || form.sku.trim(),
       storageLocation: form.storageLocation.trim() || 'Main warehouse',
     });
@@ -235,6 +240,7 @@ export const AddInventoryItemModal = ({
               ['Minimum stock', 'minimumStock'],
               ['Reorder quantity', 'reorderQuantity'],
               ['Cost per unit', 'costPerUnit'],
+              ['Selling price', 'sellingPrice'],
             ].map(([label, key]) => (
               <label key={key} className="grid gap-2 text-sm text-brand-dark/80">
                 <span className="flex items-center gap-2 font-medium text-brand-dark">
@@ -247,7 +253,7 @@ export const AddInventoryItemModal = ({
                   value={form[key as keyof typeof form] as string}
                   onChange={(event) =>
                     setNumberField(
-                      key as 'currentStock' | 'reservedStock' | 'minimumStock' | 'reorderQuantity' | 'costPerUnit',
+                      key as 'currentStock' | 'reservedStock' | 'minimumStock' | 'reorderQuantity' | 'costPerUnit' | 'sellingPrice',
                       event.target.value,
                     )
                   }
@@ -282,7 +288,7 @@ export const AddInventoryItemModal = ({
             </div>
 
             <div className="mt-6 rounded-2xl bg-brand-10 px-4 py-4 text-sm text-brand-60">
-              Use this intake modal for all new stock so the dashboard can track replenishment, usage, and clearance cleanly.
+              Every item gets a business-specific barcode automatically after save, so it can be printed and scanned at checkout.
             </div>
           </div>
             </div>
