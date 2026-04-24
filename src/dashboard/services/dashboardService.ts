@@ -17,6 +17,7 @@ import type {
   DashboardData,
   DeletedCustomerRecord,
   FinanceEntry,
+  InvoicePaymentMethod,
   InvoicePaymentStatus,
   InventoryProcurementStatus,
   NoteItem,
@@ -338,6 +339,7 @@ const normalizeSalesInvoice = (invoiceId: string, value: Partial<SalesInvoice> |
   businessBarcodeKey: value?.businessBarcodeKey || '',
   customerName: value?.customerName || 'Walk-in customer',
   paymentStatus: value?.paymentStatus || 'pending',
+  paymentMethod: value?.paymentMethod || 'cash',
   lineItems: (value?.lineItems ?? []).map(normalizeSalesInvoiceLine),
   subtotal: value?.subtotal ?? 0,
   taxRate: value?.taxRate ?? 0,
@@ -819,6 +821,7 @@ export const dashboardService = {
     payload: {
       customerName: string;
       paymentStatus: InvoicePaymentStatus;
+      paymentMethod: InvoicePaymentMethod;
       taxRate: number;
       notes: string;
       billedBy: string;
@@ -884,6 +887,7 @@ export const dashboardService = {
       businessBarcodeKey,
       customerName: payload.customerName.trim() || 'Walk-in customer',
       paymentStatus: payload.paymentStatus,
+      paymentMethod: payload.paymentMethod,
       lineItems,
       subtotal,
       taxRate: payload.taxRate,

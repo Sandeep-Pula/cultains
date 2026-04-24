@@ -13,6 +13,7 @@ import type {
   DashboardData,
   FinanceEntry,
   InventoryItem,
+  InvoicePaymentMethod,
   InvoicePaymentStatus,
   ProjectStage,
   SalesInvoiceLineItem,
@@ -616,6 +617,7 @@ export const DashboardApp = () => {
   const handleFinalizeBarcodeSale = async (payload: {
     customerName: string;
     paymentStatus: InvoicePaymentStatus;
+    paymentMethod: InvoicePaymentMethod;
     taxRate: number;
     notes: string;
     billedBy: string;
@@ -750,6 +752,7 @@ export const DashboardApp = () => {
           ) : activeView === 'barcode-desk' ? (
             <BarcodeDeskPage
               companyName={data.profile.companyName}
+              businessProfile={data.profile}
               billedBy={data.profile.userName}
               inventory={data.inventory}
               salesInvoices={data.salesInvoices}

@@ -285,6 +285,7 @@ export interface FinanceEntry {
 }
 
 export type InvoicePaymentStatus = 'pending' | 'paid';
+export type InvoicePaymentMethod = 'cash' | 'upi' | 'credit_card' | 'debit_card' | 'bank_transfer' | 'mixed';
 
 export interface SalesInvoiceLineItem {
   inventoryItemId: string;
@@ -302,6 +303,7 @@ export interface SalesInvoice {
   businessBarcodeKey: string;
   customerName: string;
   paymentStatus: InvoicePaymentStatus;
+  paymentMethod: InvoicePaymentMethod;
   lineItems: SalesInvoiceLineItem[];
   subtotal: number;
   taxRate: number;
