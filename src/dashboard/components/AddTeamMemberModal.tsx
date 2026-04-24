@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { TeamMember, TeamRole } from '../types';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
 import { getInitials } from '../utils';
@@ -34,6 +34,12 @@ export const AddTeamMemberModal = ({ open, existingTeam, businessConfig, onClose
     if (!form.name.trim()) return '';
     return `${form.name.trim().toLowerCase().replace(/\s+/g, '.')}@aivyapari.work`;
   }, [form.name]);
+
+  useEffect(() => {
+    if (!open) {
+      setForm(initialState);
+    }
+  }, [open]);
 
   if (!open) return null;
 

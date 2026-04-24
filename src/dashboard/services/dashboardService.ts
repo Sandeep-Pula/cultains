@@ -52,6 +52,14 @@ type UserProfileDoc = {
   updatedAt: string;
 };
 
+const requireDb = () => {
+  if (!db) {
+    throw new Error('Firebase Firestore is not configured yet. Add the required VITE_FIREBASE_* variables and reload the app.');
+  }
+
+  return db;
+};
+
 type CustomerCreatePayload = Pick<
   CustomerProject,
   | 'customerName'
@@ -71,15 +79,15 @@ type CustomerCreatePayload = Pick<
 type TeamMemberPayload = Pick<TeamMember, 'name' | 'role' | 'email' | 'phone' | 'status'>;
 
 const usersCollection = (userId: string, collectionName: string) =>
-  collection(db, 'users', userId, collectionName);
+  collection(requireDb(), 'users', userId, collectionName);
 
-const userDoc = (userId: string) => doc(db, 'users', userId);
-const customerDoc = (userId: string, customerId: string) => doc(db, 'users', userId, 'customers', customerId);
-const teamMemberDoc = (userId: string, memberId: string) => doc(db, 'users', userId, 'teamMembers', memberId);
-const taskDoc = (userId: string, taskId: string) => doc(db, 'users', userId, 'tasks', taskId);
-const inventoryItemDoc = (userId: string, itemId: string) => doc(db, 'users', userId, 'inventoryItems', itemId);
-const financeEntryDoc = (userId: string, entryId: string) => doc(db, 'users', userId, 'financeEntries', entryId);
-const deletedCustomerDoc = (userId: string, recordId: string) => doc(db, 'users', userId, 'deletedCustomers', recordId);
+const userDoc = (userId: string) => doc(requireDb(), 'users', userId);
+const customerDoc = (userId: string, customerId: string) => doc(requireDb(), 'users', userId, 'customers', customerId);
+const teamMemberDoc = (userId: string, memberId: string) => doc(requireDb(), 'users', userId, 'teamMembers', memberId);
+const taskDoc = (userId: string, taskId: string) => doc(requireDb(), 'users', userId, 'tasks', taskId);
+const inventoryItemDoc = (userId: string, itemId: string) => doc(requireDb(), 'users', userId, 'inventoryItems', itemId);
+const financeEntryDoc = (userId: string, entryId: string) => doc(requireDb(), 'users', userId, 'financeEntries', entryId);
+const deletedCustomerDoc = (userId: string, recordId: string) => doc(requireDb(), 'users', userId, 'deletedCustomers', recordId);
 
 const nowIso = () => new Date().toISOString();
 
@@ -613,7 +621,7 @@ export const dashboardService = {
   },
 
   async archiveCustomer(userId: string, customer: CustomerProject, deletedBy: string) {
-    const batch = writeBatch(db);
+    const batch = writeBatch(requireDb());
     batch.set(deletedCustomerDoc(userId, customer.id), {
       userId,
       customerName: customer.customerName,
@@ -725,7 +733,7 @@ export const dashboardService = {
   },
 
   async deleteInventoryItem(userId: string, itemId: string) {
-    const batch = writeBatch(db);
+    const batch = writeBatch(requireDb());
     batch.delete(inventoryItemDoc(userId, itemId));
     await batch.commit();
   },
@@ -752,7 +760,7 @@ export const dashboardService = {
   },
 
   async deleteFinanceEntry(userId: string, entryId: string) {
-    const batch = writeBatch(db);
+    const batch = writeBatch(requireDb());
     batch.delete(financeEntryDoc(userId, entryId));
     await batch.commit();
   },
@@ -765,7 +773,7 @@ export const dashboardService = {
     const fallbackForRole = (role: TeamMember['role']) =>
       remainingTeam.find((member) => member.role === role)?.id ?? remainingTeam[0]?.id ?? '';
 
-    const batch = writeBatch(db);
+    const batch = writeBatch(requireDb());
 
     customers.forEach((customer) => {
       if (

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { auth, firebaseStatus } from '../lib/firebase';
 import styles from './Navbar.module.css';
 
 export const Navbar = () => {
@@ -18,12 +18,14 @@ export const Navbar = () => {
   }, []);
 
   useEffect(() => {
+    if (!auth) return;
     const unsub = onAuthStateChanged(auth, setUser);
     return () => unsub();
   }, []);
 
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
+    if (!auth) return;
     await signOut(auth);
     window.location.hash = '#login';
   };
@@ -61,7 +63,9 @@ export const Navbar = () => {
           </>
         )}
 
-        <a href="#contact" className={styles.ctaLink}>Start Free</a>
+        <a href={firebaseStatus.isConfigured ? '#signup' : '#contact'} className={styles.ctaLink}>
+          {firebaseStatus.isConfigured ? 'Start Free' : 'View Launch Info'}
+        </a>
       </div>
     </motion.nav>
   );

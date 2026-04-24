@@ -16,14 +16,17 @@ const missingFirebaseEnv = Object.entries(firebaseConfig)
   .filter(([, value]) => !value)
   .map(([key]) => key);
 
-if (missingFirebaseEnv.length > 0) {
-  throw new Error(
-    `Missing Firebase configuration: ${missingFirebaseEnv.join(', ')}. ` +
-      'Set the matching VITE_FIREBASE_* variables locally and in the GitHub Actions environment before building.',
-  );
-}
+export const firebaseStatus = {
+  isConfigured: missingFirebaseEnv.length === 0,
+  missingFields: missingFirebaseEnv,
+  setupMessage:
+    missingFirebaseEnv.length === 0
+      ? ''
+      : `Missing Firebase configuration: ${missingFirebaseEnv.join(', ')}. Set the matching VITE_FIREBASE_* variables locally and in the GitHub Actions environment before enabling authentication and dashboard sync.`,
+};
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+const app = firebaseStatus.isConfigured ? initializeApp(firebaseConfig) : null;
+
+export const auth = app ? getAuth(app) : null;
+export const db = app ? getFirestore(app) : null;
+export const storage = app ? getStorage(app) : null;

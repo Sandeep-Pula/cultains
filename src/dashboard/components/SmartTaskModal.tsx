@@ -23,6 +23,7 @@ export const SmartTaskModal = ({ open, onClose, initialDate, customers, customer
   const [newPhone, setNewPhone] = useState('');
   const [newAddress, setNewAddress] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -35,6 +36,7 @@ export const SmartTaskModal = ({ open, onClose, initialDate, customers, customer
       setNewPhone('');
       setNewAddress('');
       setIsSaving(false);
+      setError(null);
     }
   }, [open]);
 
@@ -54,6 +56,7 @@ export const SmartTaskModal = ({ open, onClose, initialDate, customers, customer
     if (isCreatingNew && !search.trim()) return;
 
     setIsSaving(true);
+    setError(null);
     try {
       const at = new Date(
         initialDate.getFullYear(),
@@ -64,21 +67,20 @@ export const SmartTaskModal = ({ open, onClose, initialDate, customers, customer
         0,
       ).toISOString();
 
-      // Fire and forget mapping to support rapid UI closing
-      onSave(
+      await onSave(
         title,
         at,
         isCreatingNew
           ? { isNew: true, name: search, phone: newPhone, address: newAddress }
           : { id: selectedCustomer!.id }
-      ).catch(console.error);
+      );
 
       setIsSaving(false);
       onClose();
     } catch (err) {
       console.error(err);
+      setError(err instanceof Error ? err.message : 'Unable to save this task right now.');
       setIsSaving(false);
-      onClose();
     }
   };
 
@@ -108,6 +110,12 @@ export const SmartTaskModal = ({ open, onClose, initialDate, customers, customer
             </div>
 
             <div className="space-y-4">
+              {error ? (
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                  {error}
+                </div>
+              ) : null}
+
               <div>
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-brand-dark/70">
                   Task Title

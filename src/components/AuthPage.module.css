@@ -138,6 +138,19 @@
   box-shadow: 0 16px 28px rgba(15, 14, 71, 0.18);
 }
 
+.submitButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  box-shadow: none;
+}
+
+.helperText {
+  margin-top: -0.25rem;
+  font-size: 0.83rem;
+  color: var(--color-brand-dark);
+  opacity: 0.65;
+}
+
 .switchText {
   margin-top: 1rem;
   color: var(--color-brand-dark);

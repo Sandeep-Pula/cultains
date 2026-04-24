@@ -18,6 +18,7 @@ import { BillingPage } from './pages/BillingPage';
 import { CrmPage } from './pages/CrmPage';
 import { AIToolsPage } from './pages/AIToolsPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { SettingsPage } from './pages/SettingsPage';
 import { CustomerDrawer } from './components/CustomerDrawer';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { ToastStack } from './components/ToastStack';
@@ -36,10 +37,10 @@ const defaultFilters: CustomerFilters = {
 };
 
 export const DashboardApp = () => {
-  const [user, setUser] = useState<User | null>(auth.currentUser);
-  const [authLoading, setAuthLoading] = useState(!auth.currentUser);
+  const [user, setUser] = useState<User | null>(auth?.currentUser ?? null);
+  const [authLoading, setAuthLoading] = useState(Boolean(auth));
   const [hash, setHash] = useState(window.location.hash || '#dashboard');
-  const [data, setData] = useState<DashboardData | null>(() => auth.currentUser ? dashboardService.getEmptyDashboardData(auth.currentUser) : null);
+  const [data, setData] = useState<DashboardData | null>(() => auth?.currentUser ? dashboardService.getEmptyDashboardData(auth.currentUser) : null);
   const [loading, setLoading] = useState(false);
   const [hasInitialSnapshot, setHasInitialSnapshot] = useState(false);
   const [syncIssue, setSyncIssue] = useState<string | null>(null);
@@ -60,6 +61,13 @@ export const DashboardApp = () => {
   }, []);
 
   useEffect(() => {
+    if (!auth) {
+      setAuthLoading(false);
+      setUser(null);
+      setData(null);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
       setUser(nextUser);
       setAuthLoading(false);
@@ -733,6 +741,13 @@ export const DashboardApp = () => {
             />
           ) : activeView === 'ai-tools' ? (
             <AIToolsPage businessConfig={businessConfig} />
+          ) : activeView === 'settings' ? (
+            <SettingsPage
+              businessConfig={businessConfig}
+              companyName={data.profile.companyName}
+              userName={data.profile.userName}
+              onNavigate={handleNavigate}
+            />
           ) : activeView === 'profile' ? (
             <ProfilePage
               profile={data.profile}

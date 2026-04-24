@@ -1,26 +1,43 @@
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from './lib/firebase';
+import { auth, firebaseStatus } from './lib/firebase';
 import { HeroSection } from './components/HeroSection';
 import { BentoFeatures } from './components/BentoFeatures';
 import { HomeContent } from './components/HomeContent';
 import { WelcomeSplash } from './components/WelcomeSplash';
 import { AuthPage } from './components/AuthPage';
-import { AIInteriorDesigner } from './components/AIInteriorDesigner';
-import { Dashboard } from './components/Dashboard';
 import { DashboardSkeleton } from './dashboard/components/DashboardSkeleton';
 import styles from './App.module.css';
 import './styles/global.css';
 
 import { Navbar } from './components/Navbar';
+import { SetupGuide } from './components/SetupGuide';
+
+const Dashboard = lazy(() => import('./components/Dashboard').then((module) => ({ default: module.Dashboard })));
+const AIInteriorDesigner = lazy(() =>
+  import('./components/AIInteriorDesigner').then((module) => ({ default: module.AIInteriorDesigner })),
+);
+
+const surfaceLoader = (
+  <section style={{ minHeight: '60vh', display: 'grid', placeItems: 'center', padding: '8rem 1rem 3rem' }}>
+    <div style={{ textAlign: 'center', color: 'var(--color-brand-dark)', opacity: 0.72 }}>
+      Loading workspace...
+    </div>
+  </section>
+);
 
 function App() {
   const [hash, setHash] = useState(window.location.hash);
   const [user, setUser] = useState<User | null>(null);
-  const [authReady, setAuthReady] = useState(false);
+  const [authReady, setAuthReady] = useState(!firebaseStatus.isConfigured);
 
   useEffect(() => {
+    if (!auth) {
+      setAuthReady(true);
+      return;
+    }
+
     const unsub = onAuthStateChanged(auth, (nextUser) => {
       setUser(nextUser);
       setAuthReady(true);
@@ -46,6 +63,7 @@ function App() {
   const isTryOncePage = hash === '#try-once';
   const isDashboardPage = hash.startsWith('#dashboard');
   const isAuthPage = isLoginPage || isSignupPage;
+  const showSetupGuide = !firebaseStatus.isConfigured && (isAuthPage || isDashboardPage);
 
   // Protect Dashboard route
   useEffect(() => {
@@ -77,10 +95,16 @@ function App() {
       <main>
         {isDashboardPage && !authReady ? (
           <DashboardSkeleton />
+        ) : showSetupGuide ? (
+          <SetupGuide missingFields={firebaseStatus.missingFields} />
         ) : isDashboardPage && user ? (
-          <Dashboard />
+          <Suspense fallback={<DashboardSkeleton />}>
+            <Dashboard />
+          </Suspense>
         ) : isTryOncePage ? (
-          <AIInteriorDesigner />
+          <Suspense fallback={surfaceLoader}>
+            <AIInteriorDesigner />
+          </Suspense>
         ) : isAuthPage && !user ? (
           <AuthPage mode={isSignupPage ? 'signup' : 'login'} />
         ) : (

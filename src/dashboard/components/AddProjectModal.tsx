@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CustomerProject, TeamMember } from '../types';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
 
@@ -41,6 +41,12 @@ const initialState = {
 
 export const AddProjectModal = ({ open, team, businessConfig, onClose, onSubmit }: AddProjectModalProps) => {
   const [form, setForm] = useState(initialState);
+
+  useEffect(() => {
+    if (!open) {
+      setForm(initialState);
+    }
+  }, [open]);
 
   if (!open) return null;
 

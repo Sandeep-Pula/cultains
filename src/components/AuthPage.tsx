@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
 import { authService } from '../lib/authService';
 import styles from './AuthPage.module.css';
@@ -24,8 +24,18 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  if (mode === 'signup' && !isSignup && !isForgotPassword) setIsSignup(true);
-  if (mode === 'login' && isSignup && !isForgotPassword) setIsSignup(false);
+  useEffect(() => {
+    if (isForgotPassword) return;
+    setIsSignup(mode === 'signup');
+  }, [mode, isForgotPassword]);
+
+  const isSubmitDisabled = useMemo(() => {
+    if (loading) return true;
+    if (!email.trim()) return true;
+    if (isForgotPassword) return false;
+    if (isSignup && !name.trim()) return true;
+    return password.length < 8;
+  }, [email, isForgotPassword, isSignup, loading, name, password]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,14 +44,25 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
     setLoading(true);
 
     try {
+      const normalizedEmail = email.trim();
+      const normalizedName = name.trim();
+
       if (isForgotPassword) {
-        await authService.requestPasswordReset(email);
+        await authService.requestPasswordReset(normalizedEmail);
         setSuccessMsg('A password reset link has been sent to your email.');
       } else if (isSignup) {
-        await authService.signUp(email, password, name);
+        if (password.length < 8) {
+          throw new Error('Use at least 8 characters for the password.');
+        }
+
+        await authService.signUp(normalizedEmail, password, normalizedName);
         window.location.hash = '#dashboard';
       } else {
-        await authService.signIn(email, password);
+        if (password.length < 8) {
+          throw new Error('Use at least 8 characters for the password.');
+        }
+
+        await authService.signIn(normalizedEmail, password);
         window.location.hash = '#dashboard';
       }
     } catch (err) {
@@ -144,6 +165,7 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
                     placeholder="you@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
                     required
                   />
                 </label>
@@ -156,12 +178,18 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
                       placeholder="Enter password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      autoComplete={isSignup ? 'new-password' : 'current-password'}
+                      minLength={8}
                       required
                     />
                   </label>
                 )}
 
-                <button type="submit" className={styles.submitButton} disabled={loading}>
+                {!isForgotPassword ? (
+                  <p className={styles.helperText}>Use at least 8 characters for your password.</p>
+                ) : null}
+
+                <button type="submit" className={styles.submitButton} disabled={isSubmitDisabled}>
                   {loading ? 'Processing...' : isForgotPassword ? 'Send Reset Link' : isSignup ? 'Create account' : 'Login'}
                 </button>
               </form>
