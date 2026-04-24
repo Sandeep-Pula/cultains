@@ -75,6 +75,14 @@ type ProductStats = {
   salesRevenue: number;
 };
 
+type DetectedBarcode = {
+  rawValue?: string;
+};
+
+type BarcodeDetectorCtor = new (options?: { formats?: string[] }) => {
+  detect: (source: HTMLVideoElement) => Promise<DetectedBarcode[]>;
+};
+
 const paymentMethodLabels: Record<InvoicePaymentMethod, string> = {
   cash: 'Cash',
   upi: 'UPI',
@@ -83,6 +91,9 @@ const paymentMethodLabels: Record<InvoicePaymentMethod, string> = {
   bank_transfer: 'Bank transfer',
   mixed: 'Mixed',
 };
+
+const getBarcodeDetectorCtor = () =>
+  (window as Window & { BarcodeDetector?: BarcodeDetectorCtor }).BarcodeDetector ?? null;
 
 const printHtml = (title: string, body: string) => {
   const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1080,height=900');
@@ -191,8 +202,11 @@ export const BarcodeDeskPage = ({
   const [printQueue, setPrintQueue] = useState<string[]>([]);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const scannerControlsRef = useRef<IScannerControls | null>(null);
   const scannerReaderRef = useRef<BrowserMultiFormatReader | null>(null);
+  const scanFrameRef = useRef<number | null>(null);
+  const scanBusyRef = useRef(false);
   const cooldownRef = useRef<string>('');
 
   const inventoryIndex = useMemo(() => {
@@ -259,6 +273,14 @@ export const BarcodeDeskPage = ({
     scannerControlsRef.current?.stop();
     scannerControlsRef.current = null;
     scannerReaderRef.current = null;
+    if (scanFrameRef.current) {
+      window.cancelAnimationFrame(scanFrameRef.current);
+      scanFrameRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
@@ -387,11 +409,72 @@ export const BarcodeDeskPage = ({
     }
 
     try {
+      const videoConstraints: MediaTrackConstraints = {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+      };
+
+      const nativeDetectorCtor = getBarcodeDetectorCtor();
+      if (nativeDetectorCtor && videoRef.current) {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: videoConstraints,
+        });
+
+        streamRef.current = stream;
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+
+        const detector = new nativeDetectorCtor({
+          formats: ['code_128', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_39', 'itf'],
+        });
+
+        const tick = async () => {
+          if (!videoRef.current || !streamRef.current) return;
+
+          if (videoRef.current.readyState < 2) {
+            scanFrameRef.current = window.requestAnimationFrame(() => {
+              void tick();
+            });
+            return;
+          }
+
+          if (!scanBusyRef.current) {
+            try {
+              scanBusyRef.current = true;
+              const barcodes = await detector.detect(videoRef.current);
+              const matched = barcodes.find((barcode) => barcode.rawValue?.trim());
+              if (matched?.rawValue) {
+                setScannerStatus(`Barcode detected: ${matched.rawValue}`);
+                handleBarcodeMatch(matched.rawValue);
+                return;
+              }
+            } catch (error) {
+              console.error(error);
+            } finally {
+              scanBusyRef.current = false;
+            }
+          }
+
+          scanFrameRef.current = window.requestAnimationFrame(() => {
+            void tick();
+          });
+        };
+
+        setScannerRunning(true);
+        setScannerStatus('Camera live. Native barcode detection is active. Hold the barcode closer and keep only the bars in frame.');
+        scanFrameRef.current = window.requestAnimationFrame(() => {
+          void tick();
+        });
+        return;
+      }
+
       const devices = await BrowserCodeReader.listVideoInputDevices().catch(() => []);
       const preferredDevice =
         devices.find((device) => /back|rear|environment/i.test(device.label))?.deviceId || devices[0]?.deviceId;
 
-      const hints = new Map();
+      const hints = new Map<DecodeHintType, unknown>();
       hints.set(DecodeHintType.POSSIBLE_FORMATS, [
         BarcodeFormat.CODE_128,
         BarcodeFormat.CODE_39,
@@ -407,8 +490,16 @@ export const BarcodeDeskPage = ({
       const reader = new BrowserMultiFormatReader(hints);
       scannerReaderRef.current = reader;
 
-      const controls = await reader.decodeFromVideoDevice(
-        preferredDevice,
+      const controls = await reader.decodeFromConstraints(
+        {
+          audio: false,
+          video: preferredDevice
+            ? {
+                deviceId: { ideal: preferredDevice },
+                ...videoConstraints,
+              }
+            : videoConstraints,
+        },
         videoRef.current,
         (result, error) => {
           if (result) {
@@ -429,8 +520,8 @@ export const BarcodeDeskPage = ({
       setScannerRunning(true);
       setScannerStatus(
         preferredDevice
-          ? 'Camera live. Use the rear camera and hold the barcode steady 10-15 cm away.'
-          : 'Camera live. Hold the barcode steady and keep it centered in the frame.',
+          ? 'Camera live. Rear camera selected. Move closer until the bars fill most of the preview width.'
+          : 'Camera live. Move closer until the barcode fills most of the preview width.',
       );
     } catch (error) {
       console.error(error);
