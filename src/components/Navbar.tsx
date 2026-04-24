@@ -43,7 +43,7 @@ export const Navbar = () => {
       </a>
 
       <div className={styles.links}>
-        <a href="#about" className={styles.link}>Platform</a>
+
         <a href="#workflow" className={styles.link}>Workflow</a>
         <a href="#product" className={styles.link}>Modules</a>
         <a href="#industries" className={styles.link}>Industries</a>
