@@ -24,25 +24,30 @@ const baseParticles = [
   { size: 7, left: '94%', top: '79%', duration: 12, delay: 0.4 },
 ];
 
-const particles = [
-  ...baseParticles,
-  ...baseParticles.map((particle, index) => ({
-    ...particle,
-    size: Math.max(4, particle.size - 2),
-    left: `${Math.min(96, parseInt(particle.left, 10) + (index % 2 === 0 ? 3 : -4))}%`,
-    top: `${Math.min(92, Math.max(8, parseInt(particle.top, 10) + (index % 3 === 0 ? 6 : -5)))}%`,
-    duration: particle.duration + 2,
-    delay: particle.delay + 0.18,
-  })),
-  ...baseParticles.map((particle, index) => ({
-    ...particle,
-    size: particle.size + 1,
-    left: `${Math.min(95, Math.max(5, parseInt(particle.left, 10) + (index % 2 === 0 ? -6 : 5)))}%`,
-    top: `${Math.min(94, Math.max(6, parseInt(particle.top, 10) + (index % 4 === 0 ? -7 : 8)))}%`,
-    duration: particle.duration + 4,
-    delay: particle.delay + 0.32,
-  })),
+const particleVariants = [
+  { sizeShift: 0, leftShift: 0, topShift: 0, durationShift: 0, delayShift: 0 },
+  { sizeShift: -2, leftShift: 3, topShift: 6, durationShift: 2, delayShift: 0.18 },
+  { sizeShift: 1, leftShift: -6, topShift: -7, durationShift: 4, delayShift: 0.32 },
+  { sizeShift: -1, leftShift: 7, topShift: -4, durationShift: 1, delayShift: 0.12 },
+  { sizeShift: 2, leftShift: -8, topShift: 8, durationShift: 5, delayShift: 0.4 },
+  { sizeShift: -3, leftShift: 11, topShift: -9, durationShift: 3, delayShift: 0.22 },
+  { sizeShift: 0, leftShift: -12, topShift: 10, durationShift: 6, delayShift: 0.48 },
+  { sizeShift: 2, leftShift: 5, topShift: 12, durationShift: 7, delayShift: 0.56 },
+  { sizeShift: -2, leftShift: -10, topShift: -12, durationShift: 4, delayShift: 0.28 },
 ];
+
+const clampPercent = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+const particles = particleVariants.flatMap((variant, variantIndex) =>
+  baseParticles.map((particle, index) => ({
+    ...particle,
+    size: Math.max(3, particle.size + variant.sizeShift + ((variantIndex + index) % 3 === 0 ? 1 : 0)),
+    left: `${clampPercent(parseInt(particle.left, 10) + variant.leftShift + ((index % 2 === 0 ? 1 : -1) * (variantIndex % 3)), 4, 96)}%`,
+    top: `${clampPercent(parseInt(particle.top, 10) + variant.topShift + ((index % 3 === 0 ? 1 : -1) * (variantIndex % 4)), 6, 94)}%`,
+    duration: particle.duration + variant.durationShift,
+    delay: particle.delay + variant.delayShift,
+  })),
+);
 
 export const WelcomeSplash = () => {
   return (
@@ -95,7 +100,7 @@ export const WelcomeSplash = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.12 }}
         >
-          <img src={`${import.meta.env.BASE_URL}mydandha-logo.png`} alt="mydandha logo" className={styles.logo} />
+          <img src={`${import.meta.env.BASE_URL}aivyapari-logo.png`} alt="aivyapari logo" className={styles.logo} />
         </motion.div>
 
         <motion.h1
@@ -104,7 +109,7 @@ export const WelcomeSplash = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.18 }}
         >
-          mydandha.com
+          aivyapari.com
         </motion.h1>
 
         <motion.p

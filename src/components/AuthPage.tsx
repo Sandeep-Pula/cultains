@@ -179,7 +179,7 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
               )}
 
               <p className={styles.switchText}>
-                {isForgotPassword ? 'Remembered your password?' : isSignup ? 'Already have an account?' : 'New to mydandha?'}
+                {isForgotPassword ? 'Remembered your password?' : isSignup ? 'Already have an account?' : 'New to aivyapari?'}
                 {' '}
                 <button
                   type="button"

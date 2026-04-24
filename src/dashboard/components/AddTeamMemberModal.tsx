@@ -32,7 +32,7 @@ export const AddTeamMemberModal = ({ open, existingTeam, businessConfig, onClose
 
   const defaultEmail = useMemo(() => {
     if (!form.name.trim()) return '';
-    return `${form.name.trim().toLowerCase().replace(/\s+/g, '.')}@mydandha.work`;
+    return `${form.name.trim().toLowerCase().replace(/\s+/g, '.')}@aivyapari.work`;
   }, [form.name]);
 
   if (!open) return null;
@@ -94,7 +94,7 @@ export const AddTeamMemberModal = ({ open, existingTeam, businessConfig, onClose
                   value={form.email}
                   onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
                   className="rounded-2xl border border-brand-30 bg-white px-3 py-2.5 outline-none text-brand-dark"
-                  placeholder={defaultEmail || 'teammate@mydandha.work'}
+                  placeholder={defaultEmail || 'teammate@aivyapari.work'}
                 />
               </label>
 

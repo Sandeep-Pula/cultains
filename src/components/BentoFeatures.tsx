@@ -36,7 +36,7 @@ export const BentoFeatures = () => {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6 }}
         >
-          <span className={styles.eyebrow}>How mydandha works</span>
+          <span className={styles.eyebrow}>How aivyapari works</span>
           <h2 className={styles.heading}>Start with core business operations, then layer in AI and advanced workflows as you grow.</h2>
           <p className={styles.subheading}>
             Instead of juggling CRM sheets, billing apps, stock notes, tax records, and disconnected AI tools, your

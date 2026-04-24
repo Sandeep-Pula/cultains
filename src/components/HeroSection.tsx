@@ -66,7 +66,7 @@ export const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, delay: 0.16 }}
           >
-            mydandha helps any business manage customers, invoices, taxes, inventory, operations, and team workflows
+            aivyapari helps any business manage customers, invoices, taxes, inventory, operations, and team workflows
             online, then adds industry-specific AI tools for faster decisions and better service.
           </motion.p>
 
@@ -117,7 +117,7 @@ export const HeroSection = () => {
         >
           <div className={styles.mockupCard}>
             <div className={styles.mockupHeader}>
-              <span className={styles.mockupPill}>mydandha workspace</span>
+              <span className={styles.mockupPill}>aivyapari workspace</span>
               <span className={styles.mockupPillMuted}>Live business control</span>
             </div>
 

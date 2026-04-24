@@ -112,7 +112,7 @@ export const HomeContent = () => {
             <span className={styles.eyebrow}>The problem</span>
             <h2 className={styles.title}>Most businesses do not need more software. They need one place where the business actually runs.</h2>
             <p className={styles.lead}>
-              mydandha is designed as a one-stop platform for businesses that want CRM, billing, taxes, stock
+              aivyapari is designed as a one-stop platform for businesses that want CRM, billing, taxes, stock
               management, ERP-style workflows, and AI solutions under one roof.
             </p>
           </motion.div>
@@ -238,7 +238,7 @@ export const HomeContent = () => {
             <span className={styles.eyebrow}>Industry fit</span>
             <h2 className={styles.title}>Built to adapt across different business types instead of forcing one template on everyone.</h2>
             <p className={styles.lead}>
-              mydandha starts as a strong business core and grows into industry-specific workflows for retail,
+              aivyapari starts as a strong business core and grows into industry-specific workflows for retail,
               interiors, sports, trading, and service businesses.
             </p>
           </motion.div>
@@ -267,7 +267,7 @@ export const HomeContent = () => {
               <span className={styles.eyebrow}>AI + operations</span>
               <h2 className={styles.title}>AI becomes useful when it is connected to your business data and daily workflow.</h2>
               <p className={styles.lead}>
-                mydandha is built so AI can assist real business jobs: drafting quotes, summarizing leads, forecasting
+                aivyapari is built so AI can assist real business jobs: drafting quotes, summarizing leads, forecasting
                 stock, organizing catalogs, and powering industry-specific tools when the team needs them.
               </p>
 
@@ -290,7 +290,7 @@ export const HomeContent = () => {
             <motion.div className={styles.testimonialCard} {...fadeUp}>
               <Quote size={26} className={styles.quoteMark} />
               <p className={styles.testimonialText}>
-                “mydandha feels like the operating layer we were missing. Our team can handle customers, inventory,
+                “aivyapari feels like the operating layer we were missing. Our team can handle customers, inventory,
                 billing, and AI workflows without juggling separate apps all day.”
               </p>
               <div className={styles.testimonialMeta}>
@@ -311,7 +311,7 @@ export const HomeContent = () => {
         <div className={styles.container}>
           <motion.div className={styles.ctaPanel} {...fadeUp}>
             <span className={styles.eyebrow}>Ready to build on it</span>
-            <h2 className={styles.title}>Launch mydandha as the digital control room for your business.</h2>
+            <h2 className={styles.title}>Launch aivyapari as the digital control room for your business.</h2>
             <p className={styles.lead}>
               Start with CRM, stock, billing, tax workflows, and team operations now. Add AI solutions business by
               business as the platform grows.
@@ -329,9 +329,9 @@ export const HomeContent = () => {
             </div>
 
             <div className={styles.footerBrand}>
-              <img src={`${import.meta.env.BASE_URL}mydandha-logo.png`} alt="mydandha logo" className={styles.footerLogo} />
+              <img src={`${import.meta.env.BASE_URL}aivyapari-logo.png`} alt="aivyapari logo" className={styles.footerLogo} />
               <div>
-                <strong>mydandha</strong>
+                <strong>aivyapari</strong>
                 <p>One-stop business operating system with AI-ready workflows for modern Indian companies.</p>
               </div>
             </div>

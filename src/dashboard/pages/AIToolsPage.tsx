@@ -7,7 +7,7 @@ type AIToolsPageProps = {
 };
 
 export const AIToolsPage = ({ businessConfig }: AIToolsPageProps) => {
-  const storageKey = `mydandha-ai-favorites-${businessConfig.type}`;
+  const storageKey = `aivyapari-ai-favorites-${businessConfig.type}`;
   const [query, setQuery] = useState('');
   const [favorites, setFavorites] = useState<string[]>([]);
 
