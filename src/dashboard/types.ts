@@ -223,7 +223,7 @@ export interface ToastItem {
   description?: string;
 }
 
-export type InventoryCategory = 'Hardware & Tools' | 'Office & Tech' | 'Decor & Lighting' | 'Raw Material' | 'Vehicle';
+export type InventoryCategory = string;
 export type InventoryStatus = 'in-stock' | 'low-stock' | 'out-of-stock' | 'clearance';
 export type InventoryCondition = 'new' | 'good' | 'fair' | 'aging' | 'damaged';
 export type InventoryUnit = 'pcs' | 'rolls' | 'boxes' | 'sets' | 'sqm' | 'kg' | 'litres';

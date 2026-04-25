@@ -29,6 +29,7 @@ type AddInventoryItemModalProps = {
   onClose: () => void;
   onSubmit: (payload: InventoryFormPayload) => void | Promise<void>;
   initialValues?: InventoryItem | null;
+  presetValues?: Partial<InventoryItem> | null;
   title?: string;
   subtitle?: string;
   submitLabel?: string;
@@ -64,7 +65,7 @@ const initialState = {
   notes: '',
 };
 
-const toFormState = (item?: InventoryItem | null) => ({
+const toFormState = (item?: Partial<InventoryItem> | null) => ({
   name: item?.name ?? initialState.name,
   sku: item?.sku ?? initialState.sku,
   itemCode: item?.itemCode ?? initialState.itemCode,
@@ -122,6 +123,7 @@ export const AddInventoryItemModal = ({
   onClose,
   onSubmit,
   initialValues = null,
+  presetValues = null,
   title,
   subtitle,
   submitLabel,
@@ -133,6 +135,7 @@ export const AddInventoryItemModal = ({
   const [scannerRunning, setScannerRunning] = useState(false);
   const [scannerStatus, setScannerStatus] = useState('Scanner idle');
   const [scannerError, setScannerError] = useState<string | null>(null);
+  const [categoryQuery, setCategoryQuery] = useState(initialValues?.category ?? presetValues?.category ?? initialState.category);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const scannerControlsRef = useRef<IScannerControls | null>(null);
@@ -144,15 +147,22 @@ export const AddInventoryItemModal = ({
 
   useEffect(() => {
     if (!open) return;
-    setForm(toFormState(initialValues));
+    setForm(toFormState(initialValues ?? presetValues));
+    setCategoryQuery(initialValues?.category ?? presetValues?.category ?? initialState.category);
     setSubmitting(false);
     setScannerOpen(false);
     setScannerError(null);
-  }, [initialValues, open]);
+  }, [initialValues, open, presetValues]);
 
   const setField = <K extends keyof typeof form>(field: K, value: (typeof form)[K]) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
+
+  const filteredCategories = useMemo(() => {
+    const lowered = categoryQuery.trim().toLowerCase();
+    if (!lowered) return categoryOptions;
+    return categoryOptions.filter((option) => option.toLowerCase().includes(lowered));
+  }, [categoryQuery]);
 
   const setNumberField = (
     field: 'currentStock' | 'reservedStock' | 'minimumStock' | 'reorderQuantity' | 'costPerUnit' | 'sellingPrice',
@@ -167,6 +177,7 @@ export const AddInventoryItemModal = ({
     setSubmitting(true);
     await onSubmit({
       ...form,
+      category: categoryQuery.trim() || initialState.category,
       currentStock: Number(form.currentStock || '0'),
       reservedStock: Number(form.reservedStock || '0'),
       minimumStock: Number(form.minimumStock || '0'),
@@ -338,7 +349,7 @@ export const AddInventoryItemModal = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-brand-dark/25 p-3 sm:p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-brand-dark/25 p-3 sm:items-center sm:p-4 backdrop-blur-sm">
       <div className="flex h-[min(92vh,980px)] w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-brand-60 shadow-2xl">
         <div className="flex items-start justify-between border-b border-brand-30 px-5 py-4 sm:px-6 sticky top-0 z-10 bg-brand-60">
           <div>
@@ -405,17 +416,36 @@ export const AddInventoryItemModal = ({
 
             <label className="grid gap-2 text-sm text-brand-dark/80">
               <span className="font-medium text-brand-dark">Category</span>
-              <select
-                value={form.category}
-                onChange={(event) => setField('category', event.target.value as InventoryCategory)}
-                className="rounded-2xl border border-brand-30 bg-white px-3 py-2.5 text-brand-dark"
-              >
-                {categoryOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
+              <div className="space-y-2">
+                <input
+                  value={categoryQuery}
+                  onChange={(event) => {
+                    setCategoryQuery(event.target.value);
+                    setField('category', event.target.value as InventoryCategory);
+                  }}
+                  placeholder="Type a category"
+                  className="rounded-2xl border border-brand-30 bg-white px-3 py-2.5 outline-none text-brand-dark"
+                />
+                <div className="flex flex-wrap gap-2">
+                  {filteredCategories.length ? (
+                    filteredCategories.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => {
+                          setCategoryQuery(option);
+                          setField('category', option as InventoryCategory);
+                        }}
+                        className="rounded-full border border-brand-30 bg-brand-60/30 px-3 py-1.5 text-xs font-semibold text-brand-dark"
+                      >
+                        {option}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="text-xs text-brand-dark/55">No suggestion found. Your typed category will be used as-is.</div>
+                  )}
+                </div>
+              </div>
             </label>
 
             <label className="grid gap-2 text-sm text-brand-dark/80">
@@ -522,8 +552,8 @@ export const AddInventoryItemModal = ({
       </div>
 
       {scannerOpen ? (
-        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-brand-dark/35 p-3 backdrop-blur-sm">
-          <div className="w-full max-w-3xl rounded-[32px] border border-brand-30 bg-white shadow-2xl">
+        <div className="fixed inset-0 z-[130] flex items-start justify-center overflow-y-auto bg-brand-dark/35 p-3 backdrop-blur-sm sm:items-center">
+          <div className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-2xl">
             <div className="flex items-start justify-between gap-4 border-b border-brand-30 px-5 py-4 sm:px-6">
               <div>
                 <div className="inline-flex rounded-full bg-brand-60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
@@ -539,7 +569,7 @@ export const AddInventoryItemModal = ({
               </button>
             </div>
 
-            <div className="space-y-4 px-5 py-5 sm:px-6">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5 sm:px-6">
               <div className="overflow-hidden rounded-[28px] border border-brand-30 bg-brand-60/25">
                 <div className="relative aspect-[4/3] bg-brand-dark/95">
                   <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />

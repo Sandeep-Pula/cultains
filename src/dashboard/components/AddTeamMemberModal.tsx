@@ -53,7 +53,7 @@ export const AddTeamMemberModal = ({ open, existingTeam, businessConfig, onClose
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-brand-dark/25 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-brand-dark/25 p-4 pt-6 backdrop-blur-sm sm:items-center sm:pt-4">
       <div className="w-full max-w-2xl rounded-[28px] border border-brand-30 bg-brand-60 shadow-2xl">
         <div className="flex items-center justify-between border-b border-brand-30 px-6 py-4">
           <div>

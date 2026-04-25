@@ -102,7 +102,7 @@ const ManageSidebarModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[140] flex items-center justify-center bg-brand-dark/35 p-3 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[140] flex items-start justify-center overflow-y-auto bg-brand-dark/35 p-3 pt-6 backdrop-blur-sm sm:items-center sm:pt-3">
       <div className="flex h-[min(92vh,860px)] w-full max-w-4xl flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-brand-30 px-5 py-4 sm:px-6">
           <div>
@@ -130,7 +130,7 @@ const ManageSidebarModal = ({
           <div className="mt-5 grid gap-5 xl:grid-cols-2">
             <div className="rounded-[28px] border border-brand-30 bg-brand-60/20 p-4">
               <div className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-dark/60">Visible in sidebar</div>
-              <div className="mt-4 space-y-3">
+              <div className="mt-4 max-h-[52vh] space-y-3 overflow-y-auto pr-1">
                 {filteredVisible.length ? (
                   filteredVisible.map((view) => {
                     const Icon = itemMap[view];
@@ -177,7 +177,7 @@ const ManageSidebarModal = ({
 
             <div className="rounded-[28px] border border-brand-30 bg-brand-60/20 p-4">
               <div className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-dark/60">Hidden tools</div>
-              <div className="mt-4 space-y-3">
+              <div className="mt-4 max-h-[52vh] space-y-3 overflow-y-auto pr-1">
                 {filteredHidden.length ? (
                   filteredHidden.map((view) => {
                     const Icon = itemMap[view];
@@ -312,7 +312,7 @@ export const Sidebar = ({
               })}
             </div>
 
-            <div className="mt-8 rounded-3xl bg-brand-60 p-4">
+            <div className="mt-8 rounded-3xl border border-brand-30 bg-transparent p-4">
               <div className="flex items-center gap-3">
                 <div className="rounded-2xl bg-brand-30 p-2 text-brand-10">
                   <Sparkles size={18} />
@@ -328,7 +328,7 @@ export const Sidebar = ({
                   onNavigate('ai-tools');
                   onClose();
                 }}
-                className="mt-4 flex justify-center rounded-2xl bg-brand-10 px-4 py-2 text-sm font-medium text-[#f5f4fb] transition hover:bg-brand-dark hover:text-[#ffffff]"
+                className="mt-4 flex justify-center rounded-2xl border border-brand-30 bg-transparent px-4 py-2 text-sm font-medium text-brand-dark transition hover:border-brand-10 hover:text-brand-10"
               >
                 Open AI tools
               </a>

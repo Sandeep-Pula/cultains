@@ -86,7 +86,7 @@ export const AddCrmTouchpointModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-brand-dark/25 p-3 sm:p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-brand-dark/25 p-3 pt-6 backdrop-blur-sm sm:items-center sm:p-4 sm:pt-4">
       <div className="flex h-[min(86vh,760px)] w-full max-w-3xl flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-brand-60 shadow-2xl">
         <div className="sticky top-0 z-10 flex items-start justify-between border-b border-brand-30 bg-brand-60 px-5 py-4 sm:px-6">
           <div>

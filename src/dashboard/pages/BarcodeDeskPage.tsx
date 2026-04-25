@@ -142,7 +142,7 @@ const ModalShell = ({
   onClose: () => void;
   children: React.ReactNode;
 }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-dark/45 p-3 sm:p-6">
+  <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-brand-dark/45 p-3 sm:items-center sm:p-6">
     <div className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-2xl">
       <div className="flex items-start justify-between gap-4 border-b border-brand-30 px-5 py-4 sm:px-6">
         <div>
