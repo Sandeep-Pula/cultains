@@ -10,11 +10,25 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function isWorkspaceMember(userId) {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountType == 'team_member' &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.workspaceOwnerId == userId;
+    }
+
+    function managesTeamAccount(userId) {
+      return isSignedIn() && (
+        (request.resource != null && request.resource.data.workspaceOwnerId == request.auth.uid) ||
+        (resource != null && resource.data.workspaceOwnerId == request.auth.uid)
+      );
+    }
+
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId) || isWorkspaceMember(userId) || managesTeamAccount(userId);
+      allow write: if isOwner(userId) || managesTeamAccount(userId);
 
       match /{document=**} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isOwner(userId) || isWorkspaceMember(userId);
       }
     }
   }

@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BadgeCheck,
   Building2,
+  CircleDollarSign,
   Crown,
   Globe,
   Mail,
@@ -10,10 +11,12 @@ import {
   Save,
   ShieldCheck,
   UsersRound,
+  X,
 } from 'lucide-react';
-import type { WorkspaceProfile } from '../types';
+import type { FinanceEntry, InvoicePaymentMethod, TeamMember, WorkspaceProfile } from '../types';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
-import { formatDate } from '../utils';
+import { printSalaryPaycheck } from '../invoicePrint';
+import { formatCurrency, formatDate, formatDateTime } from '../utils';
 
 type ProfilePageProps = {
   profile: WorkspaceProfile;
@@ -21,10 +24,23 @@ type ProfilePageProps = {
   totalCustomers: number;
   totalTeamMembers: number;
   totalInventoryItems: number;
+  team: TeamMember[];
+  financeEntries: FinanceEntry[];
   onSaveProfile: (profile: Pick<
     WorkspaceProfile,
     'companyName' | 'userName' | 'businessType' | 'workspaceLogoUrl' | 'email' | 'phone' | 'city' | 'studioAddress' | 'gstNumber' | 'teamSize' | 'website' | 'sidebarViews'
   >) => Promise<void>;
+  onCreatePaycheck: (payload: {
+    employeeMemberId: string;
+    employeeName: string;
+    amount: number;
+    dueAt: string;
+    notes: string;
+    payPeriodLabel: string;
+    paymentMethod: InvoicePaymentMethod;
+    status: FinanceEntry['status'];
+    issuedBy: string;
+  }) => Promise<void>;
 };
 
 export const ProfilePage = ({
@@ -33,7 +49,10 @@ export const ProfilePage = ({
   totalCustomers,
   totalTeamMembers,
   totalInventoryItems,
+  team,
+  financeEntries,
   onSaveProfile,
+  onCreatePaycheck,
 }: ProfilePageProps) => {
   const [form, setForm] = useState({
     companyName: profile.companyName,
@@ -51,7 +70,18 @@ export const ProfilePage = ({
   });
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [paycheckOpen, setPaycheckOpen] = useState(false);
+  const [paycheckSubmitting, setPaycheckSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [paycheckForm, setPaycheckForm] = useState({
+    employeeMemberId: '',
+    amount: '',
+    dueAt: new Date().toISOString().slice(0, 10),
+    notes: '',
+    payPeriodLabel: new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }),
+    paymentMethod: 'bank_transfer' as InvoicePaymentMethod,
+    status: 'paid' as FinanceEntry['status'],
+  });
 
   useEffect(() => {
     setForm({
@@ -73,6 +103,15 @@ export const ProfilePage = ({
   const updateField = (field: keyof typeof form, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
+
+  const paycheckEntries = useMemo(
+    () =>
+      financeEntries
+        .filter((entry) => entry.category === 'salary')
+        .slice()
+        .sort((left, right) => new Date(right.dueAt).getTime() - new Date(left.dueAt).getTime()),
+    [financeEntries],
+  );
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -101,6 +140,39 @@ export const ProfilePage = ({
       await onSaveProfile(form);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCreatePaycheck = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const employee = team.find((member) => member.id === paycheckForm.employeeMemberId);
+    if (!employee) return;
+
+    setPaycheckSubmitting(true);
+    try {
+      await onCreatePaycheck({
+        employeeMemberId: employee.id,
+        employeeName: employee.name,
+        amount: Number(paycheckForm.amount || '0'),
+        dueAt: new Date(paycheckForm.dueAt).toISOString(),
+        notes: paycheckForm.notes.trim(),
+        payPeriodLabel: paycheckForm.payPeriodLabel.trim(),
+        paymentMethod: paycheckForm.paymentMethod,
+        status: paycheckForm.status,
+        issuedBy: profile.userName,
+      });
+      setPaycheckOpen(false);
+      setPaycheckForm({
+        employeeMemberId: '',
+        amount: '',
+        dueAt: new Date().toISOString().slice(0, 10),
+        notes: '',
+        payPeriodLabel: new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }),
+        paymentMethod: 'bank_transfer',
+        status: 'paid',
+      });
+    } finally {
+      setPaycheckSubmitting(false);
     }
   };
 
@@ -342,6 +414,172 @@ export const ProfilePage = ({
           </div>
         </div>
       </section>
+
+      <section className="rounded-[32px] border border-brand-30 bg-white p-6 shadow-sm sm:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-brand-60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
+              <CircleDollarSign size={14} />
+              Payroll
+            </div>
+            <h2 className="mt-4 text-2xl font-semibold tracking-tight text-brand-dark">Salary and paycheck history</h2>
+            <p className="mt-2 text-sm text-brand-dark/65">Generate salary paychecks for team members, print them as PDF, and keep the same records visible in their profile too.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPaycheckOpen(true)}
+            className="rounded-2xl bg-brand-10 px-4 py-3 text-sm font-medium text-brand-60 transition hover:bg-brand-dark"
+          >
+            Generate paycheck
+          </button>
+        </div>
+
+        <div className="mt-6 space-y-3">
+          {paycheckEntries.length ? (
+            paycheckEntries.map((entry) => (
+              <div key={entry.id} className="rounded-[24px] border border-brand-30 bg-brand-60/25 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <div className="font-semibold text-brand-dark">{entry.paycheckNumber || entry.title}</div>
+                    <div className="mt-1 text-sm text-brand-dark/70">
+                      {entry.employeeName || 'Team member'} • {entry.payPeriodLabel || 'Pay period not set'} • {formatDateTime(entry.dueAt)}
+                    </div>
+                    <div className="mt-1 text-xs uppercase tracking-[0.16em] text-brand-dark/45">
+                      {entry.paymentMethod ? entry.paymentMethod.replace('_', ' ') : 'bank transfer'} • {entry.status}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div className="font-semibold text-brand-dark">{formatCurrency(entry.amount)}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => printSalaryPaycheck(entry, profile.companyName, profile)}
+                      className="rounded-2xl border border-brand-30 bg-white px-4 py-2 text-sm font-medium text-brand-dark"
+                    >
+                      Print PDF
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-[24px] border border-dashed border-brand-30 bg-brand-60/25 p-8 text-center text-brand-dark/55">
+              No salary paychecks have been created yet.
+            </div>
+          )}
+        </div>
+      </section>
+
+      {paycheckOpen ? (
+        <div className="fixed inset-0 z-[140] flex items-start justify-center overflow-y-auto bg-brand-dark/35 p-4 pt-6 backdrop-blur-sm sm:items-center sm:pt-4">
+          <div className="w-full max-w-2xl rounded-[32px] border border-brand-30 bg-white shadow-2xl">
+            <div className="flex items-start justify-between border-b border-brand-30 px-6 py-5">
+              <div>
+                <h3 className="text-2xl font-semibold text-brand-dark">Generate paycheck</h3>
+                <p className="mt-1 text-sm text-brand-dark/70">Create a salary paycheck that can be printed by the business owner and viewed by the team member.</p>
+              </div>
+              <button type="button" onClick={() => setPaycheckOpen(false)} className="rounded-2xl border border-brand-30 bg-brand-60/30 p-2 text-brand-dark">
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreatePaycheck} className="grid gap-4 px-6 py-6 md:grid-cols-2">
+              <label className="grid gap-2 text-sm text-brand-dark/75">
+                <span>Team member</span>
+                <select
+                  value={paycheckForm.employeeMemberId}
+                  onChange={(event) => setPaycheckForm((current) => ({ ...current, employeeMemberId: event.target.value }))}
+                  className="rounded-2xl border border-brand-30 bg-brand-60/20 px-4 py-3 outline-none"
+                  required
+                >
+                  <option value="">Select a team member</option>
+                  {team.map((member) => (
+                    <option key={member.id} value={member.id}>{member.name} • {member.role}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="grid gap-2 text-sm text-brand-dark/75">
+                <span>Amount</span>
+                <input
+                  inputMode="numeric"
+                  value={paycheckForm.amount}
+                  onChange={(event) => setPaycheckForm((current) => ({ ...current, amount: event.target.value.replace(/[^\d]/g, '') }))}
+                  className="rounded-2xl border border-brand-30 bg-brand-60/20 px-4 py-3 outline-none"
+                  placeholder="25000"
+                  required
+                />
+              </label>
+              <label className="grid gap-2 text-sm text-brand-dark/75">
+                <span>Pay date</span>
+                <input
+                  type="date"
+                  value={paycheckForm.dueAt}
+                  onChange={(event) => setPaycheckForm((current) => ({ ...current, dueAt: event.target.value }))}
+                  className="rounded-2xl border border-brand-30 bg-brand-60/20 px-4 py-3 outline-none"
+                  required
+                />
+              </label>
+              <label className="grid gap-2 text-sm text-brand-dark/75">
+                <span>Pay period</span>
+                <input
+                  value={paycheckForm.payPeriodLabel}
+                  onChange={(event) => setPaycheckForm((current) => ({ ...current, payPeriodLabel: event.target.value }))}
+                  className="rounded-2xl border border-brand-30 bg-brand-60/20 px-4 py-3 outline-none"
+                  placeholder="April 2026"
+                  required
+                />
+              </label>
+              <label className="grid gap-2 text-sm text-brand-dark/75">
+                <span>Payment method</span>
+                <select
+                  value={paycheckForm.paymentMethod}
+                  onChange={(event) => setPaycheckForm((current) => ({ ...current, paymentMethod: event.target.value as InvoicePaymentMethod }))}
+                  className="rounded-2xl border border-brand-30 bg-brand-60/20 px-4 py-3 outline-none"
+                >
+                  <option value="bank_transfer">Bank transfer</option>
+                  <option value="cash">Cash</option>
+                  <option value="upi">UPI</option>
+                  <option value="credit_card">Credit card</option>
+                  <option value="debit_card">Debit card</option>
+                  <option value="mixed">Mixed</option>
+                </select>
+              </label>
+              <label className="grid gap-2 text-sm text-brand-dark/75">
+                <span>Status</span>
+                <select
+                  value={paycheckForm.status}
+                  onChange={(event) => setPaycheckForm((current) => ({ ...current, status: event.target.value as FinanceEntry['status'] }))}
+                  className="rounded-2xl border border-brand-30 bg-brand-60/20 px-4 py-3 outline-none"
+                >
+                  <option value="paid">Paid</option>
+                  <option value="pending">Pending</option>
+                  <option value="overdue">Overdue</option>
+                </select>
+              </label>
+              <label className="grid gap-2 text-sm text-brand-dark/75 md:col-span-2">
+                <span>Notes</span>
+                <textarea
+                  value={paycheckForm.notes}
+                  onChange={(event) => setPaycheckForm((current) => ({ ...current, notes: event.target.value }))}
+                  rows={4}
+                  className="rounded-2xl border border-brand-30 bg-brand-60/20 px-4 py-3 outline-none"
+                  placeholder="Optional note for the paycheck"
+                />
+              </label>
+
+              <div className="flex justify-end gap-3 md:col-span-2">
+                <button type="button" onClick={() => setPaycheckOpen(false)} className="rounded-2xl border border-brand-30 px-4 py-2.5 text-sm font-medium text-brand-dark">
+                  Cancel
+                </button>
+                <button type="submit" disabled={paycheckSubmitting} className="rounded-2xl bg-brand-10 px-4 py-2.5 text-sm font-medium text-brand-60 disabled:opacity-60">
+                  {paycheckSubmitting ? 'Creating...' : 'Create paycheck'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

@@ -5,7 +5,7 @@ import { auth } from '../lib/firebase';
 import { authService } from '../lib/authService';
 import { dashboardService } from './services/dashboardService';
 import { getBusinessConfig } from './businessConfig';
-import { dashboardHash, getStageProgress, parseDashboardView } from './utils';
+import { dashboardHash, filterDashboardViews, getStageProgress, isOwnerAccount, parseDashboardView } from './utils';
 import type {
   BusinessType,
   CustomerFilters,
@@ -25,6 +25,7 @@ import { DashboardSkeleton } from './components/DashboardSkeleton';
 import { Sidebar } from './components/Sidebar';
 import { Topbar } from './components/Topbar';
 import { OverviewPage } from './pages/OverviewPage';
+import { SalesOverviewPage } from './pages/SalesOverviewPage';
 import { CustomersPage } from './pages/CustomersPage';
 import { TeamPage } from './pages/TeamPage';
 import { InventoryPage } from './pages/InventoryPage';
@@ -33,6 +34,7 @@ import { BillingPage } from './pages/BillingPage';
 import { CrmPage } from './pages/CrmPage';
 import { AIToolsPage } from './pages/AIToolsPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { TeamMemberProfilePage } from './pages/TeamMemberProfilePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { CustomerDrawer } from './components/CustomerDrawer';
 import { ConfirmDialog } from './components/ConfirmDialog';
@@ -115,6 +117,7 @@ export const DashboardApp = () => {
       (nextData) => {
         setData(nextData);
         setHasInitialSnapshot(true);
+        setSyncIssue(null);
         setLoading(false);
       },
       (nextError) => {
@@ -124,7 +127,14 @@ export const DashboardApp = () => {
       },
     );
 
-    dashboardService.ensureUserProfile(user).catch((nextError) => {
+    dashboardService.getExistingUserProfile(user.uid).then((profile) => {
+      if (profile) return;
+
+      setSyncIssue('This login is not linked to an active business workspace.');
+      void authService.logout().finally(() => {
+        window.location.hash = '#login';
+      });
+    }).catch((nextError) => {
       console.error(nextError);
       setSyncIssue(nextError instanceof Error ? nextError.message : 'Cloud sync is temporarily unavailable.');
     });
@@ -163,6 +173,20 @@ export const DashboardApp = () => {
 
   const activeView = parseDashboardView(hash);
   const businessConfig = getBusinessConfig(data?.profile.businessType ?? 'general_business');
+  const workspaceUserId = data?.profile.workspaceOwnerId || user?.uid || '';
+  const isOwner = isOwnerAccount(data?.profile.accountType);
+  const allowedViews = filterDashboardViews(data?.profile.sidebarViews);
+  const navigableViews: DashboardView[] = isOwner ? allowedViews : Array.from(new Set<DashboardView>([...allowedViews, 'profile']));
+
+  useEffect(() => {
+    if (!user || !data) return;
+    if (isOwner) return;
+
+    const fallbackView = navigableViews[0] || 'sales-overview';
+    if (!navigableViews.includes(activeView)) {
+      window.location.hash = dashboardHash(fallbackView);
+    }
+  }, [activeView, data, isOwner, navigableViews, user]);
 
   const handleMutationError = (nextError: unknown, fallbackMessage: string) => {
     console.error(nextError);
@@ -200,7 +224,7 @@ export const DashboardApp = () => {
     if (!customer) return;
 
     try {
-      await dashboardService.updateCustomer(user.uid, customerId, {
+      await dashboardService.updateCustomer(workspaceUserId, customerId, {
         stage,
         progress: getStageProgress(stage),
         activities: [
@@ -227,7 +251,7 @@ export const DashboardApp = () => {
     if (!customer) return;
 
     try {
-      await dashboardService.updateCustomer(user.uid, customerId, {
+      await dashboardService.updateCustomer(workspaceUserId, customerId, {
         ownerId,
         assignedTeamIds: Array.from(new Set([ownerId, ...customer.assignedTeamIds].filter(Boolean))),
       });
@@ -243,7 +267,7 @@ export const DashboardApp = () => {
     if (!customer) return;
 
     try {
-      await dashboardService.updateCustomer(user.uid, customerId, {
+      await dashboardService.updateCustomer(workspaceUserId, customerId, {
         pinned: !customer.pinned,
       });
     } catch (nextError) {
@@ -257,7 +281,7 @@ export const DashboardApp = () => {
     if (!customer) return;
 
     try {
-      await dashboardService.updateCustomer(user.uid, customerId, {
+      await dashboardService.updateCustomer(workspaceUserId, customerId, {
         needsFollowUp: !customer.needsFollowUp,
       });
       pushToast('Follow-up updated');
@@ -272,7 +296,7 @@ export const DashboardApp = () => {
     if (!customer) return;
 
     try {
-      await dashboardService.updateCustomer(user.uid, customerId, {
+      await dashboardService.updateCustomer(workspaceUserId, customerId, {
         internalNotes: [
           {
             id: crypto.randomUUID(),
@@ -304,7 +328,7 @@ export const DashboardApp = () => {
   const handleUpdateCustomer = async (customerId: string, payload: Partial<CustomerProject>) => {
     if (!user || !data) return;
     try {
-      await dashboardService.updateCustomer(user.uid, customerId, payload);
+      await dashboardService.updateCustomer(workspaceUserId, customerId, payload);
       // Suppress toast for silent typing saves unless it's a major milestone if you want, 
       // but let's just let it auto-save quietly to avoid spamming for every field onBlur.
     } catch (nextError) {
@@ -336,10 +360,16 @@ export const DashboardApp = () => {
           leadDesignerId: '',
           fieldStaffId: '',
           notes: 'Auto-mapped via Calendar',
-        }, data.userName);
+        }, data.userName, workspaceUserId);
       }
 
-      await dashboardService.addTask(user.uid, title, dueAt, user.uid, finalCustomerId);
+      await dashboardService.addTask(
+        workspaceUserId,
+        title,
+        dueAt,
+        data.profile.linkedTeamMemberId || user.uid,
+        finalCustomerId,
+      );
       pushToast('Task saved', customerOption.isNew ? 'New customer mapped successfully.' : undefined);
     } catch (nextError) {
       handleMutationError(nextError, 'Unable to save smart task.');
@@ -352,7 +382,7 @@ export const DashboardApp = () => {
     if (!customer) return;
 
     try {
-      await dashboardService.archiveCustomer(user.uid, customer, data.userName);
+      await dashboardService.archiveCustomer(workspaceUserId, customer, data.userName);
       setSelectedCustomerId(null);
       setArchiveCandidateId(null);
       pushToast('Record archived', 'The active record has been moved to history.');
@@ -367,7 +397,7 @@ export const DashboardApp = () => {
     if (!customer) return;
 
     try {
-      await dashboardService.deleteCustomerRecord(user.uid, customer, data.userName);
+      await dashboardService.deleteCustomerRecord(workspaceUserId, customer, data.userName);
       setSelectedCustomerId(null);
       setDeleteCandidateId(null);
       pushToast('Customer deleted', 'The customer and project were moved to history.');
@@ -396,7 +426,7 @@ export const DashboardApp = () => {
     if (!user || !data) return;
 
     try {
-      const customerId = await dashboardService.addCustomer(user, payload, data.userName);
+      const customerId = await dashboardService.addCustomer(user, payload, data.userName, workspaceUserId);
       setAddCustomerOpen(false);
       setSelectedCustomerId(customerId);
       window.location.hash = '#dashboard/customers';
@@ -428,15 +458,58 @@ export const DashboardApp = () => {
   };
 
   const handleAddTeamMember = async (
-    payload: Pick<TeamMember, 'name' | 'role' | 'email' | 'phone' | 'status'>,
+    payload: Pick<TeamMember, 'name' | 'role' | 'email' | 'phone' | 'status' | 'allowedViews' | 'loginEnabled' | 'loginEmail'> & { password?: string },
   ) => {
-    if (!user) return;
+    if (!user || !data) return;
+    if (!isOwner) {
+      pushToast('Owner access required', 'Only the business owner can create teammate login credentials.');
+      return;
+    }
 
     try {
-      const memberId = await dashboardService.addTeamMember(user.uid, payload);
+      let authUid: string | undefined;
+      const loginEmail = payload.loginEmail?.trim() || payload.email?.trim() || '';
+
+      if (payload.loginEnabled) {
+        if (!loginEmail || !payload.password) {
+          throw new Error('Add a login email and temporary password before enabling teammate login.');
+        }
+
+        const createdUser = await authService.createTeamMemberAccount(loginEmail, payload.password, payload.name);
+        authUid = createdUser.uid;
+      }
+
+      const memberId = await dashboardService.addTeamMember(workspaceUserId, {
+        ...payload,
+        allowedViews: payload.allowedViews.length ? payload.allowedViews : ['billing'],
+        authUid,
+        loginEmail,
+      });
+
+      if (authUid) {
+        await dashboardService.provisionTeamMemberAccess(
+          workspaceUserId,
+          data.profile,
+          memberId,
+          {
+            name: payload.name,
+            phone: payload.phone,
+            authUid,
+            loginEmail,
+            allowedViews: payload.allowedViews.length ? payload.allowedViews : ['billing'],
+            loginEnabled: payload.loginEnabled,
+          },
+        );
+      }
+
       setAddTeamMemberOpen(false);
       setSelectedTeamMemberId(memberId);
-      pushToast('Team member added', `${payload.name} can now be assigned across customers and projects.`);
+      pushToast(
+        'Team member added',
+        authUid
+          ? `${payload.name} can now log in with the teammate credentials you just created.`
+          : `${payload.name} can now be assigned across customers and projects.`,
+      );
     } catch (nextError) {
       handleMutationError(nextError, 'Unable to add this team member.');
     }
@@ -445,9 +518,66 @@ export const DashboardApp = () => {
   const handleUpdateTeamMember = async (memberId: string, payload: Partial<TeamMember>) => {
     if (!user || !data) return;
     try {
-      await dashboardService.updateTeamMember(user.uid, memberId, payload);
+      await dashboardService.updateTeamMember(workspaceUserId, memberId, payload);
     } catch (nextError) {
       handleMutationError(nextError, 'Unable to update team member.');
+    }
+  };
+
+  const handleProvisionExistingTeamMemberLogin = async (
+    memberId: string,
+    payload: { loginEmail: string; password: string },
+  ) => {
+    if (!user || !data) return;
+    if (!isOwner) {
+      pushToast('Owner access required', 'Only the business owner can create teammate login credentials.');
+      return;
+    }
+
+    const member = data.team.find((item) => item.id === memberId);
+    if (!member) {
+      throw new Error('We could not find that team member anymore.');
+    }
+
+    const loginEmail = payload.loginEmail.trim();
+    if (!loginEmail || payload.password.length < 8) {
+      throw new Error('Add a valid login email and a temporary password with at least 8 characters.');
+    }
+
+    try {
+      const createdUser = await authService.createTeamMemberAccount(loginEmail, payload.password, member.name);
+      await dashboardService.updateTeamMember(workspaceUserId, memberId, {
+        loginEnabled: true,
+        loginEmail,
+        authUid: createdUser.uid,
+      });
+      await dashboardService.provisionTeamMemberAccess(
+        workspaceUserId,
+        data.profile,
+        memberId,
+        {
+          name: member.name,
+          phone: member.phone,
+          authUid: createdUser.uid,
+          loginEmail,
+          allowedViews: member.allowedViews,
+          loginEnabled: true,
+        },
+      );
+      pushToast('Login created', `${member.name} can now sign in as a team member.`);
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to create teammate login credentials.');
+      throw nextError;
+    }
+  };
+
+  const handleSendTeamMemberReset = async (email: string) => {
+    try {
+      await authService.requestPasswordReset(email.trim());
+      pushToast('Reset link sent', `A password reset email was sent to ${email.trim()}.`);
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to send a password reset email.');
+      throw nextError;
     }
   };
 
@@ -457,7 +587,7 @@ export const DashboardApp = () => {
     if (!customer) return;
 
     try {
-      await dashboardService.updateCustomer(user.uid, customerId, {
+      await dashboardService.updateCustomer(workspaceUserId, customerId, {
         assignedTeamIds: Array.from(new Set([...customer.assignedTeamIds, memberId])),
       });
       pushToast('Team member assigned');
@@ -472,7 +602,7 @@ export const DashboardApp = () => {
     if (!customer) return;
 
     try {
-      await dashboardService.updateCustomer(user.uid, customerId, {
+      await dashboardService.updateCustomer(workspaceUserId, customerId, {
         assignedTeamIds: customer.assignedTeamIds.filter((id) => id !== memberId),
       });
       pushToast('Team member removed');
@@ -483,10 +613,11 @@ export const DashboardApp = () => {
 
   const handleDeleteTeamMember = async () => {
     if (!deleteTeamCandidateId || !user || !data) return;
+    const member = data.team.find((item) => item.id === deleteTeamCandidateId);
 
     try {
       await dashboardService.removeTeamMember(
-        user.uid,
+        workspaceUserId,
         deleteTeamCandidateId,
         data.team,
         data.customers,
@@ -494,7 +625,12 @@ export const DashboardApp = () => {
       );
       setSelectedTeamMemberId(null);
       setDeleteTeamCandidateId(null);
-      pushToast('Team member removed', 'Assignments were safely reallocated to the remaining team.');
+      pushToast(
+        'Team member removed',
+        member?.authUid
+          ? 'Assignments were safely reallocated and this teammate can no longer sign in.'
+          : 'Assignments were safely reallocated to the remaining team.',
+      );
     } catch (nextError) {
       handleMutationError(nextError, 'Unable to remove this team member.');
     }
@@ -524,7 +660,7 @@ export const DashboardApp = () => {
     if (!user || !data) return;
 
     try {
-      await dashboardService.addInventoryItem(user.uid, payload);
+      await dashboardService.addInventoryItem(workspaceUserId, payload);
       pushToast('Inventory item added', `${payload.name} is now available in your stock workspace.`);
     } catch (nextError) {
       handleMutationError(nextError, 'Unable to create this inventory item.');
@@ -535,7 +671,7 @@ export const DashboardApp = () => {
     if (!user) return;
 
     try {
-      await dashboardService.updateInventoryItem(user.uid, itemId, patch);
+      await dashboardService.updateInventoryItem(workspaceUserId, itemId, patch);
       pushToast('Inventory updated', 'The stock record was saved successfully.');
     } catch (nextError) {
       handleMutationError(nextError, 'Unable to update this inventory item.');
@@ -546,45 +682,10 @@ export const DashboardApp = () => {
     if (!user) return;
 
     try {
-      await dashboardService.deleteInventoryItem(user.uid, itemId);
+      await dashboardService.deleteInventoryItem(workspaceUserId, itemId);
       pushToast('Inventory item deleted', 'The stock record has been removed from your workspace.');
     } catch (nextError) {
       handleMutationError(nextError, 'Unable to delete this inventory item.');
-    }
-  };
-
-  const handleAddFinanceEntry = async (
-    payload: Pick<FinanceEntry, 'title' | 'kind' | 'category' | 'amount' | 'status' | 'dueAt' | 'customerId' | 'projectTitle' | 'notes'>,
-  ) => {
-    if (!user) return;
-
-    try {
-      await dashboardService.addFinanceEntry(user.uid, payload);
-      pushToast('Finance entry added', `${payload.title} was added to the company ledger.`);
-    } catch (nextError) {
-      handleMutationError(nextError, 'Unable to create this finance entry.');
-    }
-  };
-
-  const handleUpdateFinanceEntry = async (entryId: string, patch: Partial<FinanceEntry>) => {
-    if (!user) return;
-
-    try {
-      await dashboardService.updateFinanceEntry(user.uid, entryId, patch);
-      pushToast('Finance entry updated');
-    } catch (nextError) {
-      handleMutationError(nextError, 'Unable to update this finance entry.');
-    }
-  };
-
-  const handleDeleteFinanceEntry = async (entryId: string) => {
-    if (!user) return;
-
-    try {
-      await dashboardService.deleteFinanceEntry(user.uid, entryId);
-      pushToast('Finance entry deleted');
-    } catch (nextError) {
-      handleMutationError(nextError, 'Unable to delete this finance entry.');
     }
   };
 
@@ -608,9 +709,13 @@ export const DashboardApp = () => {
     sidebarViews: DashboardView[];
   }) => {
     if (!user) return;
+    if (!isOwner) {
+      pushToast('Owner access required', 'Only the business owner can update workspace profile details.');
+      return;
+    }
 
     try {
-      await dashboardService.updateWorkspaceProfile(user.uid, profile);
+      await dashboardService.updateWorkspaceProfile(workspaceUserId, profile);
       pushToast('Profile updated', 'Your company and workspace details were saved.');
     } catch (nextError) {
       handleMutationError(nextError, 'Unable to update your profile.');
@@ -631,11 +736,37 @@ export const DashboardApp = () => {
     }
 
     try {
-      const result = await dashboardService.completeBarcodeSale(user.uid, payload);
+      const result = await dashboardService.completeBarcodeSale(workspaceUserId, payload);
       pushToast('Invoice created', `${result.invoiceNumber} is ready to print.`);
       return result;
     } catch (nextError) {
       handleMutationError(nextError, 'Unable to finalize this sale.');
+      throw nextError;
+    }
+  };
+
+  const handleCreatePaycheck = async (payload: {
+    employeeMemberId: string;
+    employeeName: string;
+    amount: number;
+    dueAt: string;
+    notes: string;
+    payPeriodLabel: string;
+    paymentMethod: InvoicePaymentMethod;
+    status: FinanceEntry['status'];
+    issuedBy: string;
+  }) => {
+    if (!user) return;
+    if (!isOwner) {
+      pushToast('Owner access required', 'Only the business owner can generate salary paychecks.');
+      return;
+    }
+
+    try {
+      await dashboardService.createSalaryPaycheck(workspaceUserId, payload);
+      pushToast('Paycheck created', `${payload.employeeName}'s paycheck is now available in both owner and staff profiles.`);
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to create this paycheck.');
       throw nextError;
     }
   };
@@ -686,13 +817,17 @@ export const DashboardApp = () => {
         activeView={activeView}
         companyName={data.profile.companyName}
         workspaceLogoUrl={data.profile.workspaceLogoUrl}
+        viewerName={data.userName}
+        viewerLabel={isOwner ? 'Business owner' : 'Team member'}
         businessConfig={businessConfig}
         visibleViews={data.profile.sidebarViews}
+        canManageSidebar={isOwner}
+        canViewProfile
         onNavigate={(view) => handleNavigate(dashboardHash(view))}
         onSaveViews={async (sidebarViews) => {
-          if (!user) return;
+          if (!user || !isOwner) return;
           try {
-            await dashboardService.updateWorkspaceProfile(user.uid, {
+            await dashboardService.updateWorkspaceProfile(workspaceUserId, {
               companyName: data.profile.companyName,
               userName: data.profile.userName,
               businessType: data.profile.businessType,
@@ -732,7 +867,13 @@ export const DashboardApp = () => {
               </div>
             </div>
           ) : null}
-          {activeView === 'overview' ? (
+          {activeView === 'sales-overview' ? (
+            <SalesOverviewPage
+              companyName={data.profile.companyName}
+              businessProfile={data.profile}
+              salesInvoices={data.salesInvoices}
+            />
+          ) : activeView === 'overview' ? (
             <OverviewPage
               data={data}
               businessConfig={businessConfig}
@@ -741,7 +882,11 @@ export const DashboardApp = () => {
               onSaveSmartTask={handleSaveSmartTask}
               onAddCustomer={() => setAddCustomerOpen(true)}
               onAddProject={() => setAddProjectOpen(true)}
-              onAddTeamMember={() => setAddTeamMemberOpen(true)}
+              onAddTeamMember={() => {
+                if (isOwner) {
+                  setAddTeamMemberOpen(true);
+                }
+              }}
             />
           ) : activeView === 'customers' ? (
             <CustomersPage
@@ -764,7 +909,13 @@ export const DashboardApp = () => {
               businessConfig={businessConfig}
               onOpenCustomer={handleOpenCustomer}
               onOpenMember={handleOpenTeamMember}
-              onAddMember={() => setAddTeamMemberOpen(true)}
+              onAddMember={() => {
+                if (isOwner) {
+                  setAddTeamMemberOpen(true);
+                } else {
+                  pushToast('Owner access required', 'Only the business owner can add or provision teammates.');
+                }
+              }}
             />
           ) : activeView === 'inventory' ? (
             <InventoryPage
@@ -779,20 +930,17 @@ export const DashboardApp = () => {
             <BarcodeDeskPage
               companyName={data.profile.companyName}
               businessProfile={data.profile}
-              billedBy={data.profile.userName}
               inventory={data.inventory}
               salesInvoices={data.salesInvoices}
-              onFinalizeSale={handleFinalizeBarcodeSale}
             />
           ) : activeView === 'billing' ? (
             <BillingPage
-              customers={data.customers}
+              companyName={data.profile.companyName}
+              businessProfile={data.profile}
+              billedBy={data.userName}
               inventory={data.inventory}
-              financeEntries={data.financeEntries}
-              businessConfig={businessConfig}
-              onAddEntry={handleAddFinanceEntry}
-              onUpdateEntry={handleUpdateFinanceEntry}
-              onDeleteEntry={handleDeleteFinanceEntry}
+              salesInvoices={data.salesInvoices}
+              onFinalizeSale={handleFinalizeBarcodeSale}
             />
           ) : activeView === 'render-history' ? (
             <OperationsPage
@@ -822,14 +970,27 @@ export const DashboardApp = () => {
               onNavigate={handleNavigate}
             />
           ) : activeView === 'profile' ? (
-            <ProfilePage
-              profile={data.profile}
-              businessConfig={businessConfig}
-              totalCustomers={data.customers.length}
-              totalTeamMembers={data.team.length}
-              totalInventoryItems={data.inventory.length}
-              onSaveProfile={handleSaveWorkspaceProfile}
-            />
+            isOwner ? (
+              <ProfilePage
+                profile={data.profile}
+                businessConfig={businessConfig}
+                totalCustomers={data.customers.length}
+                totalTeamMembers={data.team.length}
+                totalInventoryItems={data.inventory.length}
+                team={data.team}
+                financeEntries={data.financeEntries}
+                onSaveProfile={handleSaveWorkspaceProfile}
+                onCreatePaycheck={handleCreatePaycheck}
+              />
+            ) : (
+              <TeamMemberProfilePage
+                profile={data.profile}
+                member={data.team.find((member) => member.id === data.profile.linkedTeamMemberId) ?? null}
+                businessConfig={businessConfig}
+                salesInvoices={data.salesInvoices}
+                financeEntries={data.financeEntries}
+              />
+            )
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-brand-dark/50">
               Workspace intentionally cleared for layout redesign focus.
@@ -894,6 +1055,10 @@ export const DashboardApp = () => {
         member={selectedTeamMember}
         customers={data.customers}
         tasks={data.tasks}
+        salesInvoices={data.salesInvoices}
+        financeEntries={data.financeEntries}
+        businessCompanyName={data.profile.companyName}
+        businessProfile={data.profile}
         open={!!selectedTeamMemberId}
         onClose={() => setSelectedTeamMemberId(null)}
         onOpenCustomer={handleOpenCustomer}
@@ -904,6 +1069,8 @@ export const DashboardApp = () => {
         onAssignToProject={handleAssignMemberToProject}
         onRemoveFromProject={handleRemoveMemberFromProject}
         onUpdateMember={handleUpdateTeamMember}
+        onProvisionLogin={handleProvisionExistingTeamMemberLogin}
+        onSendPasswordReset={handleSendTeamMemberReset}
       />
       <ConfirmDialog
         open={!!deleteTeamCandidateId}

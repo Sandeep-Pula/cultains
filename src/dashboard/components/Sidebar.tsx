@@ -4,11 +4,13 @@ import {
   ArrowDown,
   ArrowUp,
   Barcode,
+  CalendarDays,
   Contact,
   CreditCard,
   History,
   Home,
   Package,
+  CircleUserRound,
   Search,
   Settings,
   Sparkles,
@@ -21,7 +23,8 @@ import type { DashboardView } from '../types';
 import { dashboardHash, defaultSidebarViews, getInitials, viewTitles } from '../utils';
 
 const itemMap: Record<DashboardView, typeof Home> = {
-  overview: Home,
+  'sales-overview': Home,
+  overview: CalendarDays,
   customers: Users,
   team: UsersRound,
   inventory: Package,
@@ -31,7 +34,7 @@ const itemMap: Record<DashboardView, typeof Home> = {
   'ai-tools': Sparkles,
   crm: Contact,
   settings: Settings,
-  profile: Home,
+  profile: CircleUserRound,
 };
 
 const customizableViews = defaultSidebarViews;
@@ -40,8 +43,12 @@ type SidebarProps = {
   activeView: DashboardView;
   companyName: string;
   workspaceLogoUrl?: string;
+  viewerName?: string;
+  viewerLabel?: string;
   businessConfig: WorkspaceBusinessConfig;
   visibleViews: DashboardView[];
+  canManageSidebar?: boolean;
+  canViewProfile?: boolean;
   onNavigate: (view: DashboardView) => void;
   onSaveViews: (views: DashboardView[]) => Promise<void>;
   open: boolean;
@@ -227,8 +234,12 @@ export const Sidebar = ({
   activeView,
   companyName,
   workspaceLogoUrl,
+  viewerName,
+  viewerLabel,
   businessConfig,
   visibleViews,
+  canManageSidebar = true,
+  canViewProfile = true,
   onNavigate,
   onSaveViews,
   open,
@@ -237,9 +248,9 @@ export const Sidebar = ({
   const [manageOpen, setManageOpen] = useState(false);
 
   const orderedViews = useMemo(() => {
-    const nextViews = visibleViews.filter((view) => customizableViews.includes(view));
-    return nextViews.length ? nextViews : defaultSidebarViews;
-  }, [visibleViews]);
+    const nextViews = visibleViews.filter((view): view is DashboardView => customizableViews.includes(view));
+    return nextViews.length ? nextViews : canManageSidebar ? defaultSidebarViews : (['sales-overview'] as DashboardView[]);
+  }, [canManageSidebar, visibleViews]);
 
   return (
     <>
@@ -278,16 +289,25 @@ export const Sidebar = ({
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setManageOpen(true)}
-            className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-brand-30 bg-white px-4 py-3 text-sm font-medium text-brand-dark"
-          >
-            <Search size={16} />
-            Manage sidebar
-          </button>
+          {canManageSidebar ? (
+            <button
+              type="button"
+              onClick={() => setManageOpen(true)}
+              className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-brand-30 bg-white px-4 py-3 text-sm font-medium text-brand-dark"
+            >
+              <Search size={16} />
+              Manage sidebar
+            </button>
+          ) : null}
 
           <div className="mt-6 min-h-0 flex-1 overflow-y-auto pr-1">
+            {viewerName ? (
+              <div className="mb-4 rounded-2xl border border-brand-30 bg-white/65 px-4 py-3">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-brand-dark/50">{viewerLabel || 'User'}</div>
+                <div className="mt-1 truncate text-sm font-semibold text-brand-dark">{viewerName}</div>
+              </div>
+            ) : null}
+
             <div className="space-y-1">
               {orderedViews.map((view) => {
                 const Icon = itemMap[view];
@@ -312,61 +332,63 @@ export const Sidebar = ({
               })}
             </div>
 
-            <div className="mt-8 rounded-3xl border border-brand-30 bg-transparent p-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-2xl bg-brand-30 p-2 text-brand-10">
-                  <Sparkles size={18} />
-                </div>
-                <div>
-                  <div className="font-medium text-brand-dark">AI tool hub</div>
-                  <div className="text-[13px] text-brand-dark/80">Search, favorite, and launch AI workflows matched to your business.</div>
-                </div>
-              </div>
-              <a
-                href={dashboardHash('ai-tools')}
-                onClick={() => {
-                  onNavigate('ai-tools');
-                  onClose();
-                }}
-                className="mt-4 flex justify-center rounded-2xl border border-brand-30 bg-transparent px-4 py-2 text-sm font-medium text-brand-dark transition hover:border-brand-10 hover:text-brand-10"
-              >
-                Open AI tools
-              </a>
-            </div>
-
             <div className="mt-6 pb-2">
-              {(['settings', 'profile'] as const).map((view) => {
-                const Icon = view === 'settings' ? Settings : Home;
-                return (
+              {orderedViews.includes('ai-tools') ? (
+                <div className="rounded-3xl border border-brand-30 bg-transparent p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-2xl bg-brand-30 p-2 text-brand-10">
+                      <Sparkles size={18} />
+                    </div>
+                    <div>
+                      <div className="font-medium text-brand-dark">AI tool hub</div>
+                      <div className="text-[13px] text-brand-dark/80">Search, favorite, and launch AI workflows matched to your business.</div>
+                    </div>
+                  </div>
                   <a
-                    key={view}
-                    href={dashboardHash(view)}
+                    href={dashboardHash('ai-tools')}
                     onClick={() => {
-                      onNavigate(view);
+                      onNavigate('ai-tools');
                       onClose();
                     }}
-                    className={clsx(
-                      'flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition',
-                      activeView === view ? 'bg-brand-60 text-brand-10' : 'text-brand-dark/90 hover:bg-brand-60/50',
-                    )}
+                    className="mt-4 flex justify-center rounded-2xl border border-brand-30 bg-transparent px-4 py-2 text-sm font-medium text-brand-dark transition hover:border-brand-10 hover:text-brand-10"
                   >
-                    {view === 'profile' ? (
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-10 text-[10px] font-bold text-brand-60">
-                        {getInitials(companyName)}
-                      </span>
-                    ) : (
-                      <Icon size={18} />
-                    )}
-                    <span>{viewTitles[view]}</span>
+                    Open AI tools
                   </a>
-                );
-              })}
+                </div>
+              ) : null}
             </div>
           </div>
+
+          {canManageSidebar || canViewProfile ? (
+            <div className="mt-auto border-t border-brand-30 pt-4">
+              <div className="space-y-1">
+                {([...(canManageSidebar ? (['settings'] as const) : []), ...(canViewProfile ? (['profile'] as const) : [])] as DashboardView[]).map((view) => {
+                  const Icon = view === 'settings' ? Settings : CircleUserRound;
+                  return (
+                    <a
+                      key={view}
+                      href={dashboardHash(view)}
+                      onClick={() => {
+                        onNavigate(view);
+                        onClose();
+                      }}
+                      className={clsx(
+                        'flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition',
+                        activeView === view ? 'bg-brand-60 text-brand-10' : 'text-brand-dark/90 hover:bg-brand-60/50',
+                      )}
+                    >
+                      <Icon size={18} />
+                      <span>{viewTitles[view]}</span>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
         </div>
       </aside>
 
-      {manageOpen ? (
+      {manageOpen && canManageSidebar ? (
         <ManageSidebarModal
           views={orderedViews}
           onClose={() => setManageOpen(false)}

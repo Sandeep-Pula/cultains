@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import type {
+  AccountType,
   ActivityItem,
   BusinessType,
   CommunicationLog,
@@ -31,7 +32,7 @@ import type {
   InventoryItem,
   WorkspaceProfile,
 } from '../types';
-import { defaultSidebarViews, getInitials, getInventoryStatus, getStageProgress, recalculateTeamMetrics, stageProgressMap } from '../utils';
+import { defaultSidebarViews, filterDashboardViews, getInitials, getInventoryStatus, getStageProgress, recalculateTeamMetrics, stageProgressMap } from '../utils';
 import { buildBusinessBarcodeKey, buildInventoryBarcodeValue, buildInvoiceNumber } from '../barcodeUtils';
 
 type DashboardSnapshotListener = (data: DashboardData) => void;
@@ -41,6 +42,7 @@ type UserProfileDoc = {
   userId: string;
   userName: string;
   companyName: string;
+  accountType: AccountType;
   businessType: BusinessType;
   workspaceLogoUrl: string;
   email: string;
@@ -55,6 +57,8 @@ type UserProfileDoc = {
   renewalDate: string;
   recentlyViewedIds: string[];
   sidebarViews: DashboardView[];
+  workspaceOwnerId?: string;
+  linkedTeamMemberId?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -83,7 +87,7 @@ type CustomerCreatePayload = Pick<
   | 'notes'
 >;
 
-type TeamMemberPayload = Pick<TeamMember, 'name' | 'role' | 'email' | 'phone' | 'status'>;
+type TeamMemberPayload = Pick<TeamMember, 'name' | 'role' | 'email' | 'phone' | 'status' | 'allowedViews' | 'loginEnabled' | 'authUid' | 'loginEmail'>;
 
 const usersCollection = (userId: string, collectionName: string) =>
   collection(requireDb(), 'users', userId, collectionName);
@@ -107,9 +111,26 @@ const getCompanyName = (user: User, preferredName?: string) => {
   return `${baseName} Workspace`;
 };
 
+const normalizeSidebarViews = (views?: DashboardView[]) => {
+  const filtered = filterDashboardViews(views);
+  const next = filtered.length ? [...filtered] : [...defaultSidebarViews];
+
+  if (!next.includes('sales-overview')) {
+    next.unshift('sales-overview');
+  }
+
+  if (!next.includes('overview')) {
+    const overviewInsertIndex = next.includes('sales-overview') ? 1 : 0;
+    next.splice(overviewInsertIndex, 0, 'overview');
+  }
+
+  return Array.from(new Set(next));
+};
+
 const buildWorkspaceProfile = (user: User, profile?: Partial<UserProfileDoc>): WorkspaceProfile => ({
   companyName: profile?.companyName?.trim() || getCompanyName(user),
   userName: profile?.userName?.trim() || getUserName(user),
+  accountType: profile?.accountType || 'owner',
   businessType: profile?.businessType || 'general_business',
   workspaceLogoUrl: profile?.workspaceLogoUrl?.trim() || '',
   email: profile?.email?.trim() || user.email || '',
@@ -122,9 +143,9 @@ const buildWorkspaceProfile = (user: User, profile?: Partial<UserProfileDoc>): W
   subscriptionPlan: 'freemium',
   subscriptionStatus: 'active',
   renewalDate: profile?.renewalDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-  sidebarViews:
-    profile?.sidebarViews?.filter((view): view is DashboardView => defaultSidebarViews.includes(view as DashboardView)) ??
-    defaultSidebarViews,
+  sidebarViews: normalizeSidebarViews(profile?.sidebarViews),
+  workspaceOwnerId: profile?.workspaceOwnerId,
+  linkedTeamMemberId: profile?.linkedTeamMemberId,
 });
 
 const emptyDashboardData = (user: User, profile?: Partial<UserProfileDoc>): DashboardData => ({
@@ -251,13 +272,17 @@ const normalizeCustomer = (
 const normalizeTeamMember = (memberId: string, value: Partial<TeamMember> | undefined): TeamMember => ({
   id: memberId,
   name: value?.name || '',
-  role: value?.role || 'Lead Designer',
+  role: value?.role || 'Operations Coordinator',
   email: value?.email || '',
   phone: value?.phone || '',
   avatar: value?.avatar || getInitials(value?.name || 'TM'),
   activeProjects: value?.activeProjects ?? 0,
   workload: value?.workload ?? 0,
   status: value?.status || 'offline',
+  allowedViews: filterDashboardViews(value?.allowedViews),
+  loginEnabled: value?.loginEnabled ?? false,
+  authUid: value?.authUid,
+  loginEmail: value?.loginEmail || value?.email || '',
 });
 
 const normalizeTask = (taskId: string, value: Partial<TaskItem> | undefined): TaskItem => ({
@@ -325,6 +350,12 @@ const normalizeFinanceEntry = (entryId: string, value: Partial<FinanceEntry> | u
   customerId: value?.customerId,
   projectTitle: value?.projectTitle,
   sourceInvoiceId: value?.sourceInvoiceId,
+  employeeMemberId: value?.employeeMemberId,
+  employeeName: value?.employeeName,
+  paycheckNumber: value?.paycheckNumber,
+  payPeriodLabel: value?.payPeriodLabel,
+  paymentMethod: value?.paymentMethod,
+  issuedBy: value?.issuedBy,
   notes: value?.notes || '',
 });
 
@@ -432,6 +463,16 @@ export const dashboardService = {
     return emptyDashboardData(user, profile);
   },
 
+  async getExistingUserProfile(userId: string) {
+    const snapshot = await getDoc(userDoc(userId));
+    return snapshot.exists() ? (snapshot.data() as UserProfileDoc) : null;
+  },
+
+  async getTeamMemberAccess(ownerUserId: string, teamMemberId: string) {
+    const snapshot = await getDoc(teamMemberDoc(ownerUserId, teamMemberId));
+    return snapshot.exists() ? normalizeTeamMember(snapshot.id, snapshot.data() as Partial<TeamMember>) : null;
+  },
+
   async ensureUserProfile(user: User, preferredName?: string) {
     const ref = userDoc(user.uid);
     const timestamp = nowIso();
@@ -439,6 +480,7 @@ export const dashboardService = {
       userId: user.uid,
       userName: getUserName(user, preferredName),
       companyName: getCompanyName(user, preferredName),
+      accountType: 'owner',
       businessType: 'general_business',
       workspaceLogoUrl: '',
       email: user.email || '',
@@ -453,6 +495,8 @@ export const dashboardService = {
       renewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       recentlyViewedIds: [],
       sidebarViews: defaultSidebarViews,
+      workspaceOwnerId: undefined,
+      linkedTeamMemberId: undefined,
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -470,6 +514,7 @@ export const dashboardService = {
         userId: user.uid,
         userName: data.userName?.trim() || fallbackProfile.userName,
         companyName: data.companyName?.trim() || fallbackProfile.companyName,
+        accountType: data.accountType || fallbackProfile.accountType,
         businessType: data.businessType || fallbackProfile.businessType,
         workspaceLogoUrl: data.workspaceLogoUrl?.trim() || fallbackProfile.workspaceLogoUrl,
         email: data.email?.trim() || fallbackProfile.email,
@@ -483,9 +528,9 @@ export const dashboardService = {
         subscriptionStatus: 'active',
         renewalDate: data.renewalDate || fallbackProfile.renewalDate,
         recentlyViewedIds: data.recentlyViewedIds ?? [],
-        sidebarViews:
-          data.sidebarViews?.filter((view): view is DashboardView => defaultSidebarViews.includes(view as DashboardView)) ??
-          fallbackProfile.sidebarViews,
+        sidebarViews: normalizeSidebarViews(data.sidebarViews ?? fallbackProfile.sidebarViews),
+        workspaceOwnerId: data.workspaceOwnerId,
+        linkedTeamMemberId: data.linkedTeamMemberId,
         createdAt: data.createdAt || timestamp,
         updatedAt: timestamp,
       };
@@ -498,7 +543,9 @@ export const dashboardService = {
   },
 
   subscribeToDashboardData(user: User, onData: DashboardSnapshotListener, onError: DashboardErrorListener) {
-    let profile: UserProfileDoc | null = null;
+    let viewerProfile: UserProfileDoc | null = null;
+    let workspaceProfile: UserProfileDoc | null = null;
+    let accessMember: TeamMember | null = null;
     let customers: CustomerProject[] = [];
     let team: TeamMember[] = [];
     let tasks: TaskItem[] = [];
@@ -506,11 +553,39 @@ export const dashboardService = {
     let inventory: InventoryItem[] = [];
     let financeEntries: FinanceEntry[] = [];
     let salesInvoices: SalesInvoice[] = [];
+    let workspaceKey = '';
+    let teamAccessKey = '';
+    let workspaceUnsubscribers: Array<() => void> = [];
 
     const emit = () => {
-      const base = emptyDashboardData(user, profile ?? undefined);
+      const sourceProfile = workspaceProfile ?? viewerProfile;
+      const base = emptyDashboardData(user, sourceProfile ?? undefined);
+      const isTeamMember = viewerProfile?.accountType === 'team_member';
+      const visibleViews = isTeamMember
+        ? filterDashboardViews(accessMember?.allowedViews ?? viewerProfile?.sidebarViews)
+        : normalizeSidebarViews(sourceProfile?.sidebarViews ?? viewerProfile?.sidebarViews);
+      const viewerName = isTeamMember
+        ? accessMember?.name || viewerProfile?.userName?.trim() || base.userName
+        : viewerProfile?.userName?.trim() || sourceProfile?.userName?.trim() || base.userName;
       onData({
         ...base,
+        companyName: sourceProfile?.companyName?.trim() || base.companyName,
+        userName: viewerName,
+        profile: {
+          ...base.profile,
+          companyName: sourceProfile?.companyName?.trim() || base.profile.companyName,
+          userName: viewerName,
+          accountType: viewerProfile?.accountType || base.profile.accountType,
+          email: isTeamMember
+            ? accessMember?.loginEmail || viewerProfile?.email?.trim() || base.profile.email
+            : sourceProfile?.email?.trim() || base.profile.email,
+          phone: isTeamMember
+            ? accessMember?.phone || viewerProfile?.phone?.trim() || base.profile.phone
+            : sourceProfile?.phone?.trim() || base.profile.phone,
+          sidebarViews: visibleViews,
+          workspaceOwnerId: viewerProfile?.workspaceOwnerId,
+          linkedTeamMemberId: viewerProfile?.linkedTeamMemberId,
+        },
         customers,
         team: recalculateTeamMetrics(team, customers, tasks),
         inventory,
@@ -518,93 +593,149 @@ export const dashboardService = {
         salesInvoices,
         tasks,
         deletedCustomers,
+        recentlyViewedIds: viewerProfile?.recentlyViewedIds ?? [],
       });
+    };
+
+    const resetWorkspaceState = () => {
+      workspaceProfile = null;
+      accessMember = null;
+      customers = [];
+      team = [];
+      tasks = [];
+      deletedCustomers = [];
+      inventory = [];
+      financeEntries = [];
+      salesInvoices = [];
+    };
+
+    const subscribeToWorkspace = (ownerUserId: string, linkedTeamMemberId?: string) => {
+      workspaceUnsubscribers.forEach((unsubscribe) => unsubscribe());
+      workspaceUnsubscribers = [];
+      resetWorkspaceState();
+
+      workspaceUnsubscribers = [
+        onSnapshot(
+          userDoc(ownerUserId),
+          (snapshot) => {
+            workspaceProfile = snapshot.exists() ? (snapshot.data() as UserProfileDoc) : null;
+            emit();
+          },
+          (error) => onError(error),
+        ),
+        onSnapshot(
+          usersCollection(ownerUserId, 'customers'),
+          (snapshot) => {
+            customers = snapshot.docs
+              .map((item) => normalizeCustomer(item.id, item.data() as Partial<CustomerProject>))
+              .sort((left, right) => new Date(right.lastUpdated).getTime() - new Date(left.lastUpdated).getTime());
+            emit();
+          },
+          (error) => onError(error),
+        ),
+        onSnapshot(
+          usersCollection(ownerUserId, 'teamMembers'),
+          (snapshot) => {
+            team = snapshot.docs
+              .map((item) => normalizeTeamMember(item.id, item.data() as Partial<TeamMember>))
+              .sort((left, right) => left.name.localeCompare(right.name));
+            emit();
+          },
+          (error) => onError(error),
+        ),
+        onSnapshot(
+          usersCollection(ownerUserId, 'tasks'),
+          (snapshot) => {
+            tasks = snapshot.docs
+              .map((item) => normalizeTask(item.id, item.data() as Partial<TaskItem>))
+              .sort((left, right) => new Date(left.dueAt).getTime() - new Date(right.dueAt).getTime());
+            emit();
+          },
+          (error) => onError(error),
+        ),
+        onSnapshot(
+          usersCollection(ownerUserId, 'deletedCustomers'),
+          (snapshot) => {
+            deletedCustomers = snapshot.docs
+              .map((item) => normalizeDeletedCustomer(item.id, item.data() as Partial<DeletedCustomerRecord>))
+              .sort((left, right) => new Date(right.deletedAt).getTime() - new Date(left.deletedAt).getTime());
+            emit();
+          },
+          (error) => onError(error),
+        ),
+        onSnapshot(
+          usersCollection(ownerUserId, 'inventoryItems'),
+          (snapshot) => {
+            inventory = snapshot.docs
+              .map((item) => {
+                const normalized = normalizeInventoryItem(item.id, item.data() as Partial<InventoryItem>);
+                const sku = normalized.sku;
+                const itemCode = normalized.itemCode;
+                return {
+                  ...normalized,
+                  barcodeBusinessKey: normalized.barcodeBusinessKey || buildBusinessBarcodeKey(ownerUserId),
+                  barcodeValue: normalized.barcodeValue || buildInventoryBarcodeValue(ownerUserId, item.id, sku, itemCode),
+                };
+              })
+              .sort((left, right) => left.name.localeCompare(right.name));
+            emit();
+          },
+          (error) => onError(error),
+        ),
+        onSnapshot(
+          usersCollection(ownerUserId, 'financeEntries'),
+          (snapshot) => {
+            financeEntries = snapshot.docs
+              .map((item) => normalizeFinanceEntry(item.id, item.data() as Partial<FinanceEntry>))
+              .sort((left, right) => new Date(right.dueAt).getTime() - new Date(left.dueAt).getTime());
+            emit();
+          },
+          (error) => onError(error),
+        ),
+        onSnapshot(
+          usersCollection(ownerUserId, 'salesInvoices'),
+          (snapshot) => {
+            salesInvoices = snapshot.docs
+              .map((item) => normalizeSalesInvoice(item.id, item.data() as Partial<SalesInvoice>))
+              .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+            emit();
+          },
+          (error) => onError(error),
+        ),
+      ];
+
+      if (linkedTeamMemberId) {
+        workspaceUnsubscribers.push(
+          onSnapshot(
+            teamMemberDoc(ownerUserId, linkedTeamMemberId),
+            (snapshot) => {
+              accessMember = snapshot.exists() ? normalizeTeamMember(snapshot.id, snapshot.data() as Partial<TeamMember>) : null;
+              emit();
+            },
+            (error) => onError(error),
+          ),
+        );
+      }
     };
 
     const unsubscribers = [
       onSnapshot(
         userDoc(user.uid),
         (snapshot) => {
-          profile = snapshot.exists() ? (snapshot.data() as UserProfileDoc) : null;
-          emit();
-        },
-        (error) => onError(error),
-      ),
-      onSnapshot(
-        usersCollection(user.uid, 'customers'),
-        (snapshot) => {
-          customers = snapshot.docs
-            .map((item) => normalizeCustomer(item.id, item.data() as Partial<CustomerProject>))
-            .sort((left, right) => new Date(right.lastUpdated).getTime() - new Date(left.lastUpdated).getTime());
-          emit();
-        },
-        (error) => onError(error),
-      ),
-      onSnapshot(
-        usersCollection(user.uid, 'teamMembers'),
-        (snapshot) => {
-          team = snapshot.docs
-            .map((item) => normalizeTeamMember(item.id, item.data() as Partial<TeamMember>))
-            .sort((left, right) => left.name.localeCompare(right.name));
-          emit();
-        },
-        (error) => onError(error),
-      ),
-      onSnapshot(
-        usersCollection(user.uid, 'tasks'),
-        (snapshot) => {
-          tasks = snapshot.docs
-            .map((item) => normalizeTask(item.id, item.data() as Partial<TaskItem>))
-            .sort((left, right) => new Date(left.dueAt).getTime() - new Date(right.dueAt).getTime());
-          emit();
-        },
-        (error) => onError(error),
-      ),
-      onSnapshot(
-        usersCollection(user.uid, 'deletedCustomers'),
-        (snapshot) => {
-          deletedCustomers = snapshot.docs
-            .map((item) => normalizeDeletedCustomer(item.id, item.data() as Partial<DeletedCustomerRecord>))
-            .sort((left, right) => new Date(right.deletedAt).getTime() - new Date(left.deletedAt).getTime());
-          emit();
-        },
-        (error) => onError(error),
-      ),
-      onSnapshot(
-        usersCollection(user.uid, 'inventoryItems'),
-        (snapshot) => {
-          inventory = snapshot.docs
-            .map((item) => {
-              const normalized = normalizeInventoryItem(item.id, item.data() as Partial<InventoryItem>);
-              const sku = normalized.sku;
-              const itemCode = normalized.itemCode;
-              return {
-                ...normalized,
-                barcodeBusinessKey: normalized.barcodeBusinessKey || buildBusinessBarcodeKey(user.uid),
-                barcodeValue: normalized.barcodeValue || buildInventoryBarcodeValue(user.uid, item.id, sku, itemCode),
-              };
-            })
-            .sort((left, right) => left.name.localeCompare(right.name));
-          emit();
-        },
-        (error) => onError(error),
-      ),
-      onSnapshot(
-        usersCollection(user.uid, 'financeEntries'),
-        (snapshot) => {
-          financeEntries = snapshot.docs
-            .map((item) => normalizeFinanceEntry(item.id, item.data() as Partial<FinanceEntry>))
-            .sort((left, right) => new Date(right.dueAt).getTime() - new Date(left.dueAt).getTime());
-          emit();
-        },
-        (error) => onError(error),
-      ),
-      onSnapshot(
-        usersCollection(user.uid, 'salesInvoices'),
-        (snapshot) => {
-          salesInvoices = snapshot.docs
-            .map((item) => normalizeSalesInvoice(item.id, item.data() as Partial<SalesInvoice>))
-            .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+          viewerProfile = snapshot.exists() ? (snapshot.data() as UserProfileDoc) : null;
+          const nextWorkspaceKey =
+            viewerProfile?.accountType === 'team_member' && viewerProfile.workspaceOwnerId
+              ? viewerProfile.workspaceOwnerId
+              : user.uid;
+          const nextTeamAccessKey =
+            viewerProfile?.accountType === 'team_member' ? viewerProfile.linkedTeamMemberId || '' : '';
+
+          if (nextWorkspaceKey !== workspaceKey || nextTeamAccessKey !== teamAccessKey) {
+            workspaceKey = nextWorkspaceKey;
+            teamAccessKey = nextTeamAccessKey;
+            subscribeToWorkspace(workspaceKey, nextTeamAccessKey || undefined);
+          }
+
           emit();
         },
         (error) => onError(error),
@@ -612,6 +743,7 @@ export const dashboardService = {
     ];
 
     return () => {
+      workspaceUnsubscribers.forEach((unsubscribe) => unsubscribe());
       unsubscribers.forEach((unsubscribe) => unsubscribe());
     };
   },
@@ -659,12 +791,12 @@ export const dashboardService = {
     );
   },
 
-  async addCustomer(user: User, payload: CustomerCreatePayload, actorName: string) {
-    const ref = doc(usersCollection(user.uid, 'customers'));
+  async addCustomer(user: User, payload: CustomerCreatePayload, actorName: string, workspaceUserId: string = user.uid) {
+    const ref = doc(usersCollection(workspaceUserId, 'customers'));
     const timestamp = nowIso();
     await setDoc(ref, {
       ...buildCustomerPayload(payload, actorName),
-      userId: user.uid,
+      userId: workspaceUserId,
       createdAt: timestamp,
       updatedAt: timestamp,
     });
@@ -733,6 +865,7 @@ export const dashboardService = {
     await setDoc(ref, {
       userId,
       ...payload,
+      allowedViews: filterDashboardViews(payload.allowedViews),
       avatar: getInitials(payload.name),
       activeProjects: 0,
       workload: 12,
@@ -744,10 +877,93 @@ export const dashboardService = {
 
   async updateTeamMember(userId: string, memberId: string, patch: Partial<TeamMember>) {
     const timestamp = nowIso();
-    await updateDoc(teamMemberDoc(userId, memberId), {
+    const memberRef = teamMemberDoc(userId, memberId);
+    const memberSnapshot = await getDoc(memberRef);
+    const currentMember = memberSnapshot.exists()
+      ? normalizeTeamMember(memberId, memberSnapshot.data() as Partial<TeamMember>)
+      : null;
+    const ownerSnapshot = await getDoc(userDoc(userId));
+    const ownerProfile = ownerSnapshot.exists() ? (ownerSnapshot.data() as Partial<UserProfileDoc>) : null;
+
+    const nextPatch = {
       ...patch,
+      ...(patch.allowedViews ? { allowedViews: filterDashboardViews(patch.allowedViews) } : {}),
       updatedAt: timestamp,
-    });
+    };
+
+    await updateDoc(memberRef, nextPatch);
+
+    const authUid = patch.authUid || currentMember?.authUid;
+    if (authUid) {
+      const nextAllowedViews = patch.allowedViews ? filterDashboardViews(patch.allowedViews) : currentMember?.allowedViews || [];
+      await setDoc(
+        userDoc(authUid),
+        {
+          userId: authUid,
+          userName: patch.name?.trim() || currentMember?.name || '',
+          companyName: ownerProfile?.companyName?.trim() || '',
+          accountType: 'team_member' as const,
+          businessType: ownerProfile?.businessType || 'general_business',
+          workspaceLogoUrl: ownerProfile?.workspaceLogoUrl?.trim() || '',
+          email: patch.loginEmail?.trim() || patch.email?.trim() || currentMember?.loginEmail || currentMember?.email || '',
+          phone: patch.phone?.trim() || currentMember?.phone || '',
+          city: ownerProfile?.city?.trim() || '',
+          studioAddress: ownerProfile?.studioAddress?.trim() || '',
+          gstNumber: ownerProfile?.gstNumber?.trim() || '',
+          teamSize: ownerProfile?.teamSize?.trim() || '',
+          website: ownerProfile?.website?.trim() || '',
+          subscriptionPlan: 'freemium',
+          subscriptionStatus: 'active',
+          renewalDate: ownerProfile?.renewalDate || '',
+          sidebarViews: nextAllowedViews,
+          workspaceOwnerId: userId,
+          linkedTeamMemberId: memberId,
+          loginEnabled: patch.loginEnabled ?? currentMember?.loginEnabled ?? true,
+          updatedAt: timestamp,
+        },
+        { merge: true },
+      );
+    }
+  },
+
+  async provisionTeamMemberAccess(
+    ownerUserId: string,
+    ownerProfile: WorkspaceProfile,
+    teamMemberId: string,
+    payload: Pick<TeamMember, 'name' | 'phone' | 'authUid' | 'loginEmail' | 'allowedViews' | 'loginEnabled'>,
+  ) {
+    if (!payload.authUid) return;
+
+    const timestamp = nowIso();
+    await setDoc(
+      userDoc(payload.authUid),
+      {
+        userId: payload.authUid,
+        userName: payload.name.trim(),
+        companyName: ownerProfile.companyName,
+        accountType: 'team_member' as const,
+        businessType: ownerProfile.businessType,
+        workspaceLogoUrl: ownerProfile.workspaceLogoUrl,
+        email: payload.loginEmail?.trim() || '',
+        phone: payload.phone?.trim() || '',
+        city: ownerProfile.city,
+        studioAddress: ownerProfile.studioAddress,
+        gstNumber: ownerProfile.gstNumber,
+        teamSize: ownerProfile.teamSize,
+        website: ownerProfile.website,
+        subscriptionPlan: ownerProfile.subscriptionPlan,
+        subscriptionStatus: ownerProfile.subscriptionStatus,
+        renewalDate: ownerProfile.renewalDate,
+        recentlyViewedIds: [],
+        sidebarViews: filterDashboardViews(payload.allowedViews),
+        workspaceOwnerId: ownerUserId,
+        linkedTeamMemberId: teamMemberId,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        loginEnabled: payload.loginEnabled,
+      },
+      { merge: true },
+    );
   },
 
   async addInventoryItem(
@@ -815,7 +1031,7 @@ export const dashboardService = {
 
   async addFinanceEntry(
     userId: string,
-    payload: Pick<FinanceEntry, 'title' | 'kind' | 'category' | 'amount' | 'status' | 'dueAt' | 'customerId' | 'projectTitle' | 'notes'>,
+    payload: Pick<FinanceEntry, 'title' | 'kind' | 'category' | 'amount' | 'status' | 'dueAt' | 'customerId' | 'projectTitle' | 'notes' | 'employeeMemberId' | 'employeeName' | 'paycheckNumber' | 'payPeriodLabel' | 'paymentMethod' | 'issuedBy'>,
   ) {
     const ref = doc(usersCollection(userId, 'financeEntries'));
     const timestamp = nowIso();
@@ -823,6 +1039,33 @@ export const dashboardService = {
       ...payload,
       createdAt: timestamp,
       updatedAt: timestamp,
+    });
+    return ref.id;
+  },
+
+  async createSalaryPaycheck(
+    userId: string,
+    payload: Pick<FinanceEntry, 'amount' | 'status' | 'dueAt' | 'notes' | 'employeeMemberId' | 'employeeName' | 'payPeriodLabel' | 'paymentMethod' | 'issuedBy'>,
+  ) {
+    const ref = doc(usersCollection(userId, 'financeEntries'));
+    const timestamp = nowIso();
+    const paycheckNumber = `PAY-${new Date().getFullYear()}-${ref.id.slice(0, 6).toUpperCase()}`;
+    await setDoc(ref, {
+      title: `${payload.employeeName} paycheck`,
+      kind: 'expense',
+      category: 'salary',
+      amount: payload.amount,
+      status: payload.status,
+      dueAt: payload.dueAt,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      notes: payload.notes,
+      employeeMemberId: payload.employeeMemberId,
+      employeeName: payload.employeeName,
+      paycheckNumber,
+      payPeriodLabel: payload.payPeriodLabel,
+      paymentMethod: payload.paymentMethod,
+      issuedBy: payload.issuedBy,
     });
     return ref.id;
   },

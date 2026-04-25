@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import type {
+  AccountType,
   CustomerFilters,
   CustomerProject,
   DashboardView,
@@ -26,7 +27,8 @@ export const stageOrder: ProjectStage[] = [
 ];
 
 export const viewTitles: Record<DashboardView, string> = {
-  overview: 'Overview',
+  'sales-overview': 'Overview',
+  overview: 'Business Calendar',
   customers: 'Customers',
   team: 'Team',
   inventory: 'Inventory',
@@ -39,7 +41,37 @@ export const viewTitles: Record<DashboardView, string> = {
   profile: 'Profile',
 };
 
+export const genericTeamRoleSuggestions = [
+  'Sales Executive',
+  'Billing Staff',
+  'Inventory Manager',
+  'Operations Coordinator',
+  'Customer Support',
+  'Floor Staff',
+  'Store Manager',
+  'Cashier',
+  'Service Executive',
+  'Marketing Associate',
+];
+
+export const accessControlledViews: DashboardView[] = [
+  'sales-overview',
+  'overview',
+  'customers',
+  'team',
+  'inventory',
+  'barcode-desk',
+  'billing',
+  'ai-tools',
+  'render-history',
+  'crm',
+];
+
+export const filterDashboardViews = (views?: DashboardView[]) =>
+  (views ?? []).filter((view): view is DashboardView => defaultSidebarViews.includes(view as DashboardView));
+
 export const defaultSidebarViews: DashboardView[] = [
+  'sales-overview',
   'overview',
   'customers',
   'team',
@@ -50,6 +82,8 @@ export const defaultSidebarViews: DashboardView[] = [
   'ai-tools',
   'crm',
 ];
+
+export const isOwnerAccount = (accountType?: AccountType) => (accountType || 'owner') === 'owner';
 
 export const stageLabels: Record<ProjectStage, string> = {
   inquiry: 'Inquiry received',
@@ -83,14 +117,19 @@ export const siteStatusLabels: Record<SiteStatus, string> = {
 
 export const parseDashboardView = (hash: string): DashboardView => {
   const value = hash.replace(/^#dashboard\/?/, '').replace('/', '');
-  if (!value) return 'overview';
-  if (['customers', 'team', 'inventory', 'barcode-desk', 'billing', 'ai-tools', 'render-history', 'crm', 'settings', 'profile'].includes(value)) {
+  if (!value) return 'sales-overview';
+  if (value === 'overview' || value === 'business-calendar') return 'overview';
+  if (['sales-overview', 'customers', 'team', 'inventory', 'barcode-desk', 'billing', 'ai-tools', 'render-history', 'crm', 'settings', 'profile'].includes(value)) {
     return value as DashboardView;
   }
-  return 'overview';
+  return 'sales-overview';
 };
 
-export const dashboardHash = (view: DashboardView) => (view === 'overview' ? '#dashboard' : `#dashboard/${view}`);
+export const dashboardHash = (view: DashboardView) => {
+  if (view === 'sales-overview') return '#dashboard';
+  if (view === 'overview') return '#dashboard/business-calendar';
+  return `#dashboard/${view}`;
+};
 
 export const formatDate = (value: string) =>
   new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value));

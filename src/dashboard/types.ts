@@ -1,4 +1,5 @@
 export type DashboardView =
+  | 'sales-overview'
   | 'overview'
   | 'customers'
   | 'team'
@@ -40,7 +41,8 @@ export type CommunicationChannel = 'call' | 'whatsapp' | 'meeting' | 'share_link
 export type QuoteStatus = 'draft' | 'sent' | 'approved' | 'revised';
 export type PaymentStage = 'not_started' | 'advance_received' | 'partial_paid' | 'paid';
 export type RenderQueueStatus = 'queued' | 'in_progress' | 'done';
-export type TeamRole = 'Lead Designer' | 'Visualizer' | 'Site Coordinator' | 'Sales Owner' | 'Field Staff';
+export type TeamRole = string;
+export type AccountType = 'owner' | 'team_member';
 
 export interface TeamMember {
   id: string;
@@ -52,6 +54,10 @@ export interface TeamMember {
   activeProjects: number;
   workload: number;
   status: 'online' | 'busy' | 'offline';
+  allowedViews: DashboardView[];
+  loginEnabled: boolean;
+  authUid?: string;
+  loginEmail?: string;
 }
 
 export interface NoteItem {
@@ -180,6 +186,7 @@ export interface TaskItem {
 export interface WorkspaceProfile {
   companyName: string;
   userName: string;
+  accountType: AccountType;
   businessType: BusinessType;
   workspaceLogoUrl: string;
   email: string;
@@ -193,6 +200,8 @@ export interface WorkspaceProfile {
   subscriptionStatus: 'active';
   renewalDate: string;
   sidebarViews: DashboardView[];
+  workspaceOwnerId?: string;
+  linkedTeamMemberId?: string;
 }
 
 export interface DashboardData {
@@ -282,6 +291,12 @@ export interface FinanceEntry {
   customerId?: string;
   projectTitle?: string;
   sourceInvoiceId?: string;
+  employeeMemberId?: string;
+  employeeName?: string;
+  paycheckNumber?: string;
+  payPeriodLabel?: string;
+  paymentMethod?: InvoicePaymentMethod;
+  issuedBy?: string;
   notes: string;
 }
 

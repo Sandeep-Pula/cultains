@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BriefcaseBusiness, CalendarClock, Mail, Phone, Trash2, X } from 'lucide-react';
-import type { CustomerProject, TaskItem, TeamMember, TeamRole } from '../types';
-import { relativeDate } from '../utils';
+import type { CustomerProject, FinanceEntry, SalesInvoice, TeamMember, TeamRole, TaskItem, WorkspaceProfile } from '../types';
+import { printSalaryPaycheck } from '../invoicePrint';
+import { accessControlledViews, formatCurrency, formatDateTime, genericTeamRoleSuggestions, relativeDate, viewTitles } from '../utils';
 
 type TeamMemberDrawerProps = {
   member: TeamMember | null;
   customers: CustomerProject[];
   tasks: TaskItem[];
+  salesInvoices: SalesInvoice[];
+  financeEntries: FinanceEntry[];
+  businessCompanyName: string;
+  businessProfile: WorkspaceProfile;
   open: boolean;
   onClose: () => void;
   onOpenCustomer: (customerId: string) => void;
@@ -15,9 +20,9 @@ type TeamMemberDrawerProps = {
   onAssignToProject: (customerId: string, memberId: string) => void;
   onRemoveFromProject: (customerId: string, memberId: string) => void;
   onUpdateMember?: (memberId: string, payload: Partial<TeamMember>) => void;
+  onProvisionLogin?: (memberId: string, payload: { loginEmail: string; password: string }) => Promise<void>;
+  onSendPasswordReset?: (email: string) => Promise<void>;
 };
-
-const roles: TeamRole[] = ['Lead Designer', 'Visualizer', 'Site Coordinator', 'Sales Owner', 'Field Staff'];
 
 const InlineInput = ({ 
   value, 
@@ -59,6 +64,10 @@ export const TeamMemberDrawer = ({
   member,
   customers,
   tasks,
+  salesInvoices,
+  financeEntries,
+  businessCompanyName,
+  businessProfile,
   open,
   onClose,
   onOpenCustomer,
@@ -66,7 +75,18 @@ export const TeamMemberDrawer = ({
   onAssignToProject,
   onRemoveFromProject,
   onUpdateMember,
+  onProvisionLogin,
+  onSendPasswordReset,
 }: TeamMemberDrawerProps) => {
+  const [loginEmailDraft, setLoginEmailDraft] = useState(member?.loginEmail || member?.email || '');
+  const [passwordDraft, setPasswordDraft] = useState('');
+  const [credentialBusy, setCredentialBusy] = useState(false);
+
+  useEffect(() => {
+    setLoginEmailDraft(member?.loginEmail || member?.email || '');
+    setPasswordDraft('');
+  }, [member?.email, member?.id, member?.loginEmail]);
+
   if (!member) return null;
 
   const assignedProjects = customers.filter(
@@ -78,13 +98,49 @@ export const TeamMemberDrawer = ({
   );
   
   const completedProjects = assignedProjects.filter((project) => project.stage === 'completed');
-  const pendingProjects = assignedProjects.filter((project) => project.stage !== 'completed');
   const memberTasks = tasks.filter((task) => task.ownerId === member.id);
   const overdueTasks = memberTasks.filter((task) => !task.done && new Date(task.dueAt).getTime() < Date.now());
+  const memberName = member.name.trim().toLowerCase();
+  const memberInvoices = salesInvoices.filter((invoice) => invoice.billedBy.trim().toLowerCase() === memberName);
+  const invoiceRevenue = memberInvoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0);
+  const salaryPaychecks = financeEntries.filter((entry) => {
+    if (entry.category !== 'salary') return false;
+    if (entry.employeeMemberId === member.id) return true;
+    const haystack = `${entry.title} ${entry.notes} ${entry.projectTitle || ''}`.toLowerCase();
+    return haystack.includes(memberName);
+  });
+  const salaryPaidTotal = salaryPaychecks
+    .filter((entry) => entry.status === 'paid')
+    .reduce((sum, entry) => sum + entry.amount, 0);
 
   const handleFieldSave = <K extends keyof TeamMember>(field: K, value: TeamMember[K]) => {
     if (onUpdateMember) {
       onUpdateMember(member.id, { [field]: value });
+    }
+  };
+
+  const handleProvisionLogin = async () => {
+    if (!onProvisionLogin) return;
+    setCredentialBusy(true);
+    try {
+      await onProvisionLogin(member.id, {
+        loginEmail: loginEmailDraft.trim(),
+        password: passwordDraft,
+      });
+      setPasswordDraft('');
+    } finally {
+      setCredentialBusy(false);
+    }
+  };
+
+  const handleSendReset = async () => {
+    const email = (member.loginEmail || loginEmailDraft || member.email).trim();
+    if (!email || !onSendPasswordReset) return;
+    setCredentialBusy(true);
+    try {
+      await onSendPasswordReset(email);
+    } finally {
+      setCredentialBusy(false);
     }
   };
 
@@ -132,15 +188,17 @@ export const TeamMemberDrawer = ({
                       </select>
                     </div>
                     <div className="mt-1 flex items-center gap-2">
-                       <select
+                       <input
                         value={member.role}
                         onChange={(e) => handleFieldSave('role', e.target.value as TeamRole)}
-                        className="cursor-pointer appearance-none outline-none border border-transparent hover:border-brand-30 bg-transparent focus:bg-white rounded-lg px-2 py-1 -ml-2 text-[15px] font-medium text-brand-dark/80 transition-colors"
-                      >
-                        {roles.map(r => (
-                          <option key={r} value={r}>{r}</option>
+                        list={`member-role-suggestions-${member.id}`}
+                        className="outline-none border border-transparent hover:border-brand-30 bg-transparent focus:bg-white rounded-lg px-2 py-1 -ml-2 text-[15px] font-medium text-brand-dark/80 transition-colors"
+                      />
+                      <datalist id={`member-role-suggestions-${member.id}`}>
+                        {genericTeamRoleSuggestions.map((role) => (
+                          <option key={role} value={role} />
                         ))}
-                      </select>
+                      </datalist>
                       <span className="text-sm font-medium text-brand-dark/50">• {member.activeProjects} active projects</span>
                     </div>
                   </div>
@@ -157,14 +215,29 @@ export const TeamMemberDrawer = ({
               <section className="grid gap-4 sm:grid-cols-3">
                 {[
                   { label: 'Assigned works', value: assignedProjects.length },
-                  { label: 'Completed maps', value: completedProjects.length },
-                  { label: 'Pending delivery', value: pendingProjects.length },
+                  { label: 'Invoices generated', value: memberInvoices.length },
+                  { label: 'Paid salary entries', value: salaryPaychecks.filter((entry) => entry.status === 'paid').length },
                 ].map((item) => (
                   <div key={item.label} className="rounded-[24px] border border-brand-30 bg-white p-5 shadow-sm">
                     <div className="text-xs font-bold uppercase tracking-wider text-brand-dark/50">{item.label}</div>
                     <div className="mt-2 text-3xl font-semibold tracking-tight text-brand-dark">{item.value}</div>
                   </div>
                 ))}
+              </section>
+
+              <section className="grid gap-4 lg:grid-cols-3">
+                <div className="rounded-[24px] border border-brand-30 bg-white p-5 shadow-sm">
+                  <div className="text-xs font-bold uppercase tracking-wider text-brand-dark/50">Completed maps</div>
+                  <div className="mt-2 text-3xl font-semibold tracking-tight text-brand-dark">{completedProjects.length}</div>
+                </div>
+                <div className="rounded-[24px] border border-brand-30 bg-white p-5 shadow-sm">
+                  <div className="text-xs font-bold uppercase tracking-wider text-brand-dark/50">Invoice revenue handled</div>
+                  <div className="mt-2 text-3xl font-semibold tracking-tight text-brand-dark">{formatCurrency(invoiceRevenue)}</div>
+                </div>
+                <div className="rounded-[24px] border border-brand-30 bg-white p-5 shadow-sm">
+                  <div className="text-xs font-bold uppercase tracking-wider text-brand-dark/50">Salary paid</div>
+                  <div className="mt-2 text-3xl font-semibold tracking-tight text-brand-dark">{formatCurrency(salaryPaidTotal)}</div>
+                </div>
               </section>
 
               <section className="rounded-[28px] border border-brand-30 bg-white p-6 shadow-sm">
@@ -206,6 +279,92 @@ export const TeamMemberDrawer = ({
                        <div className="font-semibold text-[15px] text-amber-700">{overdueTasks.length} tasks critically overdue.</div>
                      </div>
                   </div>
+                </div>
+              </section>
+
+              <section className="rounded-[28px] border border-brand-30 bg-white p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-brand-dark">Access Control</h3>
+                <p className="mt-1 text-sm text-brand-dark/60">Choose which dashboard areas this teammate can access after login.</p>
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  {accessControlledViews.map((view) => (
+                    <label key={view} className="flex items-center gap-3 rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 text-sm text-brand-dark">
+                      <input
+                        type="checkbox"
+                        checked={member.allowedViews.includes(view)}
+                        onChange={(event) =>
+                          handleFieldSave(
+                            'allowedViews',
+                            event.target.checked
+                              ? [...member.allowedViews, view]
+                              : member.allowedViews.filter((item) => item !== view),
+                          )
+                        }
+                      />
+                      <span>{viewTitles[view]}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="mt-4 rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 text-sm text-brand-dark/70">
+                  {member.loginEnabled
+                    ? `Login enabled for ${member.loginEmail || member.email || member.name}.`
+                    : 'No separate login credentials are enabled for this teammate yet.'}
+                </div>
+                <div className="mt-4 rounded-2xl border border-brand-30 bg-white p-4">
+                  <div className="text-sm font-semibold text-brand-dark">Business login access</div>
+                  <p className="mt-1 text-sm text-brand-dark/60">
+                    {member.loginEnabled
+                      ? 'This teammate already has a separate staff login for the business dashboard.'
+                      : 'Create separate login credentials for this existing teammate so they can access only the tools you allowed above.'}
+                  </p>
+                  {!member.loginEnabled ? (
+                    <div className="mt-4 grid gap-3 md:grid-cols-[1fr_220px_auto]">
+                      <input
+                        type="email"
+                        value={loginEmailDraft}
+                        onChange={(event) => setLoginEmailDraft(event.target.value)}
+                        placeholder="staff@business.com"
+                        className="rounded-2xl border border-brand-30 bg-brand-60/25 px-4 py-3 text-sm text-brand-dark outline-none"
+                      />
+                      <input
+                        type="password"
+                        value={passwordDraft}
+                        onChange={(event) => setPasswordDraft(event.target.value)}
+                        placeholder="Temporary password"
+                        minLength={8}
+                        className="rounded-2xl border border-brand-30 bg-brand-60/25 px-4 py-3 text-sm text-brand-dark outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void handleProvisionLogin()}
+                        disabled={credentialBusy || !loginEmailDraft.trim() || passwordDraft.length < 8}
+                        className="rounded-2xl bg-brand-10 px-4 py-3 text-sm font-semibold text-brand-60 disabled:opacity-50"
+                      >
+                        {credentialBusy ? 'Saving...' : 'Create login'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <div className="rounded-2xl border border-brand-30 bg-brand-60/25 px-4 py-3 text-sm text-brand-dark">
+                        Login email: <span className="font-semibold">{member.loginEmail || member.email}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void handleSendReset()}
+                        disabled={credentialBusy || !(member.loginEmail || member.email)}
+                        className="rounded-2xl border border-brand-30 bg-white px-4 py-3 text-sm font-semibold text-brand-dark disabled:opacity-50"
+                      >
+                        {credentialBusy ? 'Sending...' : 'Send reset link'}
+                      </button>
+                    </div>
+                  )}
+                  {!member.loginEnabled ? (
+                    <p className="mt-3 text-xs text-brand-dark/55">
+                      Add a staff login email and a temporary password with at least 8 characters, then click `Create login`.
+                    </p>
+                  ) : null}
+                  <p className="mt-3 text-xs text-brand-dark/55">
+                    Team members use the same login page as the business owner. Forgot password works normally for these staff accounts too.
+                  </p>
                 </div>
               </section>
 
@@ -278,6 +437,77 @@ export const TeamMemberDrawer = ({
                     ) : (
                       <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-brand-30 bg-brand-60/50 p-5 text-center text-[15px] font-medium text-brand-dark/50">
                         Task backlog is empty for this member.
+                      </div>
+                    )}
+                  </div>
+                </section>
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+                <section className="rounded-[28px] border border-brand-30 bg-white p-6 shadow-sm overflow-hidden flex flex-col">
+                  <div className="flex items-center justify-between gap-3 shrink-0">
+                    <h3 className="text-lg font-semibold text-brand-dark">Invoice performance</h3>
+                    <span className="rounded-full border border-brand-30 bg-brand-60/40 px-3 py-1 text-xs font-semibold text-brand-dark">
+                      {memberInvoices.length} invoices
+                    </span>
+                  </div>
+                  <div className="mt-4 flex-1 overflow-y-auto pr-2 space-y-3 hide-scrollbar min-h-[250px]">
+                    {memberInvoices.length ? (
+                      memberInvoices.slice(0, 10).map((invoice) => (
+                        <div key={invoice.id} className="rounded-2xl border border-brand-30/50 bg-brand-60/50 p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="font-semibold text-[15px] text-brand-dark">{invoice.invoiceNumber}</div>
+                              <div className="mt-1 text-sm text-brand-dark/65">{invoice.customerName} • {formatDateTime(invoice.createdAt)}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-semibold text-brand-dark">{formatCurrency(invoice.totalAmount)}</div>
+                              <div className="mt-1 text-xs uppercase tracking-wider text-brand-dark/50">{invoice.paymentMethod.replace('_', ' ')}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-brand-30 bg-brand-60/50 p-5 text-center text-[15px] font-medium text-brand-dark/50">
+                        No invoices have been generated by this team member yet.
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                <section className="rounded-[28px] border border-brand-30 bg-white p-6 shadow-sm overflow-hidden flex flex-col">
+                  <div className="flex items-center justify-between gap-3 shrink-0">
+                    <h3 className="text-lg font-semibold text-brand-dark">Salary and paychecks</h3>
+                    <span className="rounded-full border border-brand-30 bg-brand-60/40 px-3 py-1 text-xs font-semibold text-brand-dark">
+                      {salaryPaychecks.length} entries
+                    </span>
+                  </div>
+                  <div className="mt-4 flex-1 overflow-y-auto pr-2 space-y-3 hide-scrollbar min-h-[250px]">
+                    {salaryPaychecks.length ? (
+                      salaryPaychecks.slice(0, 10).map((entry) => (
+                        <div key={entry.id} className="rounded-2xl border border-brand-30/50 bg-brand-60/50 p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="font-semibold text-[15px] text-brand-dark">{entry.title}</div>
+                              <div className="mt-1 text-sm text-brand-dark/65">{formatDateTime(entry.dueAt)}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-semibold text-brand-dark">{formatCurrency(entry.amount)}</div>
+                              <div className="mt-1 text-xs uppercase tracking-wider text-brand-dark/50">{entry.status}</div>
+                              <button
+                                type="button"
+                                onClick={() => printSalaryPaycheck(entry, businessCompanyName, businessProfile)}
+                                className="mt-3 rounded-2xl border border-brand-30 bg-white px-3 py-2 text-xs font-medium text-brand-dark"
+                              >
+                                Print PDF
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-brand-30 bg-brand-60/50 p-5 text-center text-[15px] font-medium text-brand-dark/50">
+                        No salary or paycheck entries are linked to this team member yet.
                       </div>
                     )}
                   </div>

@@ -10,7 +10,7 @@ type AuthPageProps = {
 const benefitPoints = [
   'Manage customers, stock, billing, and workflows',
   'Give your team one shared business dashboard',
-  'Unlock AI tools inside the same workspace',
+  'Business owners and staff can log in from the same page',
 ];
 
 export const AuthPage = ({ mode }: AuthPageProps) => {
@@ -127,7 +127,9 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
               <p className={styles.formText}>
                 {isForgotPassword
                   ? 'We will email you further instructions.'
-                  : isSignup ? 'Use your email to create an account.' : 'Enter your email and password to continue.'}
+                  : isSignup
+                    ? 'Use your email to create the main business owner account. Team member logins are created from inside the dashboard.'
+                    : 'Business owners and team members both log in here using the credentials assigned to them.'}
               </p>
 
               {error && (

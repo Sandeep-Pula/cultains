@@ -1,17 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { TeamMember, TeamRole } from '../types';
+import type { DashboardView, TeamMember, TeamRole } from '../types';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
-import { getInitials } from '../utils';
+import { accessControlledViews, genericTeamRoleSuggestions, getInitials, viewTitles } from '../utils';
 
 type AddTeamMemberModalProps = {
   open: boolean;
   existingTeam: TeamMember[];
   businessConfig: WorkspaceBusinessConfig;
   onClose: () => void;
-  onSubmit: (payload: Pick<TeamMember, 'name' | 'role' | 'email' | 'phone' | 'status'>) => void;
+  onSubmit: (payload: Pick<TeamMember, 'name' | 'role' | 'email' | 'phone' | 'status' | 'allowedViews' | 'loginEnabled' | 'loginEmail'> & { password?: string }) => void;
 };
-
-const roles: TeamRole[] = ['Sales Owner', 'Lead Designer', 'Visualizer', 'Site Coordinator', 'Field Staff'];
 
 const initialState: {
   name: string;
@@ -19,12 +17,20 @@ const initialState: {
   email: string;
   phone: string;
   status: TeamMember['status'];
+  allowedViews: DashboardView[];
+  loginEnabled: boolean;
+  loginEmail: string;
+  password: string;
 } = {
   name: '',
-  role: 'Lead Designer' as TeamRole,
+  role: 'Sales Executive',
   email: '',
   phone: '',
   status: 'online' as const,
+  allowedViews: ['sales-overview', 'billing', 'barcode-desk'],
+  loginEnabled: false,
+  loginEmail: '',
+  password: '',
 };
 
 export const AddTeamMemberModal = ({ open, existingTeam, businessConfig, onClose, onSubmit }: AddTeamMemberModalProps) => {
@@ -48,6 +54,8 @@ export const AddTeamMemberModal = ({ open, existingTeam, businessConfig, onClose
     onSubmit({
       ...form,
       email: form.email || defaultEmail,
+      loginEmail: form.loginEmail || form.email || defaultEmail,
+      password: form.password || undefined,
     });
     setForm(initialState);
   };
@@ -80,17 +88,19 @@ export const AddTeamMemberModal = ({ open, existingTeam, businessConfig, onClose
 
             <label className="grid gap-2 text-sm text-brand-dark/80">
               <span className="font-medium text-brand-dark">Role</span>
-              <select
+              <input
                 value={form.role}
-                onChange={(event) => setForm((current) => ({ ...current, role: event.target.value as TeamRole }))}
-                className="rounded-2xl border border-brand-30 bg-white px-3 py-2.5 text-brand-dark"
-              >
-                {roles.map((role) => (
-                  <option key={role} value={role}>
-                    {role}
-                  </option>
+                onChange={(event) => setForm((current) => ({ ...current, role: event.target.value }))}
+                list="team-role-suggestions"
+                className="rounded-2xl border border-brand-30 bg-white px-3 py-2.5 text-brand-dark outline-none"
+                placeholder="Sales Executive"
+              />
+              <datalist id="team-role-suggestions">
+                {genericTeamRoleSuggestions.map((role) => (
+                  <option key={role} value={role} />
                 ))}
-              </select>
+              </datalist>
+              <span className="text-xs text-brand-dark/55">Use a suggested business role or type your own custom role.</span>
             </label>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -128,6 +138,69 @@ export const AddTeamMemberModal = ({ open, existingTeam, businessConfig, onClose
                 <option value="offline">Offline</option>
               </select>
             </label>
+
+            <div className="grid gap-3 rounded-3xl border border-brand-30 bg-brand-60/30 p-4">
+              <div>
+                <div className="font-medium text-brand-dark">Dashboard access</div>
+                <div className="mt-1 text-xs text-brand-dark/60">Choose exactly which dashboard areas this teammate can use after login.</div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {accessControlledViews.map((view) => (
+                  <label key={view} className="flex items-center gap-3 rounded-2xl border border-brand-30 bg-white px-3 py-2 text-sm text-brand-dark">
+                    <input
+                      type="checkbox"
+                      checked={form.allowedViews.includes(view)}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          allowedViews: event.target.checked
+                            ? [...current.allowedViews, view]
+                            : current.allowedViews.filter((item) => item !== view),
+                        }))
+                      }
+                    />
+                    <span>{viewTitles[view]}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-3 rounded-3xl border border-brand-30 bg-brand-60/30 p-4">
+              <label className="flex items-center justify-between rounded-2xl border border-brand-30 bg-white px-4 py-3 text-sm text-brand-dark">
+                <span className="font-medium">Create login credentials</span>
+                <input
+                  type="checkbox"
+                  checked={form.loginEnabled}
+                  onChange={(event) => setForm((current) => ({ ...current, loginEnabled: event.target.checked }))}
+                />
+              </label>
+              {form.loginEnabled ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="grid gap-2 text-sm text-brand-dark/80">
+                    <span className="font-medium text-brand-dark">Login email</span>
+                    <input
+                      value={form.loginEmail}
+                      onChange={(event) => setForm((current) => ({ ...current, loginEmail: event.target.value }))}
+                      className="rounded-2xl border border-brand-30 bg-white px-3 py-2.5 outline-none text-brand-dark"
+                      placeholder={form.email || defaultEmail || 'teammate@business.com'}
+                      required={form.loginEnabled}
+                    />
+                  </label>
+                  <label className="grid gap-2 text-sm text-brand-dark/80">
+                    <span className="font-medium text-brand-dark">Temporary password</span>
+                    <input
+                      type="password"
+                      value={form.password}
+                      onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+                      className="rounded-2xl border border-brand-30 bg-white px-3 py-2.5 outline-none text-brand-dark"
+                      placeholder="At least 8 characters"
+                      minLength={8}
+                      required={form.loginEnabled}
+                    />
+                  </label>
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <div className="rounded-3xl bg-brand-30/40 p-5">
@@ -137,9 +210,12 @@ export const AddTeamMemberModal = ({ open, existingTeam, businessConfig, onClose
             </div>
             <div className="mt-4 text-xl font-semibold text-brand-dark">{form.name || 'New teammate'}</div>
             <div className="mt-1 text-sm text-brand-dark/80">{form.role}</div>
+            <div className="mt-2 text-xs uppercase tracking-[0.16em] text-brand-dark/55">
+              {form.allowedViews.length ? `${form.allowedViews.length} workspace tools enabled` : 'No dashboard access selected'}
+            </div>
             <div className="mt-6 rounded-2xl bg-white p-4 text-sm text-brand-dark/80">
               <div>{existingTeam.length} team members currently active in the dashboard.</div>
-              <div className="mt-2">New members can be assigned from team cards, account drawers, and work ownership controls.</div>
+              <div className="mt-2">Business owners can assign only the tools this teammate should see after login.</div>
             </div>
           </div>
 
