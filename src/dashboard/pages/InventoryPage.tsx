@@ -24,6 +24,7 @@ type InventoryPageProps = {
     | 'reorderQuantity'
     | 'costPerUnit'
     | 'sellingPrice'
+    | 'barcodeValue'
     | 'storageLocation'
     | 'supplierName'
     | 'supplierPhone'

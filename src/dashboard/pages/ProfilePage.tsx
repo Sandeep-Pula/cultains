@@ -23,7 +23,7 @@ type ProfilePageProps = {
   totalInventoryItems: number;
   onSaveProfile: (profile: Pick<
     WorkspaceProfile,
-    'companyName' | 'userName' | 'businessType' | 'workspaceLogoUrl' | 'email' | 'phone' | 'city' | 'studioAddress' | 'gstNumber' | 'teamSize' | 'website'
+    'companyName' | 'userName' | 'businessType' | 'workspaceLogoUrl' | 'email' | 'phone' | 'city' | 'studioAddress' | 'gstNumber' | 'teamSize' | 'website' | 'sidebarViews'
   >) => Promise<void>;
 };
 
@@ -47,6 +47,7 @@ export const ProfilePage = ({
     gstNumber: profile.gstNumber,
     teamSize: profile.teamSize,
     website: profile.website,
+    sidebarViews: profile.sidebarViews,
   });
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -65,6 +66,7 @@ export const ProfilePage = ({
       gstNumber: profile.gstNumber,
       teamSize: profile.teamSize,
       website: profile.website,
+      sidebarViews: profile.sidebarViews,
     });
   }, [profile]);
 

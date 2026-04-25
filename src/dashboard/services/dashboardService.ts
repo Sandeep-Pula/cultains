@@ -14,6 +14,7 @@ import type {
   BusinessType,
   CommunicationLog,
   CustomerProject,
+  DashboardView,
   DashboardData,
   DeletedCustomerRecord,
   FinanceEntry,
@@ -30,7 +31,7 @@ import type {
   InventoryItem,
   WorkspaceProfile,
 } from '../types';
-import { getInitials, getInventoryStatus, getStageProgress, recalculateTeamMetrics, stageProgressMap } from '../utils';
+import { defaultSidebarViews, getInitials, getInventoryStatus, getStageProgress, recalculateTeamMetrics, stageProgressMap } from '../utils';
 import { buildBusinessBarcodeKey, buildInventoryBarcodeValue, buildInvoiceNumber } from '../barcodeUtils';
 
 type DashboardSnapshotListener = (data: DashboardData) => void;
@@ -53,6 +54,7 @@ type UserProfileDoc = {
   subscriptionStatus: 'active';
   renewalDate: string;
   recentlyViewedIds: string[];
+  sidebarViews: DashboardView[];
   createdAt: string;
   updatedAt: string;
 };
@@ -120,6 +122,9 @@ const buildWorkspaceProfile = (user: User, profile?: Partial<UserProfileDoc>): W
   subscriptionPlan: 'freemium',
   subscriptionStatus: 'active',
   renewalDate: profile?.renewalDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+  sidebarViews:
+    profile?.sidebarViews?.filter((view): view is DashboardView => defaultSidebarViews.includes(view as DashboardView)) ??
+    defaultSidebarViews,
 });
 
 const emptyDashboardData = (user: User, profile?: Partial<UserProfileDoc>): DashboardData => ({
@@ -447,6 +452,7 @@ export const dashboardService = {
       subscriptionStatus: 'active',
       renewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       recentlyViewedIds: [],
+      sidebarViews: defaultSidebarViews,
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -477,6 +483,9 @@ export const dashboardService = {
         subscriptionStatus: 'active',
         renewalDate: data.renewalDate || fallbackProfile.renewalDate,
         recentlyViewedIds: data.recentlyViewedIds ?? [],
+        sidebarViews:
+          data.sidebarViews?.filter((view): view is DashboardView => defaultSidebarViews.includes(view as DashboardView)) ??
+          fallbackProfile.sidebarViews,
         createdAt: data.createdAt || timestamp,
         updatedAt: timestamp,
       };
@@ -634,6 +643,7 @@ export const dashboardService = {
       | 'gstNumber'
       | 'teamSize'
       | 'website'
+      | 'sidebarViews'
     >,
   ) {
     await setDoc(
@@ -755,6 +765,7 @@ export const dashboardService = {
       | 'reorderQuantity'
       | 'costPerUnit'
       | 'sellingPrice'
+      | 'barcodeValue'
       | 'storageLocation'
       | 'supplierName'
       | 'supplierPhone'
@@ -767,7 +778,7 @@ export const dashboardService = {
     const procurementStatus: InventoryProcurementStatus =
       payload.currentStock <= payload.minimumStock ? 'to_order' : 'none';
     const barcodeBusinessKey = buildBusinessBarcodeKey(userId);
-    const barcodeValue = buildInventoryBarcodeValue(userId, ref.id, payload.sku, payload.itemCode);
+    const barcodeValue = payload.barcodeValue?.trim() || buildInventoryBarcodeValue(userId, ref.id, payload.sku, payload.itemCode);
     const itemPayload = {
       ...payload,
       barcodeValue,

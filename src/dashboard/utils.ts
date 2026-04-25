@@ -39,6 +39,18 @@ export const viewTitles: Record<DashboardView, string> = {
   profile: 'Profile',
 };
 
+export const defaultSidebarViews: DashboardView[] = [
+  'overview',
+  'customers',
+  'team',
+  'inventory',
+  'barcode-desk',
+  'billing',
+  'render-history',
+  'ai-tools',
+  'crm',
+];
+
 export const stageLabels: Record<ProjectStage, string> = {
   inquiry: 'Inquiry received',
   consultation: 'Consultation done',

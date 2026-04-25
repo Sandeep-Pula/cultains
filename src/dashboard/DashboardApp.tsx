@@ -11,6 +11,7 @@ import type {
   CustomerFilters,
   CustomerProject,
   DashboardData,
+  DashboardView,
   FinanceEntry,
   InventoryItem,
   InvoicePaymentMethod,
@@ -513,6 +514,7 @@ export const DashboardApp = () => {
       | 'reorderQuantity'
       | 'costPerUnit'
       | 'sellingPrice'
+      | 'barcodeValue'
       | 'storageLocation'
       | 'supplierName'
       | 'supplierPhone'
@@ -603,6 +605,7 @@ export const DashboardApp = () => {
     gstNumber: string;
     teamSize: string;
     website: string;
+    sidebarViews: DashboardView[];
   }) => {
     if (!user) return;
 
@@ -684,7 +687,30 @@ export const DashboardApp = () => {
         companyName={data.profile.companyName}
         workspaceLogoUrl={data.profile.workspaceLogoUrl}
         businessConfig={businessConfig}
+        visibleViews={data.profile.sidebarViews}
         onNavigate={(view) => handleNavigate(dashboardHash(view))}
+        onSaveViews={async (sidebarViews) => {
+          if (!user) return;
+          try {
+            await dashboardService.updateWorkspaceProfile(user.uid, {
+              companyName: data.profile.companyName,
+              userName: data.profile.userName,
+              businessType: data.profile.businessType,
+              workspaceLogoUrl: data.profile.workspaceLogoUrl,
+              email: data.profile.email,
+              phone: data.profile.phone,
+              city: data.profile.city,
+              studioAddress: data.profile.studioAddress,
+              gstNumber: data.profile.gstNumber,
+              teamSize: data.profile.teamSize,
+              website: data.profile.website,
+              sidebarViews,
+            });
+            pushToast('Sidebar updated', 'Your sidebar shortcuts were saved.');
+          } catch (nextError) {
+            handleMutationError(nextError, 'Unable to save sidebar changes.');
+          }
+        }}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />

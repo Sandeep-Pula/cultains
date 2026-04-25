@@ -192,6 +192,7 @@ export interface WorkspaceProfile {
   subscriptionPlan: 'freemium';
   subscriptionStatus: 'active';
   renewalDate: string;
+  sidebarViews: DashboardView[];
 }
 
 export interface DashboardData {

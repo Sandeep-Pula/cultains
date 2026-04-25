@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Info, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { BrowserCodeReader, BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser';
+import { BarcodeFormat, DecodeHintType, NotFoundException } from '@zxing/library';
+import { Camera, CameraOff, Info, ScanLine, X } from 'lucide-react';
 import type { InventoryCategory, InventoryItem, InventoryUnit } from '../types';
 
 type InventoryFormPayload = Pick<
@@ -15,6 +17,7 @@ type InventoryFormPayload = Pick<
   | 'reorderQuantity'
   | 'costPerUnit'
   | 'sellingPrice'
+  | 'barcodeValue'
   | 'storageLocation'
   | 'supplierName'
   | 'supplierPhone'
@@ -54,6 +57,7 @@ const initialState = {
   reorderQuantity: '20',
   costPerUnit: '0',
   sellingPrice: '0',
+  barcodeValue: '',
   storageLocation: '',
   supplierName: '',
   supplierPhone: '',
@@ -72,6 +76,7 @@ const toFormState = (item?: InventoryItem | null) => ({
   reorderQuantity: String(item?.reorderQuantity ?? initialState.reorderQuantity),
   costPerUnit: String(item?.costPerUnit ?? initialState.costPerUnit),
   sellingPrice: String(item?.sellingPrice ?? item?.costPerUnit ?? initialState.sellingPrice),
+  barcodeValue: item?.barcodeValue ?? initialState.barcodeValue,
   storageLocation: item?.storageLocation ?? initialState.storageLocation,
   supplierName: item?.supplierName ?? initialState.supplierName,
   supplierPhone: item?.supplierPhone ?? initialState.supplierPhone,
@@ -87,7 +92,19 @@ const helpText: Record<string, string> = {
   reorderQuantity: 'Suggested quantity to buy when you restock this item.',
   costPerUnit: 'Purchase cost for one unit. This helps estimate total stock value.',
   sellingPrice: 'Selling price used when this item is scanned at the billing counter.',
+  barcodeValue: 'Scan the manufacturer barcode already printed on the product pack, or leave blank to generate one automatically.',
 };
+
+type DetectedBarcode = {
+  rawValue?: string;
+};
+
+type BarcodeDetectorCtor = new (options?: { formats?: string[] }) => {
+  detect: (source: HTMLVideoElement) => Promise<DetectedBarcode[]>;
+};
+
+const getBarcodeDetectorCtor = () =>
+  (window as Window & { BarcodeDetector?: BarcodeDetectorCtor }).BarcodeDetector ?? null;
 
 const Hint = ({ text }: { text: string }) => (
   <span className="group relative inline-flex">
@@ -112,6 +129,16 @@ export const AddInventoryItemModal = ({
 }: AddInventoryItemModalProps) => {
   const [form, setForm] = useState(() => toFormState(initialValues));
   const [submitting, setSubmitting] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerRunning, setScannerRunning] = useState(false);
+  const [scannerStatus, setScannerStatus] = useState('Scanner idle');
+  const [scannerError, setScannerError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const scannerControlsRef = useRef<IScannerControls | null>(null);
+  const scanFrameRef = useRef<number | null>(null);
+  const scanBusyRef = useRef(false);
+  const cooldownRef = useRef('');
 
   const isEditMode = useMemo(() => !!initialValues, [initialValues]);
 
@@ -119,9 +146,9 @@ export const AddInventoryItemModal = ({
     if (!open) return;
     setForm(toFormState(initialValues));
     setSubmitting(false);
+    setScannerOpen(false);
+    setScannerError(null);
   }, [initialValues, open]);
-
-  if (!open) return null;
 
   const setField = <K extends keyof typeof form>(field: K, value: (typeof form)[K]) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -146,6 +173,7 @@ export const AddInventoryItemModal = ({
       reorderQuantity: Number(form.reorderQuantity || '0'),
       costPerUnit: Number(form.costPerUnit || '0'),
       sellingPrice: Number(form.sellingPrice || '0'),
+      barcodeValue: form.barcodeValue.trim(),
       itemCode: form.itemCode.trim() || form.sku.trim(),
       storageLocation: form.storageLocation.trim() || 'Main warehouse',
     });
@@ -153,6 +181,161 @@ export const AddInventoryItemModal = ({
     setSubmitting(false);
     onClose();
   };
+
+  const stopScanner = useCallback(() => {
+    scannerControlsRef.current?.stop();
+    scannerControlsRef.current = null;
+    if (scanFrameRef.current) {
+      window.cancelAnimationFrame(scanFrameRef.current);
+      scanFrameRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setScannerRunning(false);
+    setScannerStatus('Scanner idle');
+  }, []);
+
+  useEffect(() => () => stopScanner(), [stopScanner]);
+
+  const handleBarcodeMatch = useCallback((barcodeValue: string) => {
+    const trimmed = barcodeValue.trim();
+    if (!trimmed || trimmed === cooldownRef.current) return;
+    cooldownRef.current = trimmed;
+    window.setTimeout(() => {
+      if (cooldownRef.current === trimmed) {
+        cooldownRef.current = '';
+      }
+    }, 1200);
+    setForm((current) => ({ ...current, barcodeValue: trimmed }));
+    setScannerStatus(`Barcode detected: ${trimmed}`);
+    setScannerError(null);
+    stopScanner();
+    setScannerOpen(false);
+  }, [stopScanner]);
+
+  const startScanner = useCallback(async () => {
+    stopScanner();
+    setScannerError(null);
+    setScannerStatus('Starting camera...');
+
+    if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+      setScannerError('Camera scanning needs HTTPS on mobile browsers.');
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia || !videoRef.current) {
+      setScannerError('Camera access is not available in this browser right now.');
+      return;
+    }
+
+    try {
+      const videoConstraints: MediaTrackConstraints = {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+      };
+
+      const nativeDetectorCtor = getBarcodeDetectorCtor();
+      if (nativeDetectorCtor && videoRef.current) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: videoConstraints });
+        streamRef.current = stream;
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+
+        const detector = new nativeDetectorCtor({
+          formats: ['code_128', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_39', 'itf'],
+        });
+
+        const tick = async () => {
+          if (!videoRef.current || !streamRef.current) return;
+          if (videoRef.current.readyState < 2) {
+            scanFrameRef.current = window.requestAnimationFrame(() => void tick());
+            return;
+          }
+          if (!scanBusyRef.current) {
+            try {
+              scanBusyRef.current = true;
+              const barcodes = await detector.detect(videoRef.current);
+              const matched = barcodes.find((barcode) => barcode.rawValue?.trim());
+              if (matched?.rawValue) {
+                handleBarcodeMatch(matched.rawValue);
+                return;
+              }
+            } catch (error) {
+              console.error(error);
+            } finally {
+              scanBusyRef.current = false;
+            }
+          }
+          scanFrameRef.current = window.requestAnimationFrame(() => void tick());
+        };
+
+        setScannerRunning(true);
+        setScannerStatus('Camera live. Align the product barcode with the green line.');
+        scanFrameRef.current = window.requestAnimationFrame(() => void tick());
+        return;
+      }
+
+      const devices = await BrowserCodeReader.listVideoInputDevices().catch(() => []);
+      const preferredDevice =
+        devices.find((device) => /back|rear|environment/i.test(device.label))?.deviceId || devices[0]?.deviceId;
+      const hints = new Map<DecodeHintType, unknown>();
+      hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+        BarcodeFormat.CODE_128,
+        BarcodeFormat.CODE_39,
+        BarcodeFormat.CODE_93,
+        BarcodeFormat.CODABAR,
+        BarcodeFormat.ITF,
+        BarcodeFormat.EAN_13,
+        BarcodeFormat.EAN_8,
+        BarcodeFormat.UPC_A,
+        BarcodeFormat.UPC_E,
+      ]);
+      hints.set(DecodeHintType.TRY_HARDER, true);
+      const reader = new BrowserMultiFormatReader(hints);
+      const controls = await reader.decodeFromConstraints(
+        {
+          audio: false,
+          video: preferredDevice
+            ? { deviceId: { ideal: preferredDevice }, ...videoConstraints }
+            : videoConstraints,
+        },
+        videoRef.current,
+        (result, error) => {
+          if (result) {
+            handleBarcodeMatch(result.getText());
+            return;
+          }
+          if (error && !(error instanceof NotFoundException)) {
+            setScannerError(error instanceof Error ? error.message : 'Unable to read barcode from camera.');
+          }
+        },
+      );
+      scannerControlsRef.current = controls;
+      setScannerRunning(true);
+      setScannerStatus('Camera live. Align the product barcode with the green line.');
+    } catch (error) {
+      console.error(error);
+      setScannerError(error instanceof Error ? error.message : 'Unable to access the camera.');
+      stopScanner();
+    }
+  }, [handleBarcodeMatch, stopScanner]);
+
+  useEffect(() => {
+    if (scannerOpen) {
+      void startScanner();
+    } else {
+      stopScanner();
+      setScannerError(null);
+    }
+  }, [scannerOpen, startScanner, stopScanner]);
+
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-brand-dark/25 p-3 sm:p-4 backdrop-blur-sm">
@@ -186,6 +369,7 @@ export const AddInventoryItemModal = ({
               ['Item name', 'name'],
               ['SKU', 'sku'],
               ['Internal code', 'itemCode'],
+              ['Barcode value', 'barcodeValue'],
               ['Storage location', 'storageLocation'],
               ['Supplier name', 'supplierName'],
               ['Supplier phone', 'supplierPhone'],
@@ -201,6 +385,21 @@ export const AddInventoryItemModal = ({
                   className="rounded-2xl border border-brand-30 bg-white px-3 py-2.5 outline-none text-brand-dark"
                   required={['name', 'sku'].includes(key)}
                 />
+                {key === 'barcodeValue' ? (
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setScannerOpen(true)}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-brand-30 bg-brand-60/35 px-3 py-2 text-xs font-semibold text-brand-dark"
+                    >
+                      <ScanLine size={14} />
+                      Scan existing barcode
+                    </button>
+                    <span className="text-xs text-brand-dark/60">
+                      Leave blank if you want the system to generate a new barcode after save.
+                    </span>
+                  </div>
+                ) : null}
               </label>
             ))}
 
@@ -288,7 +487,7 @@ export const AddInventoryItemModal = ({
             </div>
 
             <div className="mt-6 rounded-2xl bg-brand-10 px-4 py-4 text-sm text-brand-60">
-              Every item gets a business-specific barcode automatically after save, so it can be printed and scanned at checkout.
+              You can either scan the manufacturer barcode already on the item or let the system generate a business-specific barcode after save.
             </div>
           </div>
             </div>
@@ -321,6 +520,82 @@ export const AddInventoryItemModal = ({
           </div>
         </form>
       </div>
+
+      {scannerOpen ? (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-brand-dark/35 p-3 backdrop-blur-sm">
+          <div className="w-full max-w-3xl rounded-[32px] border border-brand-30 bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-brand-30 px-5 py-4 sm:px-6">
+              <div>
+                <div className="inline-flex rounded-full bg-brand-60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
+                  Inventory barcode scan
+                </div>
+                <h3 className="mt-3 text-2xl font-semibold text-brand-dark">Scan existing product barcode</h3>
+                <p className="mt-1 text-sm text-brand-dark/70">
+                  Use the barcode already printed on the product so it can be billed directly later.
+                </p>
+              </div>
+              <button onClick={() => setScannerOpen(false)} className="rounded-2xl border border-brand-30 bg-brand-60/40 p-2 text-brand-dark">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-4 px-5 py-5 sm:px-6">
+              <div className="overflow-hidden rounded-[28px] border border-brand-30 bg-brand-60/25">
+                <div className="relative aspect-[4/3] bg-brand-dark/95">
+                  <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
+                  <div className="pointer-events-none absolute inset-0">
+                    <div className="absolute inset-x-[10%] top-1/2 -translate-y-1/2">
+                      <div className="h-0.5 rounded-full bg-emerald-400 shadow-[0_0_0_1px_rgba(16,185,129,0.3),0_0_18px_rgba(16,185,129,0.85)]" />
+                      <div className="mt-3 text-center text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200 drop-shadow">
+                        Align barcode with green line
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="border-t border-brand-30 px-4 py-4">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={scannerRunning ? stopScanner : () => void startScanner()}
+                      className="inline-flex items-center gap-2 rounded-2xl bg-brand-10 px-4 py-3 text-sm font-medium text-brand-60"
+                    >
+                      {scannerRunning ? <CameraOff size={16} /> : <Camera size={16} />}
+                      {scannerRunning ? 'Stop scanner' : 'Start scanner'}
+                    </button>
+                  </div>
+                  <div className="mt-3 rounded-2xl border border-brand-30 bg-white px-4 py-3 text-sm text-brand-dark/70">
+                    {scannerStatus}
+                  </div>
+                  {scannerError ? (
+                    <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                      {scannerError}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="rounded-[28px] border border-brand-30 bg-brand-60/20 p-4">
+                <div className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-dark/60">Manual fallback</div>
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                  <input
+                    value={form.barcodeValue}
+                    onChange={(event) => setField('barcodeValue', event.target.value)}
+                    placeholder="Type or paste the item barcode"
+                    className="w-full rounded-2xl border border-brand-30 bg-white px-4 py-3 text-sm text-brand-dark outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setScannerOpen(false)}
+                    className="rounded-2xl border border-brand-30 bg-white px-4 py-3 text-sm font-medium text-brand-dark"
+                  >
+                    Use this code
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };
