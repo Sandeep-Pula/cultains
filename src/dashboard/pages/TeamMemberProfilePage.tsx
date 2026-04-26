@@ -1,7 +1,8 @@
 import { BadgeCheck, Building2, CircleDollarSign, FileText, IdCard, Mail, Phone, ShieldCheck, Store, UserCircle2 } from 'lucide-react';
 import type { FinanceEntry, SalesInvoice, TeamMember, WorkspaceProfile } from '../types';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
-import { printSalaryPaycheck } from '../invoicePrint';
+import { useState } from 'react';
+import { SalaryPaycheckDetailModal } from '../components/SalaryPaycheckDetailModal';
 import { formatCurrency, formatDateTime } from '../utils';
 
 type TeamMemberProfilePageProps = {
@@ -19,6 +20,7 @@ export const TeamMemberProfilePage = ({
   salesInvoices,
   financeEntries,
 }: TeamMemberProfilePageProps) => {
+  const [selectedPaycheck, setSelectedPaycheck] = useState<FinanceEntry | null>(null);
   if (!member) {
     return (
       <div className="rounded-[32px] border border-brand-30 bg-white p-8 shadow-sm">
@@ -237,10 +239,10 @@ export const TeamMemberProfilePage = ({
                       <div className="mt-1 text-xs uppercase tracking-wider text-brand-dark/50">{entry.status}</div>
                       <button
                         type="button"
-                        onClick={() => printSalaryPaycheck(entry, profile.companyName, profile)}
+                        onClick={() => setSelectedPaycheck(entry)}
                         className="mt-3 rounded-2xl border border-brand-30 bg-white px-3 py-2 text-xs font-medium text-brand-dark"
                       >
-                        Print PDF
+                        Preview paycheck
                       </button>
                     </div>
                   </div>
@@ -254,6 +256,13 @@ export const TeamMemberProfilePage = ({
           </div>
         </div>
       </section>
+      <SalaryPaycheckDetailModal
+        paycheck={selectedPaycheck}
+        open={!!selectedPaycheck}
+        companyName={profile.companyName}
+        businessProfile={profile}
+        onClose={() => setSelectedPaycheck(null)}
+      />
     </div>
   );
 };

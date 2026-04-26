@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import type { FinanceEntry, InvoicePaymentMethod, TeamMember, WorkspaceProfile } from '../types';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
-import { printSalaryPaycheck } from '../invoicePrint';
+import { SalaryPaycheckDetailModal } from '../components/SalaryPaycheckDetailModal';
 import { formatCurrency, formatDate, formatDateTime } from '../utils';
 
 type ProfilePageProps = {
@@ -71,6 +71,7 @@ export const ProfilePage = ({
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [paycheckOpen, setPaycheckOpen] = useState(false);
+  const [selectedPaycheck, setSelectedPaycheck] = useState<FinanceEntry | null>(null);
   const [paycheckSubmitting, setPaycheckSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [paycheckForm, setPaycheckForm] = useState({
@@ -454,10 +455,10 @@ export const ProfilePage = ({
                     </div>
                     <button
                       type="button"
-                      onClick={() => printSalaryPaycheck(entry, profile.companyName, profile)}
+                      onClick={() => setSelectedPaycheck(entry)}
                       className="rounded-2xl border border-brand-30 bg-white px-4 py-2 text-sm font-medium text-brand-dark"
                     >
-                      Print PDF
+                      Preview paycheck
                     </button>
                   </div>
                 </div>
@@ -473,7 +474,7 @@ export const ProfilePage = ({
 
       {paycheckOpen ? (
         <div className="fixed inset-0 z-[140] flex items-start justify-center overflow-y-auto bg-brand-dark/35 p-4 pt-6 backdrop-blur-sm sm:items-center sm:pt-4">
-          <div className="w-full max-w-2xl rounded-[32px] border border-brand-30 bg-white shadow-2xl">
+          <div className="flex max-h-[88dvh] w-full max-w-2xl flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-2xl">
             <div className="flex items-start justify-between border-b border-brand-30 px-6 py-5">
               <div>
                 <h3 className="text-2xl font-semibold text-brand-dark">Generate paycheck</h3>
@@ -484,7 +485,7 @@ export const ProfilePage = ({
               </button>
             </div>
 
-            <form onSubmit={handleCreatePaycheck} className="grid gap-4 px-6 py-6 md:grid-cols-2">
+            <form onSubmit={handleCreatePaycheck} className="ui-scrollable grid gap-4 px-6 py-6 md:grid-cols-2">
               <label className="grid gap-2 text-sm text-brand-dark/75">
                 <span>Team member</span>
                 <select
@@ -580,6 +581,13 @@ export const ProfilePage = ({
           </div>
         </div>
       ) : null}
+      <SalaryPaycheckDetailModal
+        paycheck={selectedPaycheck}
+        open={!!selectedPaycheck}
+        companyName={profile.companyName}
+        businessProfile={profile}
+        onClose={() => setSelectedPaycheck(null)}
+      />
     </div>
   );
 };

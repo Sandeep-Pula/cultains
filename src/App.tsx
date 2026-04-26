@@ -27,6 +27,8 @@ const surfaceLoader = (
   </section>
 );
 
+const SUPER_ADMIN_EMAIL = 'superadmin@aivyapari.com';
+
 function App() {
   const [hash, setHash] = useState(window.location.hash);
   const [user, setUser] = useState<User | null>(null);
@@ -75,7 +77,8 @@ function App() {
   // Autoredirect to dashboard if logged in and visiting login/signup
   useEffect(() => {
     if (authReady && user && isAuthPage) {
-      window.location.hash = '#dashboard';
+      window.location.hash =
+        user.email?.trim().toLowerCase() === SUPER_ADMIN_EMAIL ? '#dashboard/super-admin' : '#dashboard';
     }
   }, [authReady, user, isAuthPage]);
 

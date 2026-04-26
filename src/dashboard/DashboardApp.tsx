@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { AlertTriangle } from 'lucide-react';
 import { auth } from '../lib/firebase';
@@ -36,6 +36,7 @@ import { AIToolsPage } from './pages/AIToolsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { TeamMemberProfilePage } from './pages/TeamMemberProfilePage';
 import { SettingsPage } from './pages/SettingsPage';
+import { SuperAdminPage } from './pages/SuperAdminPage';
 import { CustomerDrawer } from './components/CustomerDrawer';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { ToastStack } from './components/ToastStack';
@@ -52,6 +53,8 @@ const defaultFilters: CustomerFilters = {
   completion: 'all',
   sortBy: 'latest',
 };
+
+const SUPER_ADMIN_EMAIL = 'superadmin@aivyapari.com';
 
 export const DashboardApp = () => {
   const [user, setUser] = useState<User | null>(auth?.currentUser ?? null);
@@ -130,6 +133,10 @@ export const DashboardApp = () => {
     dashboardService.getExistingUserProfile(user.uid).then((profile) => {
       if (profile) return;
 
+      if (user.email?.trim().toLowerCase() === SUPER_ADMIN_EMAIL) {
+        return dashboardService.ensureSuperAdminProfile(user).then(() => undefined);
+      }
+
       setSyncIssue('This login is not linked to an active business workspace.');
       void authService.logout().finally(() => {
         window.location.hash = '#login';
@@ -174,19 +181,36 @@ export const DashboardApp = () => {
   const activeView = parseDashboardView(hash);
   const businessConfig = getBusinessConfig(data?.profile.businessType ?? 'general_business');
   const workspaceUserId = data?.profile.workspaceOwnerId || user?.uid || '';
+  const isSuperAdminIdentity = user?.email?.trim().toLowerCase() === SUPER_ADMIN_EMAIL;
+  const isSuperAdmin = data?.profile.accountType === 'super_admin' || isSuperAdminIdentity;
   const isOwner = isOwnerAccount(data?.profile.accountType);
   const allowedViews = filterDashboardViews(data?.profile.sidebarViews);
-  const navigableViews: DashboardView[] = isOwner ? allowedViews : Array.from(new Set<DashboardView>([...allowedViews, 'profile']));
+  const navigableViews: DashboardView[] = useMemo(
+    () => (
+      isSuperAdmin
+        ? ['super-admin']
+        : isOwner
+          ? allowedViews
+          : Array.from(new Set<DashboardView>([...allowedViews, 'profile']))
+    ),
+    [allowedViews, isOwner, isSuperAdmin],
+  );
 
   useEffect(() => {
     if (!user || !data) return;
+    if (isSuperAdmin) {
+      if (activeView !== 'super-admin') {
+        window.location.hash = '#dashboard/super-admin';
+      }
+      return;
+    }
     if (isOwner) return;
 
     const fallbackView = navigableViews[0] || 'sales-overview';
     if (!navigableViews.includes(activeView)) {
       window.location.hash = dashboardHash(fallbackView);
     }
-  }, [activeView, data, isOwner, navigableViews, user]);
+  }, [activeView, data, isOwner, isSuperAdmin, navigableViews, user]);
 
   const handleMutationError = (nextError: unknown, fallbackMessage: string) => {
     console.error(nextError);
@@ -771,6 +795,38 @@ export const DashboardApp = () => {
     }
   };
 
+  const handleCreateSupportTicket = async (payload: { subject: string; body: string; category: 'general' | 'technical' | 'billing' | 'feature_request' | 'account'; priority: 'low' | 'medium' | 'high' | 'urgent' }) => {
+    if (!user || !data) return;
+    if (!isOwner) {
+      pushToast('Owner access required', 'Only the business owner can open and manage platform support complaints.');
+      return;
+    }
+
+    try {
+      await dashboardService.createBusinessSupportTicket(workspaceUserId, data.profile, payload);
+      pushToast('Ticket created', 'The platform super admin can now pick up this new support ticket.');
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to create this support ticket.');
+      throw nextError;
+    }
+  };
+
+  const handleSendSupportMessage = async (payload: { ticketId: string; body: string }) => {
+    if (!user || !data) return;
+    if (!isOwner) {
+      pushToast('Owner access required', 'Only the business owner can open and manage platform support complaints.');
+      return;
+    }
+
+    try {
+      await dashboardService.replyToSupportTicketAsBusiness(payload.ticketId, { name: data.profile.userName, email: data.profile.email }, payload.body);
+      pushToast('Reply sent', 'Your message was added to this support ticket.');
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to send this support message.');
+      throw nextError;
+    }
+  };
+
   if (authLoading || (loading && !data)) {
     return <DashboardSkeleton />;
   }
@@ -809,6 +865,20 @@ export const DashboardApp = () => {
     }
 
     return <DashboardSkeleton />;
+  }
+
+  if (isSuperAdmin) {
+    return (
+      <>
+        <SuperAdminPage
+          profile={data.profile}
+          onLogout={handleLogout}
+          onError={handleMutationError}
+          onSuccess={pushToast}
+        />
+        <ToastStack toasts={toasts} />
+      </>
+    );
   }
 
   return (
@@ -967,7 +1037,10 @@ export const DashboardApp = () => {
               businessConfig={businessConfig}
               companyName={data.profile.companyName}
               userName={data.profile.userName}
+              supportThreads={data.supportThreads}
               onNavigate={handleNavigate}
+              onCreateSupportTicket={handleCreateSupportTicket}
+              onSendSupportMessage={handleSendSupportMessage}
             />
           ) : activeView === 'profile' ? (
             isOwner ? (

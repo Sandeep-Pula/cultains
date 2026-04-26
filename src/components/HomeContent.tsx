@@ -12,6 +12,7 @@ import {
   Trophy,
   Users,
 } from 'lucide-react';
+import { BrandWordmark } from './BrandWordmark';
 import styles from './HomeContent.module.css';
 
 const modules = [
@@ -83,7 +84,8 @@ export const HomeContent = () => {
               <span className={styles.eyebrow}>Why owners care</span>
               <h2 className={styles.title}>The product should reduce decision fatigue, not add another dashboard to ignore.</h2>
               <p className={styles.lead}>
-                AIvyapari is designed for owners who want one dependable business system that feels organized,
+                <BrandWordmark />
+                {' '}is designed for owners who want one dependable business system that feels organized,
                 credible, and adaptable to the way their company actually works.
               </p>
 

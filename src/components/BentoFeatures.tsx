@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Bot, BriefcaseBusiness, LayoutDashboard } from 'lucide-react';
+import { BrandWordmark } from './BrandWordmark';
 import styles from './BentoFeatures.module.css';
 
 const steps = [
@@ -32,7 +33,7 @@ export const BentoFeatures = () => {
           transition={{ duration: 0.6 }}
         >
           <span className={styles.eyebrow}>Simple flow</span>
-          <h2 className={styles.heading}>AIvyapari should feel easy on day one, then grow deeper with your business.</h2>
+          <h2 className={styles.heading}><BrandWordmark /> should feel easy on day one, then grow deeper with your business.</h2>
         </motion.div>
 
         <div className={styles.stepsGrid}>

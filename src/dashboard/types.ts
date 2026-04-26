@@ -1,4 +1,5 @@
 export type DashboardView =
+  | 'super-admin'
   | 'sales-overview'
   | 'overview'
   | 'customers'
@@ -42,7 +43,7 @@ export type QuoteStatus = 'draft' | 'sent' | 'approved' | 'revised';
 export type PaymentStage = 'not_started' | 'advance_received' | 'partial_paid' | 'paid';
 export type RenderQueueStatus = 'queued' | 'in_progress' | 'done';
 export type TeamRole = string;
-export type AccountType = 'owner' | 'team_member';
+export type AccountType = 'owner' | 'team_member' | 'super_admin';
 
 export interface TeamMember {
   id: string;
@@ -204,6 +205,52 @@ export interface WorkspaceProfile {
   linkedTeamMemberId?: string;
 }
 
+export type SupportThreadStatus = 'new' | 'open' | 'in_progress' | 'waiting_on_admin' | 'waiting_on_business' | 'resolved' | 'closed';
+export type SupportMessageSender = 'business' | 'super_admin';
+export type SupportTicketPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type SupportTicketCategory = 'general' | 'technical' | 'billing' | 'feature_request' | 'account';
+
+export interface SupportMessage {
+  id: string;
+  senderType: SupportMessageSender;
+  senderName: string;
+  senderEmail: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface SupportThread {
+  id: string;
+  ownerUserId: string;
+  ticketNumber: string;
+  businessName: string;
+  ownerName: string;
+  ownerEmail: string;
+  subject: string;
+  category: SupportTicketCategory;
+  priority: SupportTicketPriority;
+  status: SupportThreadStatus;
+  createdAt: string;
+  updatedAt: string;
+  closedAt?: string;
+  assignedAdminName?: string;
+  assignedAdminEmail?: string;
+  messages: SupportMessage[];
+  unreadForBusiness: boolean;
+  unreadForAdmin: boolean;
+}
+
+export interface PlatformBusinessAccount {
+  userId: string;
+  companyName: string;
+  ownerName: string;
+  email: string;
+  phone: string;
+  businessType: BusinessType;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface DashboardData {
   companyName: string;
   userName: string;
@@ -215,6 +262,7 @@ export interface DashboardData {
   inventory: InventoryItem[];
   financeEntries: FinanceEntry[];
   salesInvoices: SalesInvoice[];
+  supportThreads: SupportThread[];
   recentlyViewedIds: string[];
 }
 

@@ -61,8 +61,8 @@ export const AddTeamMemberModal = ({ open, existingTeam, businessConfig, onClose
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-brand-dark/25 p-4 pt-6 backdrop-blur-sm sm:items-center sm:pt-4">
-      <div className="w-full max-w-2xl rounded-[28px] border border-brand-30 bg-brand-60 shadow-2xl">
+    <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-brand-dark/25 p-3 pt-4 backdrop-blur-sm sm:items-center sm:p-4">
+      <div className="flex max-h-[88dvh] w-full max-w-2xl flex-col overflow-hidden rounded-[28px] border border-brand-30 bg-brand-60 shadow-2xl">
         <div className="flex items-center justify-between border-b border-brand-30 px-6 py-4">
           <div>
             <h3 className="text-2xl font-semibold text-brand-dark">Add team member</h3>
@@ -73,7 +73,7 @@ export const AddTeamMemberModal = ({ open, existingTeam, businessConfig, onClose
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid gap-4 px-6 py-6 md:grid-cols-[1fr_0.8fr]">
+        <form onSubmit={handleSubmit} className="ui-scrollable grid gap-4 px-6 py-5 md:grid-cols-[1fr_0.8fr]">
           <div className="space-y-4">
             <label className="grid gap-2 text-sm text-brand-dark/80">
               <span className="font-medium text-brand-dark">Full name</span>

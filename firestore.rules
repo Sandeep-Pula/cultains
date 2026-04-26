@@ -10,6 +10,12 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function isSuperAdmin() {
+      return isSignedIn() &&
+        request.auth.token.email != null &&
+        request.auth.token.email == 'superadmin@aivyapari.com';
+    }
+
     function isWorkspaceMember(userId) {
       return isSignedIn() &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountType == 'team_member' &&
@@ -24,12 +30,31 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isOwner(userId) || isWorkspaceMember(userId) || managesTeamAccount(userId);
-      allow write: if isOwner(userId) || managesTeamAccount(userId);
+      allow read: if isSuperAdmin() || isOwner(userId) || isWorkspaceMember(userId) || managesTeamAccount(userId);
+      allow write: if isSuperAdmin() || isOwner(userId) || managesTeamAccount(userId);
 
       match /{document=**} {
-        allow read, write: if isOwner(userId) || isWorkspaceMember(userId);
+        allow read, write: if isSuperAdmin() || isOwner(userId) || isWorkspaceMember(userId);
       }
+    }
+
+    match /supportThreads/{ticketId} {
+      allow read: if isSuperAdmin() || (
+        resource.data.ownerUserId != null &&
+        (isOwner(resource.data.ownerUserId) || isWorkspaceMember(resource.data.ownerUserId))
+      );
+
+      allow create: if isSuperAdmin() || (
+        request.resource.data.ownerUserId != null &&
+        (isOwner(request.resource.data.ownerUserId) || isWorkspaceMember(request.resource.data.ownerUserId))
+      );
+
+      allow update: if isSuperAdmin() || (
+        resource.data.ownerUserId != null &&
+        (isOwner(resource.data.ownerUserId) || isWorkspaceMember(resource.data.ownerUserId))
+      );
+
+      allow delete: if isSuperAdmin();
     }
   }
 }

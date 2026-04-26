@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { ArrowDown } from 'lucide-react';
+import { BrandWordmark } from './BrandWordmark';
 import styles from './WelcomeSplash.module.css';
 
 const baseParticles = [
@@ -109,7 +110,7 @@ export const WelcomeSplash = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.18 }}
         >
-          AIvyapari.com
+          <BrandWordmark showDotCom />
         </motion.h1>
 
         <motion.p

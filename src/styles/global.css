@@ -19,6 +19,7 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  scrollbar-gutter: stable;
 }
 
 #root {
@@ -61,8 +62,14 @@ ul {
 }
 
 /* Scrollbar customization for webkit */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-brand-30-strong) var(--color-brand-60-soft);
+}
+
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -76,4 +83,9 @@ ul {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-brand-10);
+}
+
+.ui-scrollable {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }

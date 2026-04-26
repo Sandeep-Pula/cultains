@@ -13,6 +13,7 @@ import {
   CircleUserRound,
   Search,
   Settings,
+  ShieldCheck,
   Sparkles,
   Users,
   UsersRound,
@@ -23,6 +24,7 @@ import type { DashboardView } from '../types';
 import { dashboardHash, defaultSidebarViews, getInitials, viewTitles } from '../utils';
 
 const itemMap: Record<DashboardView, typeof Home> = {
+  'super-admin': ShieldCheck,
   'sales-overview': Home,
   overview: CalendarDays,
   customers: Users,

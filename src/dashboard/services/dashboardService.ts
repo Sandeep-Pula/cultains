@@ -4,8 +4,10 @@ import {
   doc,
   getDoc,
   onSnapshot,
+  query,
   setDoc,
   updateDoc,
+  where,
   writeBatch,
 } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -23,10 +25,14 @@ import type {
   InvoicePaymentStatus,
   InventoryProcurementStatus,
   NoteItem,
+  PlatformBusinessAccount,
   RenderAsset,
   RenderRequest,
   SalesInvoice,
   SalesInvoiceLineItem,
+  SupportMessage,
+  SupportThread,
+  SupportThreadStatus,
   TaskItem,
   TeamMember,
   InventoryItem,
@@ -37,6 +43,7 @@ import { buildBusinessBarcodeKey, buildInventoryBarcodeValue, buildInvoiceNumber
 
 type DashboardSnapshotListener = (data: DashboardData) => void;
 type DashboardErrorListener = (error: Error) => void;
+type SuperAdminSnapshotListener = (data: { businesses: PlatformBusinessAccount[]; supportThreads: SupportThread[] }) => void;
 
 type UserProfileDoc = {
   userId: string;
@@ -93,6 +100,7 @@ const usersCollection = (userId: string, collectionName: string) =>
   collection(requireDb(), 'users', userId, collectionName);
 
 const userDoc = (userId: string) => doc(requireDb(), 'users', userId);
+const rootUsersCollection = () => collection(requireDb(), 'users');
 const customerDoc = (userId: string, customerId: string) => doc(requireDb(), 'users', userId, 'customers', customerId);
 const teamMemberDoc = (userId: string, memberId: string) => doc(requireDb(), 'users', userId, 'teamMembers', memberId);
 const taskDoc = (userId: string, taskId: string) => doc(requireDb(), 'users', userId, 'tasks', taskId);
@@ -100,6 +108,8 @@ const inventoryItemDoc = (userId: string, itemId: string) => doc(requireDb(), 'u
 const financeEntryDoc = (userId: string, entryId: string) => doc(requireDb(), 'users', userId, 'financeEntries', entryId);
 const salesInvoiceDoc = (userId: string, invoiceId: string) => doc(requireDb(), 'users', userId, 'salesInvoices', invoiceId);
 const deletedCustomerDoc = (userId: string, recordId: string) => doc(requireDb(), 'users', userId, 'deletedCustomers', recordId);
+const supportThreadsCollection = () => collection(requireDb(), 'supportThreads');
+const supportThreadDoc = (ticketId: string) => doc(requireDb(), 'supportThreads', ticketId);
 
 const nowIso = () => new Date().toISOString();
 
@@ -156,6 +166,7 @@ const emptyDashboardData = (user: User, profile?: Partial<UserProfileDoc>): Dash
   inventory: [],
   financeEntries: [],
   salesInvoices: [],
+  supportThreads: [],
   customers: [],
   deletedCustomers: [],
   tasks: [],
@@ -386,6 +397,47 @@ const normalizeSalesInvoice = (invoiceId: string, value: Partial<SalesInvoice> |
   createdAt: value?.createdAt || nowIso(),
 });
 
+const normalizeSupportMessage = (value: Partial<SupportMessage> | undefined): SupportMessage => ({
+  id: value?.id || crypto.randomUUID(),
+  senderType: value?.senderType || 'business',
+  senderName: value?.senderName || 'Unknown sender',
+  senderEmail: value?.senderEmail || '',
+  body: value?.body || '',
+  createdAt: value?.createdAt || nowIso(),
+});
+
+const normalizeSupportThread = (threadId: string, value: Partial<SupportThread> | undefined): SupportThread => ({
+  id: threadId,
+  ownerUserId: value?.ownerUserId || threadId,
+  ticketNumber: value?.ticketNumber || `TKT-${threadId.slice(0, 6).toUpperCase()}`,
+  businessName: value?.businessName || 'Unknown business',
+  ownerName: value?.ownerName || 'Unknown owner',
+  ownerEmail: value?.ownerEmail || '',
+  subject: value?.subject || 'General support',
+  category: value?.category || 'general',
+  priority: value?.priority || 'medium',
+  status: value?.status || 'open',
+  createdAt: value?.createdAt || nowIso(),
+  updatedAt: value?.updatedAt || nowIso(),
+  closedAt: value?.closedAt,
+  assignedAdminName: value?.assignedAdminName,
+  assignedAdminEmail: value?.assignedAdminEmail,
+  messages: (value?.messages ?? []).map(normalizeSupportMessage),
+  unreadForBusiness: value?.unreadForBusiness ?? false,
+  unreadForAdmin: value?.unreadForAdmin ?? false,
+});
+
+const normalizePlatformBusinessAccount = (userId: string, value: Partial<UserProfileDoc> | undefined): PlatformBusinessAccount => ({
+  userId,
+  companyName: value?.companyName?.trim() || 'Untitled workspace',
+  ownerName: value?.userName?.trim() || 'Unknown owner',
+  email: value?.email?.trim() || '',
+  phone: value?.phone?.trim() || '',
+  businessType: value?.businessType || 'general_business',
+  createdAt: value?.createdAt || nowIso(),
+  updatedAt: value?.updatedAt || nowIso(),
+});
+
 const buildCustomerPayload = (
   payload: CustomerCreatePayload,
   actorName: string,
@@ -473,6 +525,39 @@ export const dashboardService = {
     return snapshot.exists() ? normalizeTeamMember(snapshot.id, snapshot.data() as Partial<TeamMember>) : null;
   },
 
+  async ensureSuperAdminProfile(user: User) {
+    const ref = userDoc(user.uid);
+    const timestamp = nowIso();
+    const existing = await getDoc(ref);
+    const nextProfile: UserProfileDoc = {
+      userId: user.uid,
+      userName: user.displayName?.trim() || 'AIvyapari Super Admin',
+      companyName: 'AIvyapari Platform',
+      accountType: 'super_admin',
+      businessType: 'general_business',
+      workspaceLogoUrl: '',
+      email: user.email || '',
+      phone: '',
+      city: '',
+      studioAddress: '',
+      gstNumber: '',
+      teamSize: '',
+      website: 'https://aivyapari.com',
+      subscriptionPlan: 'freemium',
+      subscriptionStatus: 'active',
+      renewalDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      recentlyViewedIds: [],
+      sidebarViews: [],
+      workspaceOwnerId: undefined,
+      linkedTeamMemberId: undefined,
+      createdAt: existing.exists() ? String(existing.data().createdAt || timestamp) : timestamp,
+      updatedAt: timestamp,
+    };
+
+    await setDoc(ref, nextProfile, { merge: true });
+    return nextProfile;
+  },
+
   async ensureUserProfile(user: User, preferredName?: string) {
     const ref = userDoc(user.uid);
     const timestamp = nowIso();
@@ -553,6 +638,7 @@ export const dashboardService = {
     let inventory: InventoryItem[] = [];
     let financeEntries: FinanceEntry[] = [];
     let salesInvoices: SalesInvoice[] = [];
+    let supportThreads: SupportThread[] = [];
     let workspaceKey = '';
     let teamAccessKey = '';
     let workspaceUnsubscribers: Array<() => void> = [];
@@ -561,6 +647,17 @@ export const dashboardService = {
       const sourceProfile = workspaceProfile ?? viewerProfile;
       const base = emptyDashboardData(user, sourceProfile ?? undefined);
       const isTeamMember = viewerProfile?.accountType === 'team_member';
+      const isSuperAdmin = viewerProfile?.accountType === 'super_admin';
+      if (isSuperAdmin) {
+        onData({
+          ...base,
+          companyName: viewerProfile?.companyName?.trim() || base.companyName,
+          userName: viewerProfile?.userName?.trim() || base.userName,
+          profile: buildWorkspaceProfile(user, viewerProfile ?? undefined),
+          supportThreads: [],
+        });
+        return;
+      }
       const visibleViews = isTeamMember
         ? filterDashboardViews(accessMember?.allowedViews ?? viewerProfile?.sidebarViews)
         : normalizeSidebarViews(sourceProfile?.sidebarViews ?? viewerProfile?.sidebarViews);
@@ -591,6 +688,7 @@ export const dashboardService = {
         inventory,
         financeEntries,
         salesInvoices,
+        supportThreads,
         tasks,
         deletedCustomers,
         recentlyViewedIds: viewerProfile?.recentlyViewedIds ?? [],
@@ -607,6 +705,7 @@ export const dashboardService = {
       inventory = [];
       financeEntries = [];
       salesInvoices = [];
+      supportThreads = [];
     };
 
     const subscribeToWorkspace = (ownerUserId: string, linkedTeamMemberId?: string) => {
@@ -702,6 +801,16 @@ export const dashboardService = {
           },
           (error) => onError(error),
         ),
+        onSnapshot(
+          query(supportThreadsCollection(), where('ownerUserId', '==', ownerUserId)),
+          (snapshot) => {
+            supportThreads = snapshot.docs
+              .map((item) => normalizeSupportThread(item.id, item.data() as Partial<SupportThread>))
+              .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
+            emit();
+          },
+          (error) => onError(error),
+        ),
       ];
 
       if (linkedTeamMemberId) {
@@ -786,6 +895,172 @@ export const dashboardService = {
         subscriptionPlan: 'freemium',
         subscriptionStatus: 'active',
         updatedAt: nowIso(),
+      },
+      { merge: true },
+    );
+  },
+
+  subscribeToSuperAdminConsole(onData: SuperAdminSnapshotListener, onError: DashboardErrorListener) {
+    let businesses: PlatformBusinessAccount[] = [];
+    let supportThreads: SupportThread[] = [];
+
+    const emit = () => {
+      onData({
+        businesses,
+        supportThreads,
+      });
+    };
+
+    const unsubscribers = [
+      onSnapshot(
+        rootUsersCollection(),
+        (snapshot) => {
+          businesses = snapshot.docs
+            .map((item) => ({ id: item.id, data: item.data() as Partial<UserProfileDoc> }))
+            .filter((item) => item.data.accountType === 'owner')
+            .map((item) => normalizePlatformBusinessAccount(item.id, item.data))
+            .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+          emit();
+        },
+        (error) => onError(error),
+      ),
+      onSnapshot(
+        supportThreadsCollection(),
+        (snapshot) => {
+          supportThreads = snapshot.docs
+            .map((item) => normalizeSupportThread(item.id, item.data() as Partial<SupportThread>))
+            .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
+          emit();
+        },
+        (error) => onError(error),
+      ),
+    ];
+
+    return () => {
+      unsubscribers.forEach((unsubscribe) => unsubscribe());
+    };
+  },
+
+  async createBusinessSupportTicket(
+    ownerUserId: string,
+    profile: WorkspaceProfile,
+    payload: { subject: string; body: string; category: SupportThread['category']; priority: SupportThread['priority'] },
+  ) {
+    const ref = doc(supportThreadsCollection());
+    const timestamp = nowIso();
+    const nextMessage = normalizeSupportMessage({
+      senderType: 'business',
+      senderName: profile.userName,
+      senderEmail: profile.email,
+      body: payload.body.trim(),
+      createdAt: timestamp,
+    });
+    const ticketNumber = `TKT-${new Date().getFullYear()}-${ref.id.slice(0, 6).toUpperCase()}`;
+
+    await setDoc(
+      ref,
+      {
+        ticketNumber,
+        ownerUserId,
+        businessName: profile.companyName,
+        ownerName: profile.userName,
+        ownerEmail: profile.email,
+        subject: payload.subject.trim() || 'General support',
+        category: payload.category,
+        priority: payload.priority,
+        status: 'new' as SupportThreadStatus,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        messages: [nextMessage],
+        unreadForBusiness: false,
+        unreadForAdmin: true,
+      },
+      { merge: true },
+    );
+    return ref.id;
+  },
+
+  async replyToSupportTicketAsBusiness(
+    ticketId: string,
+    sender: { name: string; email: string },
+    body: string,
+  ) {
+    const ref = supportThreadDoc(ticketId);
+    const existing = await getDoc(ref);
+    if (!existing.exists()) {
+      throw new Error('This support ticket no longer exists.');
+    }
+
+    const existingThread = normalizeSupportThread(existing.id, existing.data() as Partial<SupportThread>);
+    const timestamp = nowIso();
+    const nextMessage = normalizeSupportMessage({
+      senderType: 'business',
+      senderName: sender.name,
+      senderEmail: sender.email,
+      body: body.trim(),
+      createdAt: timestamp,
+    });
+
+    await setDoc(
+      ref,
+      {
+        ...existingThread,
+        status: existingThread.status === 'resolved' || existingThread.status === 'closed' ? 'waiting_on_admin' : 'waiting_on_admin',
+        updatedAt: timestamp,
+        messages: [...existingThread.messages, nextMessage],
+        unreadForBusiness: false,
+        unreadForAdmin: true,
+      },
+      { merge: true },
+    );
+  },
+
+  async replyToSupportThreadAsAdmin(
+    ticketId: string,
+    sender: { name: string; email: string },
+    body: string,
+    status: SupportThreadStatus = 'waiting_on_business',
+  ) {
+    const ref = supportThreadDoc(ticketId);
+    const existing = await getDoc(ref);
+    if (!existing.exists()) {
+      throw new Error('This support ticket no longer exists.');
+    }
+
+    const existingThread = normalizeSupportThread(existing.id, existing.data() as Partial<SupportThread>);
+    const timestamp = nowIso();
+    const nextMessage = normalizeSupportMessage({
+      senderType: 'super_admin',
+      senderName: sender.name,
+      senderEmail: sender.email,
+      body: body.trim(),
+      createdAt: timestamp,
+    });
+
+    await setDoc(
+      ref,
+      {
+        ...existingThread,
+        status,
+        updatedAt: timestamp,
+        closedAt: status === 'closed' ? timestamp : existingThread.closedAt,
+        assignedAdminName: sender.name,
+        assignedAdminEmail: sender.email,
+        messages: [...existingThread.messages, nextMessage],
+        unreadForBusiness: true,
+        unreadForAdmin: false,
+      },
+      { merge: true },
+    );
+  },
+
+  async updateSupportThreadStatus(ticketId: string, status: SupportThreadStatus) {
+    await setDoc(
+      supportThreadDoc(ticketId),
+      {
+        status,
+        updatedAt: nowIso(),
+        closedAt: status === 'closed' ? nowIso() : null,
       },
       { merge: true },
     );

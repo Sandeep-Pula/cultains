@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BriefcaseBusiness, CalendarClock, Mail, Phone, Trash2, X } from 'lucide-react';
 import type { CustomerProject, FinanceEntry, SalesInvoice, TeamMember, TeamRole, TaskItem, WorkspaceProfile } from '../types';
-import { printSalaryPaycheck } from '../invoicePrint';
+import { SalaryPaycheckDetailModal } from './SalaryPaycheckDetailModal';
 import { accessControlledViews, formatCurrency, formatDateTime, genericTeamRoleSuggestions, relativeDate, viewTitles } from '../utils';
 
 type TeamMemberDrawerProps = {
@@ -81,11 +81,18 @@ export const TeamMemberDrawer = ({
   const [loginEmailDraft, setLoginEmailDraft] = useState(member?.loginEmail || member?.email || '');
   const [passwordDraft, setPasswordDraft] = useState('');
   const [credentialBusy, setCredentialBusy] = useState(false);
+  const [selectedPaycheck, setSelectedPaycheck] = useState<FinanceEntry | null>(null);
 
   useEffect(() => {
     setLoginEmailDraft(member?.loginEmail || member?.email || '');
     setPasswordDraft('');
   }, [member?.email, member?.id, member?.loginEmail]);
+
+  useEffect(() => {
+    if (!open) {
+      setSelectedPaycheck(null);
+    }
+  }, [open]);
 
   if (!member) return null;
 
@@ -147,7 +154,7 @@ export const TeamMemberDrawer = ({
   return (
     <AnimatePresence>
       {open ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+        <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto p-3 pt-4 sm:items-center sm:p-6">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -160,7 +167,7 @@ export const TeamMemberDrawer = ({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="relative z-10 flex h-full max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-[32px] bg-brand-60 shadow-2xl"
+            className="relative z-10 flex h-full max-h-[88dvh] w-full max-w-5xl flex-col overflow-hidden rounded-[32px] bg-brand-60 shadow-2xl"
           >
             {/* Header Sticky Container */}
             <div className="shrink-0 border-b border-brand-30 bg-white/95 px-6 py-5 backdrop-blur z-20">
@@ -210,7 +217,7 @@ export const TeamMemberDrawer = ({
             </div>
 
             {/* Scrollable Body */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+            <div className="ui-scrollable flex-1 px-6 py-6 space-y-6">
               
               <section className="grid gap-4 sm:grid-cols-3">
                 {[
@@ -496,10 +503,10 @@ export const TeamMemberDrawer = ({
                               <div className="mt-1 text-xs uppercase tracking-wider text-brand-dark/50">{entry.status}</div>
                               <button
                                 type="button"
-                                onClick={() => printSalaryPaycheck(entry, businessCompanyName, businessProfile)}
+                                onClick={() => setSelectedPaycheck(entry)}
                                 className="mt-3 rounded-2xl border border-brand-30 bg-white px-3 py-2 text-xs font-medium text-brand-dark"
                               >
-                                Print PDF
+                                Preview paycheck
                               </button>
                             </div>
                           </div>
@@ -534,6 +541,13 @@ export const TeamMemberDrawer = ({
           </motion.div>
         </div>
       ) : null}
+      <SalaryPaycheckDetailModal
+        paycheck={selectedPaycheck}
+        open={!!selectedPaycheck}
+        companyName={businessCompanyName}
+        businessProfile={businessProfile}
+        onClose={() => setSelectedPaycheck(null)}
+      />
     </AnimatePresence>
   );
 };

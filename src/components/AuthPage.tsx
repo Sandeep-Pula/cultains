@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
 import { authService } from '../lib/authService';
+import { BrandWordmark } from './BrandWordmark';
 import styles from './AuthPage.module.css';
 
 type AuthPageProps = {
@@ -12,6 +13,8 @@ const benefitPoints = [
   'Give your team one shared business dashboard',
   'Business owners and staff can log in from the same page',
 ];
+
+const SUPER_ADMIN_EMAIL = 'superadmin@aivyapari.com';
 
 export const AuthPage = ({ mode }: AuthPageProps) => {
   const [isSignup, setIsSignup] = useState(mode === 'signup');
@@ -63,7 +66,7 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
         }
 
         await authService.signIn(normalizedEmail, password);
-        window.location.hash = '#dashboard';
+        window.location.hash = normalizedEmail.toLowerCase() === SUPER_ADMIN_EMAIL ? '#dashboard/super-admin' : '#dashboard';
       }
     } catch (err) {
       console.error(err);
@@ -209,7 +212,7 @@ export const AuthPage = ({ mode }: AuthPageProps) => {
               )}
 
               <p className={styles.switchText}>
-                {isForgotPassword ? 'Remembered your password?' : isSignup ? 'Already have an account?' : 'New to AIvyapari?'}
+                {isForgotPassword ? 'Remembered your password?' : isSignup ? 'Already have an account?' : <>New to <BrandWordmark />?</>}
                 {' '}
                 <button
                   type="button"

@@ -27,6 +27,7 @@ export const stageOrder: ProjectStage[] = [
 ];
 
 export const viewTitles: Record<DashboardView, string> = {
+  'super-admin': 'Super admin',
   'sales-overview': 'Overview',
   overview: 'Business Calendar',
   customers: 'Customers',
@@ -119,13 +120,14 @@ export const parseDashboardView = (hash: string): DashboardView => {
   const value = hash.replace(/^#dashboard\/?/, '').replace('/', '');
   if (!value) return 'sales-overview';
   if (value === 'overview' || value === 'business-calendar') return 'overview';
-  if (['sales-overview', 'customers', 'team', 'inventory', 'barcode-desk', 'billing', 'ai-tools', 'render-history', 'crm', 'settings', 'profile'].includes(value)) {
+  if (['super-admin', 'sales-overview', 'customers', 'team', 'inventory', 'barcode-desk', 'billing', 'ai-tools', 'render-history', 'crm', 'settings', 'profile'].includes(value)) {
     return value as DashboardView;
   }
   return 'sales-overview';
 };
 
 export const dashboardHash = (view: DashboardView) => {
+  if (view === 'super-admin') return '#dashboard/super-admin';
   if (view === 'sales-overview') return '#dashboard';
   if (view === 'overview') return '#dashboard/business-calendar';
   return `#dashboard/${view}`;

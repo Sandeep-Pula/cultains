@@ -18,7 +18,7 @@ export const ConfirmDialog = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-brand-dark/25 p-4 pt-6 backdrop-blur-sm sm:items-center sm:pt-4">
+    <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-brand-dark/25 p-3 pt-4 backdrop-blur-sm sm:items-center sm:p-4">
       <div className="w-full max-w-md rounded-3xl border border-brand-30 bg-brand-60 p-6 shadow-2xl">
         <h3 className="text-xl font-semibold text-brand-dark">{title}</h3>
         <p className="mt-2 text-sm leading-6 text-brand-dark/80">{description}</p>

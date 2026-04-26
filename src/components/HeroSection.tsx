@@ -10,6 +10,7 @@ import {
   MessageSquareText,
   Sparkles,
 } from 'lucide-react';
+import { BrandWordmark } from './BrandWordmark';
 import { MagneticButton } from './MagneticButton';
 import styles from './HeroSection.module.css';
 
@@ -67,7 +68,8 @@ export const HeroSection = () => {
           </h1>
 
           <p className={styles.subtitle}>
-            AIvyapari gives growing businesses a clean operating layer for customers, billing, stock, teams,
+            <BrandWordmark />
+            {' '}gives growing businesses a clean operating layer for customers, billing, stock, teams,
             reporting, and AI tools, without forcing every business into the same template.
           </p>
 

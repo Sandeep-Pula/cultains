@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { auth, firebaseStatus } from '../lib/firebase';
+import { BrandWordmark } from './BrandWordmark';
 import styles from './Navbar.module.css';
 
 export const Navbar = () => {
@@ -41,7 +42,7 @@ export const Navbar = () => {
         <span className={styles.logoBadge}>
           <img src={`${import.meta.env.BASE_URL}aivyapari-logo.png`} alt="AIvyapari logo" className={styles.logoMark} />
         </span>
-        <span className={styles.logoText}>AIvyapari</span>
+        <BrandWordmark className={styles.logoText} />
       </a>
 
       <div className={styles.links}>
