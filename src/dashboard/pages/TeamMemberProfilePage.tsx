@@ -33,7 +33,7 @@ export const TeamMemberProfilePage = ({
   }
 
   const memberName = member.name.trim().toLowerCase();
-  const memberInvoices = salesInvoices.filter((invoice) => invoice.billedBy.trim().toLowerCase() === memberName);
+  const memberInvoices = salesInvoices.filter((invoice) => invoice.status !== 'draft' && invoice.billedBy.trim().toLowerCase() === memberName);
   const invoiceRevenue = memberInvoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0);
   const salaryPaychecks = financeEntries.filter((entry) => {
     if (entry.category !== 'salary') return false;

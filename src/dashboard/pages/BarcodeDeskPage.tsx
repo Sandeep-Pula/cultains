@@ -124,7 +124,7 @@ export const BarcodeDeskPage = ({
   }, [inventory]);
 
   const recentInvoices = useMemo(
-    () => salesInvoices.slice().sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()),
+    () => salesInvoices.filter((invoice) => invoice.status !== 'draft').slice().sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()),
     [salesInvoices],
   );
 

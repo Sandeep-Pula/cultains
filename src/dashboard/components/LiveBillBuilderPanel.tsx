@@ -3,6 +3,7 @@ import { BrowserCodeReader, BrowserMultiFormatReader, type IScannerControls } fr
 import { BarcodeFormat, DecodeHintType, NotFoundException } from '@zxing/library';
 import { Camera, CameraOff, CheckCircle2, ClipboardList, Plus, ScanLine, Trash2, X } from 'lucide-react';
 import type {
+  BillingDefaults,
   InventoryItem,
   InvoicePaymentMethod,
   InvoicePaymentStatus,
@@ -14,7 +15,7 @@ import { BarcodeLabel } from './BarcodeLabel';
 import { EmptyStatePanel } from './EmptyStatePanel';
 import { SalesInvoiceDetailModal } from './SalesInvoiceDetailModal';
 import { printSalesInvoice } from '../invoicePrint';
-import { formatCurrency } from '../utils';
+import { formatCurrency, formatDateTime } from '../utils';
 
 type DraftLineItem = {
   inventoryItemId: string;
@@ -31,7 +32,10 @@ type LiveBillBuilderPanelProps = {
   businessProfile: WorkspaceProfile;
   billedBy: string;
   inventory: InventoryItem[];
+  salesInvoices: SalesInvoice[];
+  billingDefaults: BillingDefaults;
   onFinalizeSale: (payload: {
+    existingInvoiceId?: string;
     customerName: string;
     paymentStatus: InvoicePaymentStatus;
     paymentMethod: InvoicePaymentMethod;
@@ -47,8 +51,43 @@ type LiveBillBuilderPanelProps = {
     totalAmount: number;
     lineItems: SalesInvoiceLineItem[];
     createdAt: string;
+    updatedAt: string;
   }>;
+  onSaveDraft: (payload: {
+    draftId?: string;
+    customerName: string;
+    paymentStatus: InvoicePaymentStatus;
+    paymentMethod: InvoicePaymentMethod;
+    taxRate: number;
+    notes: string;
+    billedBy: string;
+    lineItems: SalesInvoiceLineItem[];
+  }) => Promise<{
+    invoiceId: string;
+    invoiceNumber: string;
+    subtotal: number;
+    taxAmount: number;
+    totalAmount: number;
+    lineItems: SalesInvoiceLineItem[];
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  onDeleteDraft: (invoiceId: string) => Promise<void>;
 };
+
+const toDraftLineItems = (lineItems: SalesInvoiceLineItem[], inventory: InventoryItem[]): DraftLineItem[] =>
+  lineItems.map((line) => {
+    const matchedItem = inventory.find((item) => item.id === line.inventoryItemId || item.barcodeValue === line.barcodeValue);
+    return {
+      inventoryItemId: line.inventoryItemId,
+      barcodeValue: line.barcodeValue,
+      itemName: line.itemName,
+      sku: line.sku,
+      quantity: line.quantity,
+      unitPrice: line.unitPrice,
+      availableStock: matchedItem?.currentStock ?? line.quantity,
+    };
+  });
 
 type DetectedBarcode = { rawValue?: string };
 type BarcodeDetectorCtor = new (options?: { formats?: string[] }) => {
@@ -72,7 +111,11 @@ export const LiveBillBuilderPanel = ({
   businessProfile,
   billedBy,
   inventory,
+  salesInvoices,
+  billingDefaults,
   onFinalizeSale,
+  onSaveDraft,
+  onDeleteDraft,
 }: LiveBillBuilderPanelProps) => {
   const [customerName, setCustomerName] = useState('Walk-in customer');
   const [taxRate, setTaxRate] = useState('5');
@@ -81,6 +124,7 @@ export const LiveBillBuilderPanel = ({
   const [notes, setNotes] = useState('');
   const [manualBarcode, setManualBarcode] = useState('');
   const [draftItems, setDraftItems] = useState<DraftLineItem[]>([]);
+  const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [lastScanned, setLastScanned] = useState<InventoryItem | null>(null);
   const [scannerRunning, setScannerRunning] = useState(false);
@@ -89,6 +133,7 @@ export const LiveBillBuilderPanel = ({
   const [invoiceError, setInvoiceError] = useState<string | null>(null);
   const [isSavingInvoice, setIsSavingInvoice] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<SalesInvoice | null>(null);
+  const [savingDraft, setSavingDraft] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -102,6 +147,23 @@ export const LiveBillBuilderPanel = ({
     inventory.forEach((item) => nextMap.set(item.barcodeValue, item));
     return nextMap;
   }, [inventory]);
+
+  const savedDrafts = useMemo(
+    () =>
+      salesInvoices
+        .filter((invoice) => invoice.status === 'draft')
+        .slice()
+        .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()),
+    [salesInvoices],
+  );
+
+  useEffect(() => {
+    setCustomerName('Walk-in customer');
+    setPaymentStatus(billingDefaults.defaultPaymentStatus);
+    setPaymentMethod(billingDefaults.defaultPaymentMethod);
+    setTaxRate(String(billingDefaults.defaultTaxRate));
+    setNotes(billingDefaults.defaultInvoiceNotes);
+  }, [billingDefaults]);
 
   const subtotal = draftItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const parsedTaxRate = Number(taxRate || '0');
@@ -324,12 +386,24 @@ export const LiveBillBuilderPanel = ({
   };
 
   const resetDraft = () => {
+    setActiveDraftId(null);
     setDraftItems([]);
     setCustomerName('Walk-in customer');
-    setPaymentStatus('paid');
-    setPaymentMethod('cash');
-    setTaxRate('5');
-    setNotes('');
+    setPaymentStatus(billingDefaults.defaultPaymentStatus);
+    setPaymentMethod(billingDefaults.defaultPaymentMethod);
+    setTaxRate(String(billingDefaults.defaultTaxRate));
+    setNotes(billingDefaults.defaultInvoiceNotes);
+    setInvoiceError(null);
+  };
+
+  const loadDraft = (invoice: SalesInvoice) => {
+    setActiveDraftId(invoice.id);
+    setCustomerName(invoice.customerName);
+    setPaymentStatus(invoice.paymentStatus);
+    setPaymentMethod(invoice.paymentMethod);
+    setTaxRate(String(invoice.taxRate));
+    setNotes(invoice.notes);
+    setDraftItems(toDraftLineItems(invoice.lineItems, inventory));
     setInvoiceError(null);
   };
 
@@ -343,6 +417,7 @@ export const LiveBillBuilderPanel = ({
     setInvoiceError(null);
     try {
       const result = await onFinalizeSale({
+        existingInvoiceId: activeDraftId || undefined,
         customerName,
         paymentStatus,
         paymentMethod,
@@ -363,6 +438,7 @@ export const LiveBillBuilderPanel = ({
       const nextInvoice: SalesInvoice = {
         id: result.invoiceId,
         invoiceNumber: result.invoiceNumber,
+        status: 'finalized',
         businessBarcodeKey: inventory[0]?.barcodeBusinessKey || '',
         customerName,
         paymentStatus,
@@ -375,6 +451,7 @@ export const LiveBillBuilderPanel = ({
         notes,
         billedBy,
         createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
       };
 
       setSelectedInvoice(nextInvoice);
@@ -386,6 +463,41 @@ export const LiveBillBuilderPanel = ({
       setInvoiceError(error instanceof Error ? error.message : 'Unable to finalize the bill right now.');
     } finally {
       setIsSavingInvoice(false);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    if (!draftItems.length) {
+      setInvoiceError('Add at least one item before saving a draft.');
+      return;
+    }
+
+    setSavingDraft(true);
+    setInvoiceError(null);
+    try {
+      const result = await onSaveDraft({
+        draftId: activeDraftId || undefined,
+        customerName,
+        paymentStatus,
+        paymentMethod,
+        taxRate: parsedTaxRate,
+        notes,
+        billedBy,
+        lineItems: draftItems.map((line) => ({
+          inventoryItemId: line.inventoryItemId,
+          barcodeValue: line.barcodeValue,
+          itemName: line.itemName,
+          sku: line.sku,
+          quantity: line.quantity,
+          unitPrice: line.unitPrice,
+          lineSubtotal: line.unitPrice * line.quantity,
+        })),
+      });
+      setActiveDraftId(result.invoiceId);
+    } catch (error) {
+      setInvoiceError(error instanceof Error ? error.message : 'Unable to save the invoice draft right now.');
+    } finally {
+      setSavingDraft(false);
     }
   };
 
@@ -412,16 +524,64 @@ export const LiveBillBuilderPanel = ({
             <button
               type="button"
               onClick={() => setScannerOpen(true)}
-              className="inline-flex items-center gap-2 rounded-2xl bg-brand-10 px-4 py-3 text-sm font-medium text-brand-60"
+              className="inline-flex items-center gap-2 rounded-2xl border border-brand-10 bg-brand-10 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-10/20 transition hover:-translate-y-0.5 hover:bg-brand-10/95"
             >
               <Camera size={16} />
               Scan into bill
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleSaveDraft()}
+              disabled={savingDraft || !draftItems.length}
+              className="inline-flex items-center gap-2 rounded-2xl border border-brand-30 bg-brand-60 px-4 py-3 text-sm font-medium text-brand-dark disabled:opacity-60"
+            >
+              <ClipboardList size={16} />
+              {savingDraft ? 'Saving draft...' : activeDraftId ? 'Update draft' : 'Save as draft'}
             </button>
           </div>
         </div>
 
         <div className="mt-5 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-4">
+            {savedDrafts.length ? (
+              <div className="rounded-[28px] border border-brand-30 bg-brand-60/20 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-dark/55">Invoice drafts</div>
+                  <span className="rounded-full border border-brand-30 bg-white px-3 py-1 text-xs font-semibold text-brand-dark">
+                    {savedDrafts.length} saved
+                  </span>
+                </div>
+                <div className="mt-4 ui-scrollable max-h-[220px] space-y-3 pr-1">
+                  {savedDrafts.map((invoice) => (
+                    <div key={invoice.id} className="rounded-2xl border border-brand-30 bg-white px-4 py-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <button type="button" onClick={() => loadDraft(invoice)} className="min-w-0 flex-1 text-left">
+                          <div className="font-semibold text-brand-dark">{invoice.invoiceNumber}</div>
+                          <div className="mt-1 text-sm text-brand-dark/65">{invoice.customerName} • {formatCurrency(invoice.totalAmount)}</div>
+                          <div className="mt-1 text-xs uppercase tracking-[0.14em] text-brand-dark/45">
+                            Updated {formatDateTime(invoice.updatedAt)}
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (activeDraftId === invoice.id) {
+                              resetDraft();
+                            }
+                            void onDeleteDraft(invoice.id);
+                          }}
+                          className="rounded-full p-2 text-rose-600 hover:bg-rose-50"
+                          aria-label={`Delete ${invoice.invoiceNumber}`}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             <div className="grid gap-4 md:grid-cols-2">
               <label className="grid gap-2 text-sm text-brand-dark/75">
                 <span>Customer name</span>
@@ -530,7 +690,7 @@ export const LiveBillBuilderPanel = ({
               className="inline-flex items-center gap-2 rounded-2xl bg-brand-10 px-4 py-3 text-sm font-medium text-brand-60 transition hover:bg-brand-dark disabled:opacity-60"
             >
               <CheckCircle2 size={16} />
-              {isSavingInvoice ? 'Finalizing...' : 'Finalize sale and print'}
+              {isSavingInvoice ? 'Finalizing...' : activeDraftId ? 'Finalize draft and print' : 'Finalize sale and print'}
             </button>
           </div>
         </div>

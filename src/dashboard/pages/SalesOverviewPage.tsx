@@ -93,6 +93,7 @@ const filterInvoicesByRange = (salesInvoices: SalesInvoice[], preset: RangePrese
   const endTime = end.getTime();
 
   return salesInvoices.filter((invoice) => {
+    if (invoice.status === 'draft') return false;
     const createdAt = new Date(invoice.createdAt).getTime();
     return createdAt >= startTime && createdAt <= endTime;
   });

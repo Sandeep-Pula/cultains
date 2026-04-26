@@ -7,6 +7,7 @@ import { dashboardService } from './services/dashboardService';
 import { getBusinessConfig } from './businessConfig';
 import { dashboardHash, filterDashboardViews, getStageProgress, isOwnerAccount, parseDashboardView } from './utils';
 import type {
+  BillingDefaults,
   BusinessType,
   CustomerFilters,
   CustomerProject,
@@ -36,6 +37,7 @@ import { AIToolsPage } from './pages/AIToolsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { TeamMemberProfilePage } from './pages/TeamMemberProfilePage';
 import { SettingsPage } from './pages/SettingsPage';
+import { RaiseIssuePage } from './pages/RaiseIssuePage';
 import { SuperAdminPage } from './pages/SuperAdminPage';
 import { CustomerDrawer } from './components/CustomerDrawer';
 import { ConfirmDialog } from './components/ConfirmDialog';
@@ -731,6 +733,7 @@ export const DashboardApp = () => {
     teamSize: string;
     website: string;
     sidebarViews: DashboardView[];
+    billingDefaults: BillingDefaults;
   }) => {
     if (!user) return;
     if (!isOwner) {
@@ -747,6 +750,7 @@ export const DashboardApp = () => {
   };
 
   const handleFinalizeBarcodeSale = async (payload: {
+    existingInvoiceId?: string;
     customerName: string;
     paymentStatus: InvoicePaymentStatus;
     paymentMethod: InvoicePaymentMethod;
@@ -765,6 +769,44 @@ export const DashboardApp = () => {
       return result;
     } catch (nextError) {
       handleMutationError(nextError, 'Unable to finalize this sale.');
+      throw nextError;
+    }
+  };
+
+  const handleSaveInvoiceDraft = async (payload: {
+    draftId?: string;
+    customerName: string;
+    paymentStatus: InvoicePaymentStatus;
+    paymentMethod: InvoicePaymentMethod;
+    taxRate: number;
+    notes: string;
+    billedBy: string;
+    lineItems: SalesInvoiceLineItem[];
+  }) => {
+    if (!user) {
+      throw new Error('Please log in again before saving the draft.');
+    }
+
+    try {
+      const result = await dashboardService.saveSalesInvoiceDraft(workspaceUserId, payload);
+      pushToast('Draft saved', `${result.invoiceNumber} is ready to resume later.`);
+      return result;
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to save this invoice draft.');
+      throw nextError;
+    }
+  };
+
+  const handleDeleteInvoiceDraft = async (invoiceId: string) => {
+    if (!user) {
+      throw new Error('Please log in again before removing the draft.');
+    }
+
+    try {
+      await dashboardService.deleteSalesInvoice(workspaceUserId, invoiceId);
+      pushToast('Draft removed', 'The invoice draft was deleted.');
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to remove this invoice draft.');
       throw nextError;
     }
   };
@@ -910,6 +952,7 @@ export const DashboardApp = () => {
               teamSize: data.profile.teamSize,
               website: data.profile.website,
               sidebarViews,
+              billingDefaults: data.profile.billingDefaults,
             });
             pushToast('Sidebar updated', 'Your sidebar shortcuts were saved.');
           } catch (nextError) {
@@ -976,9 +1019,12 @@ export const DashboardApp = () => {
               team={data.team}
               customers={data.customers}
               tasks={data.tasks}
+              financeEntries={data.financeEntries}
+              profile={data.profile}
               businessConfig={businessConfig}
               onOpenCustomer={handleOpenCustomer}
               onOpenMember={handleOpenTeamMember}
+              onCreatePaycheck={handleCreatePaycheck}
               onAddMember={() => {
                 if (isOwner) {
                   setAddTeamMemberOpen(true);
@@ -1011,6 +1057,8 @@ export const DashboardApp = () => {
               inventory={data.inventory}
               salesInvoices={data.salesInvoices}
               onFinalizeSale={handleFinalizeBarcodeSale}
+              onSaveDraft={handleSaveInvoiceDraft}
+              onDeleteDraft={handleDeleteInvoiceDraft}
             />
           ) : activeView === 'render-history' ? (
             <OperationsPage
@@ -1034,11 +1082,14 @@ export const DashboardApp = () => {
             <AIToolsPage businessConfig={businessConfig} />
           ) : activeView === 'settings' ? (
             <SettingsPage
-              businessConfig={businessConfig}
               companyName={data.profile.companyName}
-              userName={data.profile.userName}
+              businessProfile={data.profile}
+              onSaveBillingDefaults={handleSaveWorkspaceProfile}
+            />
+          ) : activeView === 'raise-issue' ? (
+            <RaiseIssuePage
+              companyName={data.profile.companyName}
               supportThreads={data.supportThreads}
-              onNavigate={handleNavigate}
               onCreateSupportTicket={handleCreateSupportTicket}
               onSendSupportMessage={handleSendSupportMessage}
             />
@@ -1050,10 +1101,7 @@ export const DashboardApp = () => {
                 totalCustomers={data.customers.length}
                 totalTeamMembers={data.team.length}
                 totalInventoryItems={data.inventory.length}
-                team={data.team}
-                financeEntries={data.financeEntries}
                 onSaveProfile={handleSaveWorkspaceProfile}
-                onCreatePaycheck={handleCreatePaycheck}
               />
             ) : (
               <TeamMemberProfilePage

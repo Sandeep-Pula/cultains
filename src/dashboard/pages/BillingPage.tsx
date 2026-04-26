@@ -20,6 +20,7 @@ type BillingPageProps = {
   inventory: InventoryItem[];
   salesInvoices: SalesInvoice[];
   onFinalizeSale: (payload: {
+    existingInvoiceId?: string;
     customerName: string;
     paymentStatus: InvoicePaymentStatus;
     paymentMethod: InvoicePaymentMethod;
@@ -35,7 +36,28 @@ type BillingPageProps = {
     totalAmount: number;
     lineItems: SalesInvoiceLineItem[];
     createdAt: string;
+    updatedAt: string;
   }>;
+  onSaveDraft: (payload: {
+    draftId?: string;
+    customerName: string;
+    paymentStatus: InvoicePaymentStatus;
+    paymentMethod: InvoicePaymentMethod;
+    taxRate: number;
+    notes: string;
+    billedBy: string;
+    lineItems: SalesInvoiceLineItem[];
+  }) => Promise<{
+    invoiceId: string;
+    invoiceNumber: string;
+    subtotal: number;
+    taxAmount: number;
+    totalAmount: number;
+    lineItems: SalesInvoiceLineItem[];
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  onDeleteDraft: (invoiceId: string) => Promise<void>;
 };
 
 export const BillingPage = ({
@@ -45,6 +67,8 @@ export const BillingPage = ({
   inventory,
   salesInvoices,
   onFinalizeSale,
+  onSaveDraft,
+  onDeleteDraft,
 }: BillingPageProps) => {
   const [selectedInvoice, setSelectedInvoice] = useState<SalesInvoice | null>(null);
 
@@ -53,6 +77,7 @@ export const BillingPage = ({
     const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime();
     return salesInvoices
+      .filter((invoice) => invoice.status !== 'draft')
       .filter((invoice) => {
         const createdAt = new Date(invoice.createdAt).getTime();
         return createdAt >= start && createdAt <= end;
@@ -82,10 +107,14 @@ export const BillingPage = ({
         <LiveBillBuilderPanel
           companyName={companyName}
           businessProfile={businessProfile}
-          billedBy={billedBy}
-          inventory={inventory}
-          onFinalizeSale={onFinalizeSale}
-        />
+        billedBy={billedBy}
+        inventory={inventory}
+        salesInvoices={salesInvoices}
+        billingDefaults={businessProfile.billingDefaults}
+        onFinalizeSale={onFinalizeSale}
+        onSaveDraft={onSaveDraft}
+        onDeleteDraft={onDeleteDraft}
+      />
 
         <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-sm">
           <div className="border-b border-brand-30 bg-brand-60/35 px-5 py-4">

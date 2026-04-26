@@ -14,6 +14,7 @@ import { db } from '../../lib/firebase';
 import type {
   AccountType,
   ActivityItem,
+  BillingDefaults,
   BusinessType,
   CommunicationLog,
   CustomerProject,
@@ -64,6 +65,7 @@ type UserProfileDoc = {
   renewalDate: string;
   recentlyViewedIds: string[];
   sidebarViews: DashboardView[];
+  billingDefaults?: BillingDefaults;
   workspaceOwnerId?: string;
   linkedTeamMemberId?: string;
   createdAt: string;
@@ -112,6 +114,12 @@ const supportThreadsCollection = () => collection(requireDb(), 'supportThreads')
 const supportThreadDoc = (ticketId: string) => doc(requireDb(), 'supportThreads', ticketId);
 
 const nowIso = () => new Date().toISOString();
+const defaultBillingDefaults: BillingDefaults = {
+  defaultTaxRate: 5,
+  defaultPaymentStatus: 'paid',
+  defaultPaymentMethod: 'cash',
+  defaultInvoiceNotes: '',
+};
 
 const getUserName = (user: User, preferredName?: string) =>
   preferredName?.trim() || user.displayName?.trim() || user.email?.split('@')[0] || 'User';
@@ -154,6 +162,12 @@ const buildWorkspaceProfile = (user: User, profile?: Partial<UserProfileDoc>): W
   subscriptionStatus: 'active',
   renewalDate: profile?.renewalDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
   sidebarViews: normalizeSidebarViews(profile?.sidebarViews),
+  billingDefaults: {
+    defaultTaxRate: Number(profile?.billingDefaults?.defaultTaxRate ?? defaultBillingDefaults.defaultTaxRate),
+    defaultPaymentStatus: profile?.billingDefaults?.defaultPaymentStatus || defaultBillingDefaults.defaultPaymentStatus,
+    defaultPaymentMethod: profile?.billingDefaults?.defaultPaymentMethod || defaultBillingDefaults.defaultPaymentMethod,
+    defaultInvoiceNotes: profile?.billingDefaults?.defaultInvoiceNotes || defaultBillingDefaults.defaultInvoiceNotes,
+  },
   workspaceOwnerId: profile?.workspaceOwnerId,
   linkedTeamMemberId: profile?.linkedTeamMemberId,
 });
@@ -383,6 +397,7 @@ const normalizeSalesInvoiceLine = (value: Partial<SalesInvoiceLineItem> | undefi
 const normalizeSalesInvoice = (invoiceId: string, value: Partial<SalesInvoice> | undefined): SalesInvoice => ({
   id: invoiceId,
   invoiceNumber: value?.invoiceNumber || `INV-${invoiceId.slice(0, 8).toUpperCase()}`,
+  status: value?.status || 'finalized',
   businessBarcodeKey: value?.businessBarcodeKey || '',
   customerName: value?.customerName || 'Walk-in customer',
   paymentStatus: value?.paymentStatus || 'pending',
@@ -395,6 +410,7 @@ const normalizeSalesInvoice = (invoiceId: string, value: Partial<SalesInvoice> |
   notes: value?.notes || '',
   billedBy: value?.billedBy || 'System',
   createdAt: value?.createdAt || nowIso(),
+  updatedAt: value?.updatedAt || value?.createdAt || nowIso(),
 });
 
 const normalizeSupportMessage = (value: Partial<SupportMessage> | undefined): SupportMessage => ({
@@ -548,6 +564,7 @@ export const dashboardService = {
       renewalDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
       recentlyViewedIds: [],
       sidebarViews: [],
+      billingDefaults: defaultBillingDefaults,
       workspaceOwnerId: undefined,
       linkedTeamMemberId: undefined,
       createdAt: existing.exists() ? String(existing.data().createdAt || timestamp) : timestamp,
@@ -580,6 +597,7 @@ export const dashboardService = {
       renewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       recentlyViewedIds: [],
       sidebarViews: defaultSidebarViews,
+      billingDefaults: defaultBillingDefaults,
       workspaceOwnerId: undefined,
       linkedTeamMemberId: undefined,
       createdAt: timestamp,
@@ -614,6 +632,12 @@ export const dashboardService = {
         renewalDate: data.renewalDate || fallbackProfile.renewalDate,
         recentlyViewedIds: data.recentlyViewedIds ?? [],
         sidebarViews: normalizeSidebarViews(data.sidebarViews ?? fallbackProfile.sidebarViews),
+        billingDefaults: {
+          defaultTaxRate: Number(data.billingDefaults?.defaultTaxRate ?? defaultBillingDefaults.defaultTaxRate),
+          defaultPaymentStatus: data.billingDefaults?.defaultPaymentStatus || defaultBillingDefaults.defaultPaymentStatus,
+          defaultPaymentMethod: data.billingDefaults?.defaultPaymentMethod || defaultBillingDefaults.defaultPaymentMethod,
+          defaultInvoiceNotes: data.billingDefaults?.defaultInvoiceNotes || defaultBillingDefaults.defaultInvoiceNotes,
+        },
         workspaceOwnerId: data.workspaceOwnerId,
         linkedTeamMemberId: data.linkedTeamMemberId,
         createdAt: data.createdAt || timestamp,
@@ -885,6 +909,7 @@ export const dashboardService = {
       | 'teamSize'
       | 'website'
       | 'sidebarViews'
+      | 'billingDefaults'
     >,
   ) {
     await setDoc(
@@ -1345,9 +1370,64 @@ export const dashboardService = {
     return ref.id;
   },
 
+  async saveSalesInvoiceDraft(
+    userId: string,
+    payload: {
+      draftId?: string;
+      customerName: string;
+      paymentStatus: InvoicePaymentStatus;
+      paymentMethod: InvoicePaymentMethod;
+      taxRate: number;
+      notes: string;
+      billedBy: string;
+      lineItems: SalesInvoiceLineItem[];
+    },
+  ) {
+    const timestamp = nowIso();
+    const ref = payload.draftId ? salesInvoiceDoc(userId, payload.draftId) : doc(usersCollection(userId, 'salesInvoices'));
+    const subtotal = payload.lineItems.reduce((sum, line) => sum + line.lineSubtotal, 0);
+    const taxAmount = Number(((subtotal * payload.taxRate) / 100).toFixed(2));
+    const totalAmount = subtotal + taxAmount;
+    const draftNumber = `DRAFT-${ref.id.slice(0, 6).toUpperCase()}`;
+
+    await setDoc(
+      ref,
+      {
+        invoiceNumber: draftNumber,
+        status: 'draft',
+        businessBarcodeKey: buildBusinessBarcodeKey(userId),
+        customerName: payload.customerName.trim() || 'Walk-in customer',
+        paymentStatus: payload.paymentStatus,
+        paymentMethod: payload.paymentMethod,
+        lineItems: payload.lineItems,
+        subtotal,
+        taxRate: payload.taxRate,
+        taxAmount,
+        totalAmount,
+        notes: payload.notes.trim(),
+        billedBy: payload.billedBy,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+      { merge: true },
+    );
+
+    return {
+      invoiceId: ref.id,
+      invoiceNumber: draftNumber,
+      subtotal,
+      taxAmount,
+      totalAmount,
+      lineItems: payload.lineItems,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+  },
+
   async completeBarcodeSale(
     userId: string,
     payload: {
+      existingInvoiceId?: string;
       customerName: string;
       paymentStatus: InvoicePaymentStatus;
       paymentMethod: InvoicePaymentMethod;
@@ -1362,7 +1442,7 @@ export const dashboardService = {
     }
 
     const timestamp = nowIso();
-    const invoiceRef = doc(usersCollection(userId, 'salesInvoices'));
+    const invoiceRef = payload.existingInvoiceId ? salesInvoiceDoc(userId, payload.existingInvoiceId) : doc(usersCollection(userId, 'salesInvoices'));
     const financeRef = doc(usersCollection(userId, 'financeEntries'));
     const businessBarcodeKey = buildBusinessBarcodeKey(userId);
     const lineItems: SalesInvoiceLineItem[] = [];
@@ -1413,6 +1493,7 @@ export const dashboardService = {
 
     batch.set(salesInvoiceDoc(userId, invoiceRef.id), {
       invoiceNumber,
+      status: 'finalized',
       businessBarcodeKey,
       customerName: payload.customerName.trim() || 'Walk-in customer',
       paymentStatus: payload.paymentStatus,
@@ -1452,7 +1533,14 @@ export const dashboardService = {
       totalAmount,
       lineItems,
       createdAt: timestamp,
+      updatedAt: timestamp,
     };
+  },
+
+  async deleteSalesInvoice(userId: string, invoiceId: string) {
+    const batch = writeBatch(requireDb());
+    batch.delete(salesInvoiceDoc(userId, invoiceId));
+    await batch.commit();
   },
 
   async updateFinanceEntry(userId: string, entryId: string, patch: Partial<FinanceEntry>) {

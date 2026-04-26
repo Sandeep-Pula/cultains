@@ -188,6 +188,7 @@ export const HomeContent = () => {
 
             <div className={styles.buttonRow}>
               <a href="#signup" className={styles.primaryButton}>Create account</a>
+              <a href="#pricing" className={styles.secondaryButton}>View pricing</a>
               <a href="#login" className={styles.secondaryButton}>Log in</a>
             </div>
           </motion.div>

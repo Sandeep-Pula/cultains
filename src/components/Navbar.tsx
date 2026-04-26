@@ -51,6 +51,7 @@ export const Navbar = () => {
         <a href="#product" className={styles.link}>Modules</a>
         <a href="#industries" className={styles.link}>Industries</a>
         <a href="#ai" className={styles.link}>AI</a>
+        <a href="#pricing" className={styles.link}>Pricing</a>
 
         {user ? (
           <>

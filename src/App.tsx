@@ -5,6 +5,7 @@ import { auth, firebaseStatus } from './lib/firebase';
 import { HeroSection } from './components/HeroSection';
 import { BentoFeatures } from './components/BentoFeatures';
 import { HomeContent } from './components/HomeContent';
+import { PricingPage } from './components/PricingPage';
 import { WelcomeSplash } from './components/WelcomeSplash';
 import { AuthPage } from './components/AuthPage';
 import { DashboardSkeleton } from './dashboard/components/DashboardSkeleton';
@@ -63,6 +64,7 @@ function App() {
   const isLoginPage = hash === '#login';
   const isSignupPage = hash === '#signup';
   const isTryOncePage = hash === '#try-once';
+  const isPricingPage = hash === '#pricing';
   const isDashboardPage = hash.startsWith('#dashboard');
   const isAuthPage = isLoginPage || isSignupPage;
   const showSetupGuide = !firebaseStatus.isConfigured && (isAuthPage || isDashboardPage);
@@ -108,6 +110,8 @@ function App() {
           <Suspense fallback={surfaceLoader}>
             <AIInteriorDesigner />
           </Suspense>
+        ) : isPricingPage ? (
+          <PricingPage />
         ) : isAuthPage && !user ? (
           <AuthPage mode={isSignupPage ? 'signup' : 'login'} />
         ) : (

@@ -10,6 +10,7 @@ export type DashboardView =
   | 'ai-tools'
   | 'render-history'
   | 'crm'
+  | 'raise-issue'
   | 'settings'
   | 'profile';
 
@@ -201,8 +202,16 @@ export interface WorkspaceProfile {
   subscriptionStatus: 'active';
   renewalDate: string;
   sidebarViews: DashboardView[];
+  billingDefaults: BillingDefaults;
   workspaceOwnerId?: string;
   linkedTeamMemberId?: string;
+}
+
+export interface BillingDefaults {
+  defaultTaxRate: number;
+  defaultPaymentStatus: InvoicePaymentStatus;
+  defaultPaymentMethod: InvoicePaymentMethod;
+  defaultInvoiceNotes: string;
 }
 
 export type SupportThreadStatus = 'new' | 'open' | 'in_progress' | 'waiting_on_admin' | 'waiting_on_business' | 'resolved' | 'closed';
@@ -350,6 +359,7 @@ export interface FinanceEntry {
 
 export type InvoicePaymentStatus = 'pending' | 'paid';
 export type InvoicePaymentMethod = 'cash' | 'upi' | 'credit_card' | 'debit_card' | 'bank_transfer' | 'mixed';
+export type SalesInvoiceStatus = 'draft' | 'finalized';
 
 export interface SalesInvoiceLineItem {
   inventoryItemId: string;
@@ -364,6 +374,7 @@ export interface SalesInvoiceLineItem {
 export interface SalesInvoice {
   id: string;
   invoiceNumber: string;
+  status: SalesInvoiceStatus;
   businessBarcodeKey: string;
   customerName: string;
   paymentStatus: InvoicePaymentStatus;
@@ -376,4 +387,5 @@ export interface SalesInvoice {
   notes: string;
   billedBy: string;
   createdAt: string;
+  updatedAt: string;
 }
