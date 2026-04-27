@@ -1,6 +1,7 @@
 import { BadgeIndianRupee, Boxes, CalendarClock } from 'lucide-react';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
 import type { CustomerProject, FinanceEntry, InventoryItem, TaskItem } from '../types';
+import { DevelopmentFlag } from '../components/DevelopmentFlag';
 import { EmptyStatePanel } from '../components/EmptyStatePanel';
 import { formatCurrency, relativeDate } from '../utils';
 
@@ -28,6 +29,8 @@ export const OperationsPage = ({
 
   return (
     <div className="flex h-full min-h-[700px] flex-col gap-5 overflow-hidden xl:h-[calc(100vh-8rem)]">
+      <DevelopmentFlag pageLabel="Operations" />
+
       <div className="px-2">
         <h1 className="text-3xl font-semibold tracking-tight text-brand-dark">Operations board</h1>
         <p className="mt-1 max-w-3xl text-[15px] text-brand-dark/80">{businessConfig.operationsIntro}</p>

@@ -1,4 +1,4 @@
-import { LogOut, Menu, Search } from 'lucide-react';
+import { LayoutPanelLeft, LogOut, Menu, Search } from 'lucide-react';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
 import type { DashboardView } from '../types';
 import { viewTitles } from '../utils';
@@ -10,6 +10,8 @@ type TopbarProps = {
   search: string;
   onSearchChange: (value: string) => void;
   onOpenSidebar: () => void;
+  onToggleDesktopSidebar: () => void;
+  desktopSidebarCollapsed: boolean;
   onLogout: () => void;
 };
 
@@ -19,6 +21,8 @@ export const Topbar = ({
   search,
   onSearchChange,
   onOpenSidebar,
+  onToggleDesktopSidebar,
+  desktopSidebarCollapsed,
   onLogout,
 }: TopbarProps) => {
   return (
@@ -30,6 +34,14 @@ export const Topbar = ({
           className="mr-4 rounded-2xl border border-brand-60 bg-brand-60 p-2 text-brand-dark lg:hidden"
         >
           <Menu size={18} />
+        </button>
+
+        <button
+          onClick={onToggleDesktopSidebar}
+          aria-label={desktopSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="hidden rounded-2xl border border-brand-60 bg-brand-60 p-2 text-brand-dark lg:inline-flex"
+        >
+          <LayoutPanelLeft size={18} />
         </button>
 
         <div className="hidden rounded-2xl border border-brand-60/70 bg-brand-60/60 px-4 py-2 lg:block">

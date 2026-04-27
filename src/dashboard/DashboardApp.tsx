@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import clsx from 'clsx';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { AlertTriangle } from 'lucide-react';
 import { auth } from '../lib/firebase';
@@ -69,6 +70,10 @@ export const DashboardApp = () => {
   const [filters, setFilters] = useState<CustomerFilters>(defaultFilters);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('dashboard-sidebar-collapsed') === 'true';
+  });
   const [archiveCandidateId, setArchiveCandidateId] = useState<string | null>(null);
   const [deleteCandidateId, setDeleteCandidateId] = useState<string | null>(null);
   const [addCustomerOpen, setAddCustomerOpen] = useState(false);
@@ -107,6 +112,11 @@ export const DashboardApp = () => {
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('dashboard-sidebar-collapsed', String(desktopSidebarCollapsed));
+  }, [desktopSidebarCollapsed]);
 
   useEffect(() => {
     if (!user) return;
@@ -960,15 +970,19 @@ export const DashboardApp = () => {
           }
         }}
         open={sidebarOpen}
+        collapsed={desktopSidebarCollapsed}
+        onToggleCollapse={() => setDesktopSidebarCollapsed((current) => !current)}
         onClose={() => setSidebarOpen(false)}
       />
-      <div className="lg:pl-72 flex flex-col min-h-screen">
+      <div className={clsx('flex min-h-screen flex-col transition-[padding] duration-300', desktopSidebarCollapsed ? 'lg:pl-24' : 'lg:pl-72')}>
         <Topbar
           activeView={activeView}
           businessConfig={businessConfig}
           search={filters.search}
           onSearchChange={(value) => setFilters((current) => ({ ...current, search: value }))}
           onOpenSidebar={() => setSidebarOpen(true)}
+          onToggleDesktopSidebar={() => setDesktopSidebarCollapsed((current) => !current)}
+          desktopSidebarCollapsed={desktopSidebarCollapsed}
           onLogout={handleLogout}
         />
         <main className="flex-1 p-4 sm:p-6">

@@ -5,6 +5,8 @@ import {
   ArrowUp,
   Barcode,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   Contact,
   CreditCard,
   History,
@@ -56,6 +58,8 @@ type SidebarProps = {
   onNavigate: (view: DashboardView) => void;
   onSaveViews: (views: DashboardView[]) => Promise<void>;
   open: boolean;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
   onClose: () => void;
 };
 
@@ -247,6 +251,8 @@ export const Sidebar = ({
   onNavigate,
   onSaveViews,
   open,
+  collapsed = false,
+  onToggleCollapse,
   onClose,
 }: SidebarProps) => {
   const [manageOpen, setManageOpen] = useState(false);
@@ -269,12 +275,13 @@ export const Sidebar = ({
       />
       <aside
         className={clsx(
-          'fixed inset-y-0 left-0 z-50 w-72 border-r border-brand-60/30 bg-brand-30 px-5 py-6 shadow-xl transition-transform lg:translate-x-0 lg:shadow-none',
+          'fixed inset-y-0 left-0 z-50 border-r border-brand-60/30 bg-brand-30 px-5 py-6 shadow-xl transition-all duration-300 lg:translate-x-0 lg:shadow-none',
+          collapsed ? 'lg:w-24' : 'lg:w-72',
           open ? 'translate-x-0' : '-translate-x-full',
         )}
       >
         <div className="flex h-full min-h-0 flex-col">
-          <div className="flex items-center justify-between">
+          <div className={clsx('flex items-center', collapsed ? 'justify-center lg:justify-between' : 'justify-between')}>
             <a href="#dashboard" className="flex min-w-0 items-center gap-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-brand-60 bg-brand-60 shadow-sm">
                 {workspaceLogoUrl ? (
@@ -283,17 +290,29 @@ export const Sidebar = ({
                   <span className="text-xs font-bold uppercase text-brand-10">{getInitials(companyName)}</span>
                 )}
               </span>
-              <div className="min-w-0">
+              <div className={clsx('min-w-0', collapsed && 'hidden lg:hidden')}>
                 <div className="truncate text-lg font-semibold text-brand-dark">{companyName}</div>
                 <div className="text-xs uppercase tracking-[0.18em] text-brand-dark/70">{businessConfig.label} workspace</div>
               </div>
             </a>
-            <button onClick={onClose} aria-label="Close dashboard navigation" className="rounded-xl p-2 text-brand-dark lg:hidden">
-              <X size={18} />
-            </button>
+            <div className="flex items-center gap-2">
+              {onToggleCollapse ? (
+                <button
+                  type="button"
+                  onClick={onToggleCollapse}
+                  aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                  className="hidden rounded-xl border border-brand-30 bg-white/70 p-2 text-brand-dark lg:inline-flex"
+                >
+                  {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+                </button>
+              ) : null}
+              <button onClick={onClose} aria-label="Close dashboard navigation" className="rounded-xl p-2 text-brand-dark lg:hidden">
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
-          {canManageSidebar ? (
+          {canManageSidebar && !collapsed ? (
             <button
               type="button"
               onClick={() => setManageOpen(true)}
@@ -304,8 +323,8 @@ export const Sidebar = ({
             </button>
           ) : null}
 
-          <div className="mt-6 min-h-0 flex-1 overflow-y-auto pr-1">
-            {viewerName ? (
+          <div className={clsx('min-h-0 flex-1 overflow-y-auto', collapsed ? 'mt-8 pr-0' : 'mt-6 pr-1')}>
+            {viewerName && !collapsed ? (
               <div className="mb-4 rounded-2xl border border-brand-30 bg-white/65 px-4 py-3">
                 <div className="text-[11px] uppercase tracking-[0.18em] text-brand-dark/50">{viewerLabel || 'User'}</div>
                 <div className="mt-1 truncate text-sm font-semibold text-brand-dark">{viewerName}</div>
@@ -325,19 +344,21 @@ export const Sidebar = ({
                       onClose();
                     }}
                     className={clsx(
-                      'flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition',
+                      'flex items-center rounded-2xl px-3 py-3 text-sm font-medium transition',
+                      collapsed ? 'justify-center gap-0' : 'gap-3',
                       active ? 'bg-brand-60 text-brand-10' : 'text-brand-dark/90 hover:bg-brand-60/50',
                     )}
+                    title={collapsed ? viewTitles[view] : undefined}
                   >
                     <Icon size={18} />
-                    <span>{viewTitles[view]}</span>
+                    {!collapsed ? <span>{viewTitles[view]}</span> : null}
                   </a>
                 );
               })}
             </div>
 
             <div className="mt-6 pb-2">
-              {orderedViews.includes('ai-tools') ? (
+              {orderedViews.includes('ai-tools') && !collapsed ? (
                 <div className="rounded-3xl border border-brand-30 bg-transparent p-4">
                   <div className="flex items-center gap-3">
                     <div className="rounded-2xl bg-brand-30 p-2 text-brand-10">
@@ -377,12 +398,14 @@ export const Sidebar = ({
                         onClose();
                       }}
                       className={clsx(
-                        'flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition',
+                        'flex items-center rounded-2xl px-3 py-3 text-sm font-medium transition',
+                        collapsed ? 'justify-center gap-0' : 'gap-3',
                         activeView === view ? 'bg-brand-60 text-brand-10' : 'text-brand-dark/90 hover:bg-brand-60/50',
                       )}
+                      title={collapsed ? viewTitles[view] : undefined}
                     >
                       <Icon size={18} />
-                      <span>{viewTitles[view]}</span>
+                      {!collapsed ? <span>{viewTitles[view]}</span> : null}
                     </a>
                   );
                 })}

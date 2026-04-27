@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Smile, FolderKanban, CheckCircle2, Clock } from 'lucide-react';
 import type { DashboardData } from '../types';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
+import { DevelopmentFlag } from '../components/DevelopmentFlag';
 import { InteractiveCalendar } from '../components/InteractiveCalendar';
 import { SmartTaskModal } from '../components/SmartTaskModal';
 import { relativeDate } from '../utils';
@@ -32,6 +33,8 @@ export const OverviewPage = ({
 
   return (
     <div className="flex xl:h-[calc(100vh-8rem)] min-h-[700px] flex-col gap-6">
+      <DevelopmentFlag pageLabel="Business Calendar" />
+
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 xl:grid-cols-2">
         {/* Left Pane - Calendar */}
         <div className="flex flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-sm min-h-[400px]">

@@ -5,6 +5,7 @@ import type { WorkspaceBusinessConfig } from '../businessConfig';
 import { EmptyStatePanel } from '../components/EmptyStatePanel';
 import { StatusBadge } from '../components/StatusBadge';
 import { AddCrmTouchpointModal } from '../components/AddCrmTouchpointModal';
+import { DevelopmentFlag } from '../components/DevelopmentFlag';
 import { relativeDate } from '../utils';
 
 type CrmPageProps = {
@@ -121,6 +122,8 @@ export const CrmPage = ({
 
   return (
     <div className="flex h-full min-h-[700px] flex-col gap-5 overflow-hidden xl:h-[calc(100vh-8rem)]">
+      <DevelopmentFlag pageLabel="CRM" />
+
       <div className="shrink-0 flex flex-col gap-3 md:flex-row md:items-end md:justify-between px-2">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight text-brand-dark">CRM workspace</h1>
