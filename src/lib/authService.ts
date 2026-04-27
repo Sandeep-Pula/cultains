@@ -76,14 +76,19 @@ export const authService = {
 
     const credential = await signInWithEmailAndPassword(authInstance, normalizedEmail, password);
 
-    const profile = await dashboardService.getExistingUserProfile(credential.user.uid);
+    let profile = await dashboardService.getExistingUserProfile(credential.user.uid);
     if (!profile) {
       if (isSuperAdminEmail(normalizedEmail)) {
         await dashboardService.ensureSuperAdminProfile(credential.user);
         return credential.user;
       }
+
+      profile = await dashboardService.ensureUserProfile(credential.user, credential.user.displayName || undefined);
+    }
+
+    if (!profile) {
       await signOut(authInstance);
-      throw new Error('This login is not linked to an active business workspace. Ask the business owner to create or restore your team access.');
+      throw new Error('We could not finish setting up this workspace profile. Please try again.');
     }
 
     if (profile.accountType === 'team_member') {

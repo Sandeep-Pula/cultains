@@ -604,51 +604,47 @@ export const dashboardService = {
       updatedAt: timestamp,
     };
 
-    try {
-      const existing = await getDoc(ref);
+    const existing = await getDoc(ref);
 
-      if (!existing.exists()) {
-        await setDoc(ref, fallbackProfile, { merge: true });
-        return fallbackProfile;
-      }
-
-      const data = existing.data() as Partial<UserProfileDoc>;
-      const nextProfile: UserProfileDoc = {
-        userId: user.uid,
-        userName: data.userName?.trim() || fallbackProfile.userName,
-        companyName: data.companyName?.trim() || fallbackProfile.companyName,
-        accountType: data.accountType || fallbackProfile.accountType,
-        businessType: data.businessType || fallbackProfile.businessType,
-        workspaceLogoUrl: data.workspaceLogoUrl?.trim() || fallbackProfile.workspaceLogoUrl,
-        email: data.email?.trim() || fallbackProfile.email,
-        phone: data.phone?.trim() || fallbackProfile.phone,
-        city: data.city?.trim() || fallbackProfile.city,
-        studioAddress: data.studioAddress?.trim() || fallbackProfile.studioAddress,
-        gstNumber: data.gstNumber?.trim() || fallbackProfile.gstNumber,
-        teamSize: data.teamSize?.trim() || fallbackProfile.teamSize,
-        website: data.website?.trim() || fallbackProfile.website,
-        subscriptionPlan: 'freemium',
-        subscriptionStatus: 'active',
-        renewalDate: data.renewalDate || fallbackProfile.renewalDate,
-        recentlyViewedIds: data.recentlyViewedIds ?? [],
-        sidebarViews: normalizeSidebarViews(data.sidebarViews ?? fallbackProfile.sidebarViews),
-        billingDefaults: {
-          defaultTaxRate: Number(data.billingDefaults?.defaultTaxRate ?? defaultBillingDefaults.defaultTaxRate),
-          defaultPaymentStatus: data.billingDefaults?.defaultPaymentStatus || defaultBillingDefaults.defaultPaymentStatus,
-          defaultPaymentMethod: data.billingDefaults?.defaultPaymentMethod || defaultBillingDefaults.defaultPaymentMethod,
-          defaultInvoiceNotes: data.billingDefaults?.defaultInvoiceNotes || defaultBillingDefaults.defaultInvoiceNotes,
-        },
-        workspaceOwnerId: data.workspaceOwnerId,
-        linkedTeamMemberId: data.linkedTeamMemberId,
-        createdAt: data.createdAt || timestamp,
-        updatedAt: timestamp,
-      };
-
-      await setDoc(ref, nextProfile, { merge: true });
-      return nextProfile;
-    } catch {
+    if (!existing.exists()) {
+      await setDoc(ref, fallbackProfile, { merge: true });
       return fallbackProfile;
     }
+
+    const data = existing.data() as Partial<UserProfileDoc>;
+    const nextProfile: UserProfileDoc = {
+      userId: user.uid,
+      userName: data.userName?.trim() || fallbackProfile.userName,
+      companyName: data.companyName?.trim() || fallbackProfile.companyName,
+      accountType: data.accountType || fallbackProfile.accountType,
+      businessType: data.businessType || fallbackProfile.businessType,
+      workspaceLogoUrl: data.workspaceLogoUrl?.trim() || fallbackProfile.workspaceLogoUrl,
+      email: data.email?.trim() || fallbackProfile.email,
+      phone: data.phone?.trim() || fallbackProfile.phone,
+      city: data.city?.trim() || fallbackProfile.city,
+      studioAddress: data.studioAddress?.trim() || fallbackProfile.studioAddress,
+      gstNumber: data.gstNumber?.trim() || fallbackProfile.gstNumber,
+      teamSize: data.teamSize?.trim() || fallbackProfile.teamSize,
+      website: data.website?.trim() || fallbackProfile.website,
+      subscriptionPlan: 'freemium',
+      subscriptionStatus: 'active',
+      renewalDate: data.renewalDate || fallbackProfile.renewalDate,
+      recentlyViewedIds: data.recentlyViewedIds ?? [],
+      sidebarViews: normalizeSidebarViews(data.sidebarViews ?? fallbackProfile.sidebarViews),
+      billingDefaults: {
+        defaultTaxRate: Number(data.billingDefaults?.defaultTaxRate ?? defaultBillingDefaults.defaultTaxRate),
+        defaultPaymentStatus: data.billingDefaults?.defaultPaymentStatus || defaultBillingDefaults.defaultPaymentStatus,
+        defaultPaymentMethod: data.billingDefaults?.defaultPaymentMethod || defaultBillingDefaults.defaultPaymentMethod,
+        defaultInvoiceNotes: data.billingDefaults?.defaultInvoiceNotes || defaultBillingDefaults.defaultInvoiceNotes,
+      },
+      workspaceOwnerId: data.workspaceOwnerId,
+      linkedTeamMemberId: data.linkedTeamMemberId,
+      createdAt: data.createdAt || timestamp,
+      updatedAt: timestamp,
+    };
+
+    await setDoc(ref, nextProfile, { merge: true });
+    return nextProfile;
   },
 
   subscribeToDashboardData(user: User, onData: DashboardSnapshotListener, onError: DashboardErrorListener) {

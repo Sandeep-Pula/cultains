@@ -132,21 +132,21 @@ export const DashboardApp = () => {
       },
     );
 
-    dashboardService.getExistingUserProfile(user.uid).then((profile) => {
-      if (profile) return;
+    dashboardService
+      .getExistingUserProfile(user.uid)
+      .then((profile) => {
+        if (profile) return;
 
-      if (user.email?.trim().toLowerCase() === SUPER_ADMIN_EMAIL) {
-        return dashboardService.ensureSuperAdminProfile(user).then(() => undefined);
-      }
+        if (user.email?.trim().toLowerCase() === SUPER_ADMIN_EMAIL) {
+          return dashboardService.ensureSuperAdminProfile(user).then(() => undefined);
+        }
 
-      setSyncIssue('This login is not linked to an active business workspace.');
-      void authService.logout().finally(() => {
-        window.location.hash = '#login';
+        return dashboardService.ensureUserProfile(user, user.displayName || undefined).then(() => undefined);
+      })
+      .catch((nextError) => {
+        console.error(nextError);
+        setSyncIssue(nextError instanceof Error ? nextError.message : 'Cloud sync is temporarily unavailable.');
       });
-    }).catch((nextError) => {
-      console.error(nextError);
-      setSyncIssue(nextError instanceof Error ? nextError.message : 'Cloud sync is temporarily unavailable.');
-    });
 
     return () => unsubscribeDashboard();
   }, [user]);
