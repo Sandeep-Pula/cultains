@@ -74,6 +74,17 @@ const fadeUp = {
   transition: { duration: 0.6 },
 };
 
+const openHomepageAuth = (mode: 'login' | 'signup') => {
+  const nextHash = `#${mode}`;
+
+  if (window.location.hash !== nextHash) {
+    window.location.hash = nextHash;
+    return;
+  }
+
+  window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+};
+
 export const HomeContent = () => {
   return (
     <>
@@ -187,9 +198,27 @@ export const HomeContent = () => {
             </p>
 
             <div className={styles.buttonRow}>
-              <a href="#signup" className={styles.primaryButton}>Create account</a>
+              <a
+                href="#signup"
+                className={styles.primaryButton}
+                onClick={(event) => {
+                  event.preventDefault();
+                  openHomepageAuth('signup');
+                }}
+              >
+                Create account
+              </a>
               <a href="#pricing" className={styles.secondaryButton}>View pricing</a>
-              <a href="#login" className={styles.secondaryButton}>Log in</a>
+              <a
+                href="#login"
+                className={styles.secondaryButton}
+                onClick={(event) => {
+                  event.preventDefault();
+                  openHomepageAuth('login');
+                }}
+              >
+                Log in
+              </a>
             </div>
           </motion.div>
         </div>

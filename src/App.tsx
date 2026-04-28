@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, firebaseStatus } from './lib/firebase';
 import { HeroSection } from './components/HeroSection';
@@ -7,7 +7,6 @@ import { BentoFeatures } from './components/BentoFeatures';
 import { HomeContent } from './components/HomeContent';
 import { PricingPage } from './components/PricingPage';
 import { WelcomeSplash } from './components/WelcomeSplash';
-import { AuthPage } from './components/AuthPage';
 import { DashboardSkeleton } from './dashboard/components/DashboardSkeleton';
 import styles from './App.module.css';
 import './styles/global.css';
@@ -29,11 +28,13 @@ const surfaceLoader = (
 );
 
 const SUPER_ADMIN_EMAIL = 'superadmin@aivyapari.com';
+const pageLevelHashes = new Set(['', '#top', '#login', '#signup', '#pricing', '#try-once']);
 
 function App() {
   const [hash, setHash] = useState(window.location.hash);
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(!firebaseStatus.isConfigured);
+  const didInitialScrollSync = useRef(false);
 
   useEffect(() => {
     if (!auth) {
@@ -51,15 +52,47 @@ function App() {
   useEffect(() => {
     const handleHashChange = () => {
       setHash(window.location.hash);
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     };
+
     window.addEventListener('hashchange', handleHashChange);
-    
-    // Also trigger scroll on mount if navigating to a specific hash out of the gate
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
+
+  useEffect(() => {
+    const scrollForHash = (nextHash: string, behavior: ScrollBehavior) => {
+      if (nextHash.startsWith('#dashboard')) {
+        window.scrollTo({ top: 0, left: 0, behavior });
+        return;
+      }
+
+      const normalizedHash = nextHash || '';
+      if (pageLevelHashes.has(normalizedHash)) {
+        window.scrollTo({ top: 0, left: 0, behavior });
+        return;
+      }
+
+      const targetId = normalizedHash.replace(/^#/, '');
+      const target = document.getElementById(targetId);
+
+      if (!target) {
+        window.scrollTo({ top: 0, left: 0, behavior });
+        return;
+      }
+
+      const navbarOffset = 96;
+      const targetTop = target.getBoundingClientRect().top + window.scrollY - navbarOffset;
+      window.scrollTo({ top: Math.max(0, targetTop), left: 0, behavior });
+    };
+
+    const behavior: ScrollBehavior = didInitialScrollSync.current ? 'smooth' : 'auto';
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        scrollForHash(hash, behavior);
+        didInitialScrollSync.current = true;
+      });
+    });
+  }, [hash]);
 
   const isLoginPage = hash === '#login';
   const isSignupPage = hash === '#signup';
@@ -112,11 +145,9 @@ function App() {
           </Suspense>
         ) : isPricingPage ? (
           <PricingPage />
-        ) : isAuthPage && !user ? (
-          <AuthPage mode={isSignupPage ? 'signup' : 'login'} />
         ) : (
           <>
-          <WelcomeSplash />
+          <WelcomeSplash mode={isSignupPage ? 'signup' : 'login'} />
           <HeroSection />
           <BentoFeatures />
           <HomeContent />

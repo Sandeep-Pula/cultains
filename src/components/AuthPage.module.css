@@ -86,7 +86,11 @@
 .formCard {
   width: 100%;
   padding: 1.6rem;
-  background: rgba(255, 255, 255, 0.94);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .formTitle {
@@ -98,6 +102,24 @@
   margin-top: 0.55rem;
   color: var(--color-brand-dark);
   opacity: 0.8;
+}
+
+.messageError,
+.messageSuccess {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  margin-bottom: -0.25rem;
+  font-size: 0.875rem;
+}
+
+.messageError {
+  color: #c62828;
+}
+
+.messageSuccess {
+  color: #1b7f47;
 }
 
 .form {
@@ -155,6 +177,25 @@
   margin-top: 1rem;
   color: var(--color-brand-dark);
   opacity: 0.8;
+}
+
+.inlineButton,
+.inlineButtonStrong {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.inlineButton {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.inlineButtonStrong {
+  color: var(--color-brand-10);
+  font-weight: 600;
 }
 
 .switchText a {

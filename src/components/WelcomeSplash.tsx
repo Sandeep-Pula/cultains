@@ -1,7 +1,12 @@
 import { motion } from 'framer-motion';
 import { ArrowDown } from 'lucide-react';
+import { AuthCard } from './AuthCard';
 import { BrandWordmark } from './BrandWordmark';
 import styles from './WelcomeSplash.module.css';
+
+type WelcomeSplashProps = {
+  mode?: 'login' | 'signup';
+};
 
 const baseParticles = [
   { size: 10, left: '8%', top: '18%', duration: 9, delay: 0.2 },
@@ -50,7 +55,7 @@ const particles = particleVariants.flatMap((variant, variantIndex) =>
   })),
 );
 
-export const WelcomeSplash = () => {
+export const WelcomeSplash = ({ mode = 'login' }: WelcomeSplashProps) => {
   return (
     <section id="top" className={styles.section}>
       <div className={styles.backdrop} />
@@ -86,52 +91,63 @@ export const WelcomeSplash = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
-        <motion.p
-          className={styles.eyebrow}
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.08 }}
-        >
-          Welcome to the business operating system
-        </motion.p>
+        <div className={styles.copyColumn}>
+          <motion.p
+            className={styles.eyebrow}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.08 }}
+          >
+            Welcome to the business operating system
+          </motion.p>
+
+          <motion.div
+            className={styles.logoWrap}
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.12 }}
+          >
+            <img src={`${import.meta.env.BASE_URL}aivyapari-logo.png`} alt="AIvyapari logo" className={styles.logo} />
+          </motion.div>
+
+          <motion.h1
+            className={styles.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.18 }}
+          >
+            <BrandWordmark showDotCom />
+          </motion.h1>
+
+          <motion.p
+            className={styles.subtitle}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.26 }}
+          >
+            One place to run business operations, teams, finance, inventory, and AI-powered workflows.
+          </motion.p>
+
+          <motion.a
+            href="#welcome-home"
+            className={styles.scrollCue}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.34 }}
+          >
+            <span>Scroll to enter</span>
+            <ArrowDown size={18} />
+          </motion.a>
+        </div>
 
         <motion.div
-          className={styles.logoWrap}
-          initial={{ opacity: 0, scale: 0.92 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.12 }}
+          className={styles.authColumn}
+          initial={{ opacity: 0, x: 18 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.75, delay: 0.16 }}
         >
-          <img src={`${import.meta.env.BASE_URL}aivyapari-logo.png`} alt="AIvyapari logo" className={styles.logo} />
+          <AuthCard mode={mode} />
         </motion.div>
-
-        <motion.h1
-          className={styles.title}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.18 }}
-        >
-          <BrandWordmark showDotCom />
-        </motion.h1>
-
-        <motion.p
-          className={styles.subtitle}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.26 }}
-        >
-          One place to run business operations, teams, finance, inventory, and AI-powered workflows.
-        </motion.p>
-
-        <motion.a
-          href="#welcome-home"
-          className={styles.scrollCue}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.34 }}
-        >
-          <span>Scroll to enter</span>
-          <ArrowDown size={18} />
-        </motion.a>
       </motion.div>
     </section>
   );

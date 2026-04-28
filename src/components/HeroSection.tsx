@@ -48,6 +48,17 @@ const aiUseCases = [
   'Launch industry AI tools',
 ];
 
+const openHomepageAuth = (mode: 'login' | 'signup') => {
+  const nextHash = `#${mode}`;
+
+  if (window.location.hash !== nextHash) {
+    window.location.hash = nextHash;
+    return;
+  }
+
+  window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+};
+
 export const HeroSection = () => {
   return (
     <section id="welcome-home" className={styles.section}>
@@ -74,7 +85,7 @@ export const HeroSection = () => {
           </p>
 
           <div className={styles.ctaRow}>
-            <MagneticButton onClick={() => window.location.assign('#signup')}>
+            <MagneticButton onClick={() => openHomepageAuth('signup')}>
               Start Free
             </MagneticButton>
             <a href="#product" className={styles.secondaryCta}>
