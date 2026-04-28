@@ -20,8 +20,8 @@ const plans = [
   {
     name: 'Vyapar Starter',
     badge: 'Start free',
-    monthly: '₹0',
-    annual: '₹0',
+    monthly: '%%%%',
+    annual: '%%%%',
     cadence: 'forever',
     accent: 'starter',
     intro: 'For small shops that want to begin digitizing billing, customers, and daily operations without upfront cost.',
@@ -38,14 +38,14 @@ const plans = [
   {
     name: 'Vyapar Growth',
     badge: 'Most popular',
-    monthly: '₹349',
-    annual: '₹3,839',
+    monthly: '%%%%',
+    annual: '%%%%',
     cadence: 'per month',
     accent: 'growth',
     intro: 'For growing businesses that want billing, stock, and customer operations to feel faster, clearer, and more organized every day.',
     highlights: [
-      'Billing + Inventory + Barcode Desk included',
-      'Customers + CRM + Business Calendar included',
+      'Choose 3 more core tools beyond your Starter setup',
+      'For every +3 tools, move into the next subscription stage',
       'Up to 3 team members included',
       'Higher invoice and stock capacity for active stores',
       'Best fit for retail shops, service teams, and growing local brands',
@@ -57,8 +57,8 @@ const plans = [
   {
     name: 'Vyapar Premium',
     badge: 'Scale confidently',
-    monthly: '₹1,199',
-    annual: '₹13,189',
+    monthly: '%%%%',
+    annual: '%%%%',
     cadence: 'per month',
     accent: 'premium',
     intro: 'For established businesses that want the full workspace, smoother team coordination, and faster support as they scale.',
@@ -119,7 +119,7 @@ export const PricingPage = () => {
                   </div>
                   <div className={styles.annualRow}>
                     Annual plan: {plan.annual}/year
-                    {plan.monthly === '₹0' ? '' : ' • billed for 11 months, 12th month free'}
+                    {plan.cadence === 'forever' ? '' : ' • billed for 11 months, 12th month free'}
                   </div>
                 </div>
 
