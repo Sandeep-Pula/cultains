@@ -7,6 +7,7 @@
 }
 
 .hero,
+.offerSection,
 .planSection,
 .aiSection {
   max-width: 1180px;
@@ -56,6 +57,103 @@
 
 .planSection {
   padding: 2rem 0 1rem;
+}
+
+.offerSection {
+  padding: 0.5rem 0 1.75rem;
+}
+
+.offerCard {
+  border-radius: 2.25rem;
+  padding: 2rem;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(36, 180, 138, 0.2), transparent 24%),
+    radial-gradient(circle at 84% 18%, rgba(30, 103, 217, 0.18), transparent 24%),
+    linear-gradient(135deg, rgba(21, 34, 92, 0.98), rgba(22, 81, 153, 0.98));
+  color: white;
+  box-shadow: 0 28px 80px rgba(22, 45, 114, 0.2);
+}
+
+.offerBadge {
+  display: inline-flex;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.offerTitle {
+  margin: 1rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.offerLead {
+  max-width: 760px;
+  margin: 1rem 0 0;
+  font-size: 1.06rem;
+  line-height: 1.85;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.offerPoints {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.offerPoint {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 1rem 1.05rem;
+  border-radius: 1.2rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.offerPoint svg {
+  flex: 0 0 auto;
+  margin-top: 0.15rem;
+}
+
+.planIntroBlock {
+  max-width: 760px;
+  margin-bottom: 1.5rem;
+}
+
+.planIntroEyebrow {
+  display: inline-flex;
+  padding: 0.48rem 0.84rem;
+  border-radius: 999px;
+  background: rgba(31, 34, 94, 0.07);
+  color: var(--color-brand-dark);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.planIntroTitle {
+  margin: 0.95rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  line-height: 1.06;
+  color: var(--color-brand-dark);
+}
+
+.planIntroText {
+  margin: 0.85rem 0 0;
+  line-height: 1.8;
+  color: rgba(31, 34, 94, 0.74);
 }
 
 .planGrid {
@@ -290,6 +388,10 @@
     grid-template-columns: 1fr;
   }
 
+  .offerPoints {
+    grid-template-columns: 1fr;
+  }
+
   .aiPoints {
     grid-template-columns: 1fr;
   }
@@ -305,6 +407,7 @@
   }
 
   .heroCopy,
+  .offerCard,
   .planCard,
   .aiCard {
     padding: 1.3rem;

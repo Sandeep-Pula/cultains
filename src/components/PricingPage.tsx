@@ -16,23 +16,27 @@ const fadeUp = {
   transition: { duration: 0.6 },
 };
 
+const trialHighlights = [
+  '1 month free trial on every plan',
+  'Free training support if needed',
+  'Monthly per-account billing starts after the trial',
+];
+
 const plans = [
   {
     name: 'Vyapar Starter',
-    badge: 'Start free',
+    badge: 'Trial launch',
     monthly: '%%%%',
     annual: '%%%%',
-    cadence: 'forever',
+    cadence: 'per account / month',
     accent: 'starter',
-    intro: 'For small shops that want to begin digitizing billing, customers, and daily operations without upfront cost.',
+    intro: 'For businesses starting with a smaller rollout.',
     highlights: [
-      'Choose any 3 core tools to begin',
-      'Up to 50 invoices per month',
-      'Up to 100 inventory items',
-      'Single-owner workflow',
+      'Choose a focused starting setup',
+      'Good for owner-led teams',
       'Clean foundation for first-time digital adoption',
     ],
-    why: 'Perfect for trying the system in a real business before moving into a paid operating setup.',
+    why: 'A practical first step for getting the business online.',
     icon: BadgeIndianRupee,
   },
   {
@@ -40,18 +44,16 @@ const plans = [
     badge: 'Most popular',
     monthly: '%%%%',
     annual: '%%%%',
-    cadence: 'per month',
+    cadence: 'per account / month',
     accent: 'growth',
-    intro: 'For growing businesses that want billing, stock, and customer operations to feel faster, clearer, and more organized every day.',
+    intro: 'For growing businesses that need a wider rollout.',
     highlights: [
       'Choose 3 more core tools beyond your Starter setup',
-      'For every +3 tools, move into the next subscription stage',
       'Up to 3 team members included',
-      'Higher invoice and stock capacity for active stores',
       'Best fit for retail shops, service teams, and growing local brands',
-      'Upgrade anytime as your business grows without losing your workspace data',
+      'Easy upgrade path as the business grows',
     ],
-    why: 'This plan gives the biggest operational jump without making the owner feel like they are overpaying.',
+    why: 'The best fit for teams ready to expand beyond the basics.',
     icon: Boxes,
   },
   {
@@ -59,18 +61,17 @@ const plans = [
     badge: 'Scale confidently',
     monthly: '%%%%',
     annual: '%%%%',
-    cadence: 'per month',
+    cadence: 'per account / month',
     accent: 'premium',
-    intro: 'For established businesses that want the full workspace, smoother team coordination, and faster support as they scale.',
+    intro: 'For established businesses rolling out the full workspace.',
     highlights: [
       'Everything across the dashboard included',
-      'Higher usage limits across billing and operations',
       'Advanced team workflows and access control',
       'Priority support through Raise an Issue',
       'Ideal for multi-staff stores and process-heavy operations',
-      'Move up from any lower plan anytime with your existing business data kept intact',
+      'Move up anytime with your existing business data intact',
     ],
-    why: 'Designed for businesses that now care less about tool cost and more about speed, control, and reliability.',
+    why: 'Built for businesses that want scale, control, and smoother coordination.',
     icon: Crown,
   },
 ];
@@ -87,13 +88,39 @@ export const PricingPage = () => {
             Clear plans for businesses growing with <BrandWordmark />
           </motion.h1>
           <motion.p className={styles.lead} {...fadeUp}>
-            Start free, move into the plan that matches your daily operations, and scale into a full business workspace
-            when your team, invoices, and workflows grow.
+            Start with a 1 month free trial and free training support. After that, billing continues monthly per
+            account.
           </motion.p>
         </div>
       </section>
 
+      <section className={styles.offerSection}>
+        <motion.div className={styles.offerCard} {...fadeUp}>
+          <div className={styles.offerBadge}>Start with zero risk</div>
+          <h2 className={styles.offerTitle}>Get 1 month free trial plus free training support.</h2>
+          <p className={styles.offerLead}>
+            Start using the workspace first. If your team needs onboarding help, training support is included during
+            the trial.
+          </p>
+          <div className={styles.offerPoints}>
+            {trialHighlights.map((item) => (
+              <div key={item} className={styles.offerPoint}>
+                <Check size={18} />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      </section>
+
       <section className={styles.planSection}>
+        <motion.div className={styles.planIntroBlock} {...fadeUp}>
+          <div className={styles.planIntroEyebrow}>After the trial</div>
+          <h2 className={styles.planIntroTitle}>Choose the plan that fits your business.</h2>
+          <p className={styles.planIntroText}>
+            Monthly pricing is charged per account. The values below are masked for now.
+          </p>
+        </motion.div>
         <div className={styles.planGrid}>
           {plans.map((plan, index) => {
             const Icon = plan.icon;
@@ -118,8 +145,8 @@ export const PricingPage = () => {
                     <span className={styles.cadence}>{plan.cadence}</span>
                   </div>
                   <div className={styles.annualRow}>
-                    Annual plan: {plan.annual}/year
-                    {plan.cadence === 'forever' ? '' : ' • billed for 11 months, 12th month free'}
+                    Monthly account pricing: {plan.monthly}
+                    {' '}• annual reference: {plan.annual}
                   </div>
                 </div>
 
