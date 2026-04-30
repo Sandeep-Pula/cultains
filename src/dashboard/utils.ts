@@ -35,6 +35,7 @@ export const viewTitles: Record<DashboardView, string> = {
   inventory: 'Inventory',
   'barcode-desk': 'Barcode Desk',
   billing: 'Billing',
+  'account-ledger': 'Account Ledger',
   'ai-tools': 'AI tools',
   'render-history': 'Operations',
   crm: 'CRM',
@@ -64,6 +65,7 @@ export const accessControlledViews: DashboardView[] = [
   'inventory',
   'barcode-desk',
   'billing',
+  'account-ledger',
   'ai-tools',
   'render-history',
   'crm',
@@ -81,6 +83,7 @@ export const defaultSidebarViews: DashboardView[] = [
   'inventory',
   'barcode-desk',
   'billing',
+  'account-ledger',
   'render-history',
   'ai-tools',
   'crm',
@@ -123,7 +126,7 @@ export const parseDashboardView = (hash: string): DashboardView => {
   const value = hash.replace(/^#dashboard\/?/, '').replace('/', '');
   if (!value) return 'sales-overview';
   if (value === 'overview' || value === 'business-calendar') return 'overview';
-  if (['super-admin', 'sales-overview', 'customers', 'team', 'inventory', 'barcode-desk', 'billing', 'ai-tools', 'render-history', 'crm', 'raise-issue', 'settings', 'profile'].includes(value)) {
+  if (['super-admin', 'sales-overview', 'customers', 'team', 'inventory', 'barcode-desk', 'billing', 'account-ledger', 'ai-tools', 'render-history', 'crm', 'raise-issue', 'settings', 'profile'].includes(value)) {
     return value as DashboardView;
   }
   return 'sales-overview';

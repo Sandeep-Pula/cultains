@@ -48,6 +48,7 @@ import { AddProjectModal } from './components/AddProjectModal';
 import { AddTeamMemberModal } from './components/AddTeamMemberModal';
 import { TeamMemberDrawer } from './components/TeamMemberDrawer';
 import { OperationsPage } from './pages/OperationsPage';
+import { AccountLedgerPage } from './pages/AccountLedgerPage';
 
 const defaultFilters: CustomerFilters = {
   search: '',
@@ -847,6 +848,41 @@ export const DashboardApp = () => {
     }
   };
 
+  const handleAddFinanceEntry = async (payload: Pick<FinanceEntry, 'title' | 'kind' | 'category' | 'amount' | 'status' | 'dueAt' | 'customerId' | 'linkedCustomerName' | 'projectTitle' | 'notes' | 'paymentMethod' | 'issuedBy' | 'referenceDate' | 'transactionFlow'>) => {
+    if (!user) return;
+    if (!isOwner) {
+      pushToast('Owner access required', 'Only the business owner can add accounting book entries.');
+      return;
+    }
+
+    try {
+      await dashboardService.addFinanceEntry(workspaceUserId, {
+        ...payload,
+        accountingSource: 'manual',
+      });
+      pushToast('Entry added', 'The transaction is now reflected in journal, ledger, and trial balance.');
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to add this accounting entry.');
+      throw nextError;
+    }
+  };
+
+  const handleDeleteFinanceEntry = async (entryId: string) => {
+    if (!user) return;
+    if (!isOwner) {
+      pushToast('Owner access required', 'Only the business owner can delete accounting book entries.');
+      return;
+    }
+
+    try {
+      await dashboardService.deleteFinanceEntry(workspaceUserId, entryId);
+      pushToast('Entry deleted', 'The selected transaction has been removed from the books.');
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to delete this accounting entry.');
+      throw nextError;
+    }
+  };
+
   const handleCreateSupportTicket = async (payload: { subject: string; body: string; category: 'general' | 'technical' | 'billing' | 'feature_request' | 'account'; priority: 'low' | 'medium' | 'high' | 'urgent' }) => {
     if (!user || !data) return;
     if (!isOwner) {
@@ -1073,6 +1109,18 @@ export const DashboardApp = () => {
               onFinalizeSale={handleFinalizeBarcodeSale}
               onSaveDraft={handleSaveInvoiceDraft}
               onDeleteDraft={handleDeleteInvoiceDraft}
+            />
+          ) : activeView === 'account-ledger' ? (
+            <AccountLedgerPage
+              companyName={data.profile.companyName}
+              businessProfile={data.profile}
+              financeEntries={data.financeEntries}
+              salesInvoices={data.salesInvoices}
+              inventory={data.inventory}
+              customers={data.customers}
+              actorName={data.userName}
+              onAddEntry={handleAddFinanceEntry}
+              onDeleteEntry={handleDeleteFinanceEntry}
             />
           ) : activeView === 'render-history' ? (
             <OperationsPage

@@ -35,20 +35,32 @@ const financePaymentMethodLabels: Record<NonNullable<FinanceEntry['paymentMethod
 };
 
 const printHtml = (title: string, body: string) => {
-  const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1080,height=900');
+  const printWindow = window.open('', '_blank', 'width=1080,height=900');
   if (!printWindow) {
     throw new Error('Popup blocked. Allow popups to print invoices.');
   }
 
-  printWindow.document.write(`
+  const html = `
     <html>
       <head>
+        <meta charset="utf-8" />
         <title>${title}</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 24px; color: #000; }
+          body { font-family: Arial, sans-serif; margin: 0; color: #000; background: #eef1ff; }
+          .preview-shell { min-height: 100vh; padding: 24px; }
+          .preview-actions { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; padding: 14px 18px; border-bottom: 1px solid #d7dcff; background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); }
+          .preview-title { font-size: 15px; font-weight: 700; color: #1f2559; letter-spacing: 0.04em; text-transform: uppercase; }
+          .preview-buttons { display: flex; gap: 10px; }
+          .preview-btn { border: 1px solid #d7dcff; background: #fff; color: #1f2559; border-radius: 999px; padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
+          .preview-btn.primary { background: #1f2559; color: #fff; border-color: #1f2559; }
+          .preview-card { max-width: 920px; margin: 0 auto; border-radius: 28px; border: 1px solid #d7dcff; background: #fff; box-shadow: 0 24px 60px rgba(31, 37, 89, 0.08); padding: 24px; }
           .india-invoice { max-width: 820px; margin: 0 auto; color: #000; }
           .invoice-brand { text-align: center; padding-bottom: 12px; border-bottom: 1px dashed #000; }
           .invoice-logo { display: block; max-width: 72px; max-height: 72px; margin: 0 auto 10px; object-fit: contain; filter: grayscale(1); }
+          .invoice-logo-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; margin-bottom: 12px; }
+          .invoice-logo-card { text-align: center; }
+          .invoice-logo-card img { max-width: 88px; max-height: 88px; object-fit: contain; }
+          .invoice-powered-by { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #1f2559; }
           .invoice-company { font-size: 34px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
           .invoice-address { margin-top: 8px; font-size: 16px; line-height: 1.35; }
           .invoice-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; padding: 14px 0; border-bottom: 1px dashed #000; font-size: 15px; }
@@ -66,15 +78,170 @@ const printHtml = (title: string, body: string) => {
           .invoice-summary-row.total { font-weight: 700; font-size: 18px; padding-top: 10px; margin-top: 8px; border-top: 1px dashed #000; }
           .invoice-footer { text-align: center; padding-top: 18px; font-size: 16px; }
           .invoice-footer-note { margin-top: 8px; font-size: 13px; line-height: 1.45; }
-          @media print { body { margin: 12px; } }
+          @media print {
+            body { margin: 12px; background: #fff; }
+            .preview-actions { display: none; }
+            .preview-shell { padding: 0; }
+            .preview-card { box-shadow: none; border: none; padding: 0; }
+          }
         </style>
       </head>
-      <body>${body}</body>
+      <body>
+        <div class="preview-shell">
+          <div class="preview-actions">
+            <div class="preview-title">${title}</div>
+            <div class="preview-buttons">
+              <button class="preview-btn" onclick="window.close()">Close</button>
+              <button class="preview-btn primary" onclick="window.print()">Print / Save as PDF</button>
+            </div>
+          </div>
+          <div class="preview-card">${body}</div>
+        </div>
+      </body>
     </html>
-  `);
-  printWindow.document.close();
+  `;
+
+  const doc = printWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
   printWindow.focus();
-  printWindow.print();
+};
+
+export const printMonthEndClosePackage = (
+  title: string,
+  payload: {
+    companyName: string;
+    monthLabel: string;
+    businessAddress: string;
+    businessPhone?: string;
+    gstNumber?: string;
+    workspaceLogoUrl?: string;
+    platformLogoUrl: string;
+    poweredByText: string;
+    checklist: Array<{ title: string; detail: string; status: string }>;
+    profitAndLoss: Array<{ label: string; amount: number }>;
+    balanceSheet: {
+      assets: Array<{ label: string; amount: number }>;
+      liabilities: Array<{ label: string; amount: number }>;
+      equity: Array<{ label: string; amount: number }>;
+    };
+    cashFlow: {
+      operating: Array<{ label: string; amount: number }>;
+      investing: Array<{ label: string; amount: number }>;
+      financing: Array<{ label: string; amount: number }>;
+    };
+    generalLedger: Array<{
+      account: string;
+      openingBalance: number;
+      closingBalance: number;
+      movements: number;
+    }>;
+  },
+) => {
+  const sectionRows = (rows: Array<{ label: string; amount: number }>) =>
+    rows
+      .map(
+        (row) => `
+          <tr>
+            <td>${escapeHtml(row.label)}</td>
+            <td style="text-align:right;">${formatCurrency(row.amount)}</td>
+          </tr>
+        `,
+      )
+      .join('');
+
+  const generalLedgerRows = payload.generalLedger
+    .map(
+      (row) => `
+        <tr>
+          <td>${escapeHtml(row.account)}</td>
+          <td style="text-align:right;">${formatCurrency(row.openingBalance)}</td>
+          <td style="text-align:right;">${row.movements}</td>
+          <td style="text-align:right;">${formatCurrency(row.closingBalance)}</td>
+        </tr>
+      `,
+    )
+    .join('');
+
+  const checklistRows = payload.checklist
+    .map(
+      (item) => `
+        <tr>
+          <td>${escapeHtml(item.title)}</td>
+          <td>${escapeHtml(item.status)}</td>
+          <td>${escapeHtml(item.detail)}</td>
+        </tr>
+      `,
+    )
+    .join('');
+
+  const body = `
+    <div class="india-invoice">
+      <div class="invoice-brand">
+        <div class="invoice-logo-row">
+          <div class="invoice-logo-card">
+            ${payload.workspaceLogoUrl ? `<img src="${escapeHtml(payload.workspaceLogoUrl)}" alt="${escapeHtml(payload.companyName)} logo" class="invoice-logo" />` : ''}
+          </div>
+          <div class="invoice-logo-card">
+            <img src="${escapeHtml(payload.platformLogoUrl)}" alt="Aivyapari logo" class="invoice-logo" />
+            <div class="invoice-powered-by">${escapeHtml(payload.poweredByText)}</div>
+          </div>
+          <div></div>
+        </div>
+        <div class="invoice-company">${escapeHtml(payload.companyName)}</div>
+        <div class="invoice-address">Month-end close package for ${escapeHtml(payload.monthLabel)}</div>
+        <div class="invoice-address">${escapeHtml(payload.businessAddress)}</div>
+        ${payload.businessPhone ? `<div class="invoice-address">PHONE : ${escapeHtml(payload.businessPhone)}</div>` : ''}
+        ${payload.gstNumber ? `<div class="invoice-address">GSTIN : ${escapeHtml(payload.gstNumber)}</div>` : ''}
+      </div>
+      <div class="invoice-summary">
+        <div class="invoice-summary-row total">
+          <span>Month-end Checklist</span>
+          <span></span>
+          <strong>${payload.checklist.length} items</strong>
+        </div>
+      </div>
+      <table class="invoice-table">
+        <thead>
+          <tr>
+            <th>Step</th>
+            <th>Status</th>
+            <th>Detail</th>
+          </tr>
+        </thead>
+        <tbody>${checklistRows}</tbody>
+      </table>
+
+      <div class="invoice-summary"><div class="invoice-summary-row total"><span>Profit and Loss Statement</span><span></span><strong>${escapeHtml(payload.monthLabel)}</strong></div></div>
+      <table class="invoice-table"><thead><tr><th>Line Item</th><th class="amt">Amount</th></tr></thead><tbody>${sectionRows(payload.profitAndLoss)}</tbody></table>
+
+      <div class="invoice-summary"><div class="invoice-summary-row total"><span>Balance Sheet</span><span></span><strong>Month Close</strong></div></div>
+      <table class="invoice-table"><thead><tr><th>Assets</th><th class="amt">Amount</th></tr></thead><tbody>${sectionRows(payload.balanceSheet.assets)}</tbody></table>
+      <table class="invoice-table"><thead><tr><th>Liabilities</th><th class="amt">Amount</th></tr></thead><tbody>${sectionRows(payload.balanceSheet.liabilities)}</tbody></table>
+      <table class="invoice-table"><thead><tr><th>Equity</th><th class="amt">Amount</th></tr></thead><tbody>${sectionRows(payload.balanceSheet.equity)}</tbody></table>
+
+      <div class="invoice-summary"><div class="invoice-summary-row total"><span>Cash Flow Statement</span><span></span><strong>${escapeHtml(payload.monthLabel)}</strong></div></div>
+      <table class="invoice-table"><thead><tr><th>Operating Activities</th><th class="amt">Amount</th></tr></thead><tbody>${sectionRows(payload.cashFlow.operating)}</tbody></table>
+      <table class="invoice-table"><thead><tr><th>Investing Activities</th><th class="amt">Amount</th></tr></thead><tbody>${sectionRows(payload.cashFlow.investing)}</tbody></table>
+      <table class="invoice-table"><thead><tr><th>Financing Activities</th><th class="amt">Amount</th></tr></thead><tbody>${sectionRows(payload.cashFlow.financing)}</tbody></table>
+
+      <div class="invoice-summary"><div class="invoice-summary-row total"><span>General Ledger Snapshot</span><span></span><strong>${payload.generalLedger.length} accounts</strong></div></div>
+      <table class="invoice-table">
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th class="amt">Opening</th>
+            <th class="amt">Movements</th>
+            <th class="amt">Closing</th>
+          </tr>
+        </thead>
+        <tbody>${generalLedgerRows}</tbody>
+      </table>
+    </div>
+  `;
+
+  printHtml(title, body);
 };
 
 export const printSalesInvoice = (
