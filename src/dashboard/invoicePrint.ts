@@ -1,8 +1,8 @@
 import type { FinanceEntry, SalesInvoice, WorkspaceProfile } from './types';
 import { formatCurrency } from './utils';
 
-const escapeHtml = (value: string) =>
-  value
+const escapeHtml = (value: unknown) =>
+  String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -34,77 +34,119 @@ const financePaymentMethodLabels: Record<NonNullable<FinanceEntry['paymentMethod
   mixed: 'Mixed',
 };
 
+const buildPrintDocument = (title: string, body: string) => `
+  <html>
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>${escapeHtml(title)}</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 0; color: #000; background: #eef1ff; }
+        .preview-shell { min-height: 100vh; padding: 24px; }
+        .preview-actions { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; padding: 14px 18px; border-bottom: 1px solid #d7dcff; background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); }
+        .preview-title { font-size: 15px; font-weight: 700; color: #1f2559; letter-spacing: 0.04em; text-transform: uppercase; }
+        .preview-buttons { display: flex; gap: 10px; }
+        .preview-btn { border: 1px solid #d7dcff; background: #fff; color: #1f2559; border-radius: 999px; padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
+        .preview-btn.primary { background: #1f2559; color: #fff; border-color: #1f2559; }
+        .preview-card { max-width: 920px; margin: 0 auto; border-radius: 28px; border: 1px solid #d7dcff; background: #fff; box-shadow: 0 24px 60px rgba(31, 37, 89, 0.08); padding: 24px; }
+        .india-invoice { max-width: 794px; margin: 0 auto; color: #000; }
+        .invoice-brand { text-align: center; padding-bottom: 14px; border-bottom: 1px dashed #000; }
+        .invoice-logo { display: block; max-width: 96px; max-height: 96px; margin: 0 auto 14px; object-fit: contain; }
+        .invoice-company { font-size: 34px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+        .invoice-address { margin-top: 8px; font-size: 16px; line-height: 1.35; }
+        .invoice-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; padding: 14px 0; border-bottom: 1px dashed #000; font-size: 15px; }
+        .invoice-meta-cell.right { text-align: right; }
+        .invoice-meta-label { font-weight: 700; }
+        .invoice-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .invoice-table thead th { border-top: 1px dashed #000; border-bottom: 1px dashed #000; color: #000; font-size: 15px; letter-spacing: 0; text-transform: none; padding: 10px 6px; text-align: left; }
+        .invoice-table tbody td { font-size: 15px; padding: 10px 6px; vertical-align: top; }
+        .invoice-table .num { text-align: center; width: 58px; }
+        .invoice-table .qty, .invoice-table .rate, .invoice-table .amt { text-align: right; white-space: nowrap; }
+        .invoice-item-name { font-weight: 700; }
+        .invoice-item-sub { margin-top: 3px; font-size: 12px; color: #333; }
+        .invoice-summary { margin-top: 10px; border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 10px 0; }
+        .invoice-summary-row { display: flex; justify-content: space-between; gap: 16px; padding: 4px 0; font-size: 15px; }
+        .invoice-summary-row.total { font-weight: 700; font-size: 18px; padding-top: 10px; margin-top: 8px; border-top: 1px dashed #000; }
+        .invoice-footer { text-align: center; padding-top: 18px; font-size: 16px; }
+        .invoice-footer-note { margin-top: 8px; font-size: 13px; line-height: 1.45; }
+        .month-end-section { margin-top: 18px; break-inside: avoid; page-break-inside: avoid; }
+        .month-end-page { min-height: calc(297mm - 28mm); padding-bottom: 18mm; break-after: page; page-break-after: always; }
+        .month-end-page:last-child { break-after: auto; page-break-after: auto; }
+        .month-end-footer { margin-top: 24px; font-size: 12px; color: #1f2559; font-weight: 700; letter-spacing: 0.04em; }
+        .print-error { max-width: 860px; margin: 48px auto; border-radius: 28px; background: #fff; border: 1px solid #d7dcff; box-shadow: 0 24px 60px rgba(31, 37, 89, 0.08); padding: 28px; color: #1f2559; }
+        .print-error h1 { margin: 0 0 12px; font-size: 28px; }
+        .print-error p { margin: 8px 0; font-size: 16px; line-height: 1.6; }
+        .print-error code { display: block; margin-top: 12px; padding: 12px; background: #f6f7ff; border-radius: 16px; white-space: pre-wrap; word-break: break-word; }
+        @page { size: A4; margin: 14mm 12mm 18mm 12mm; }
+        @media print {
+          body { margin: 0; background: #fff; }
+          .preview-actions { display: none; }
+          .preview-shell { padding: 0; }
+          .preview-card { max-width: none; box-shadow: none; border: none; border-radius: 0; padding: 0; }
+          .month-end-footer {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            margin: 0;
+            padding: 0 0 4mm 2mm;
+            font-size: 11px;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="preview-shell">
+        <div class="preview-actions">
+          <div class="preview-title">${escapeHtml(title)}</div>
+          <div class="preview-buttons">
+            <button class="preview-btn" onclick="window.close()">Close</button>
+            <button class="preview-btn primary" onclick="window.print()">Print / Save as PDF</button>
+          </div>
+        </div>
+        <div class="preview-card">${body}</div>
+      </div>
+    </body>
+  </html>
+`;
+
 const printHtml = (title: string, body: string) => {
   const printWindow = window.open('', '_blank', 'width=1080,height=900');
   if (!printWindow) {
     throw new Error('Popup blocked. Allow popups to print invoices.');
   }
 
-  const html = `
+  const loadingTitle = escapeHtml(title);
+  printWindow.document.open();
+  printWindow.document.write(`
     <html>
-      <head>
-        <meta charset="utf-8" />
-        <title>${title}</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 0; color: #000; background: #eef1ff; }
-          .preview-shell { min-height: 100vh; padding: 24px; }
-          .preview-actions { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; padding: 14px 18px; border-bottom: 1px solid #d7dcff; background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); }
-          .preview-title { font-size: 15px; font-weight: 700; color: #1f2559; letter-spacing: 0.04em; text-transform: uppercase; }
-          .preview-buttons { display: flex; gap: 10px; }
-          .preview-btn { border: 1px solid #d7dcff; background: #fff; color: #1f2559; border-radius: 999px; padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
-          .preview-btn.primary { background: #1f2559; color: #fff; border-color: #1f2559; }
-          .preview-card { max-width: 920px; margin: 0 auto; border-radius: 28px; border: 1px solid #d7dcff; background: #fff; box-shadow: 0 24px 60px rgba(31, 37, 89, 0.08); padding: 24px; }
-          .india-invoice { max-width: 820px; margin: 0 auto; color: #000; }
-          .invoice-brand { text-align: center; padding-bottom: 12px; border-bottom: 1px dashed #000; }
-          .invoice-logo { display: block; max-width: 72px; max-height: 72px; margin: 0 auto 10px; object-fit: contain; filter: grayscale(1); }
-          .invoice-logo-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; margin-bottom: 12px; }
-          .invoice-logo-card { text-align: center; }
-          .invoice-logo-card img { max-width: 88px; max-height: 88px; object-fit: contain; }
-          .invoice-powered-by { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #1f2559; }
-          .invoice-company { font-size: 34px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
-          .invoice-address { margin-top: 8px; font-size: 16px; line-height: 1.35; }
-          .invoice-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; padding: 14px 0; border-bottom: 1px dashed #000; font-size: 15px; }
-          .invoice-meta-cell.right { text-align: right; }
-          .invoice-meta-label { font-weight: 700; }
-          .invoice-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-          .invoice-table thead th { border-top: 1px dashed #000; border-bottom: 1px dashed #000; color: #000; font-size: 15px; letter-spacing: 0; text-transform: none; padding: 10px 6px; text-align: left; }
-          .invoice-table tbody td { border-bottom: none; font-size: 15px; padding: 10px 6px; vertical-align: top; }
-          .invoice-table .num { text-align: center; width: 58px; }
-          .invoice-table .qty, .invoice-table .rate, .invoice-table .amt { text-align: right; white-space: nowrap; }
-          .invoice-item-name { font-weight: 700; }
-          .invoice-item-sub { margin-top: 3px; font-size: 12px; color: #333; }
-          .invoice-summary { margin-top: 10px; border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 10px 0; }
-          .invoice-summary-row { display: flex; justify-content: space-between; gap: 16px; padding: 4px 0; font-size: 15px; }
-          .invoice-summary-row.total { font-weight: 700; font-size: 18px; padding-top: 10px; margin-top: 8px; border-top: 1px dashed #000; }
-          .invoice-footer { text-align: center; padding-top: 18px; font-size: 16px; }
-          .invoice-footer-note { margin-top: 8px; font-size: 13px; line-height: 1.45; }
-          @media print {
-            body { margin: 12px; background: #fff; }
-            .preview-actions { display: none; }
-            .preview-shell { padding: 0; }
-            .preview-card { box-shadow: none; border: none; padding: 0; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="preview-shell">
-          <div class="preview-actions">
-            <div class="preview-title">${title}</div>
-            <div class="preview-buttons">
-              <button class="preview-btn" onclick="window.close()">Close</button>
-              <button class="preview-btn primary" onclick="window.print()">Print / Save as PDF</button>
-            </div>
-          </div>
-          <div class="preview-card">${body}</div>
-        </div>
-      </body>
+      <head><title>${loadingTitle}</title><meta charset="utf-8" /></head>
+      <body style="font-family: Arial, sans-serif; padding: 24px; color: #1f2559;">Preparing print preview...</body>
     </html>
-  `;
+  `);
+  printWindow.document.close();
 
-  const doc = printWindow.document;
-  doc.open();
-  doc.write(html);
-  doc.close();
+  try {
+    const html = buildPrintDocument(title, body);
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    printWindow.location.replace(url);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown print rendering error';
+    printWindow.document.open();
+    printWindow.document.write(buildPrintDocument(
+      title,
+      `
+        <div class="print-error">
+          <h1>Preview could not be prepared</h1>
+          <p>The month-end document hit a rendering problem before the preview finished loading.</p>
+          <p>Refresh the app and try again. If the problem continues, check whether one of the report fields contains invalid data.</p>
+          <code>${escapeHtml(message)}</code>
+        </div>
+      `,
+    ));
+    printWindow.document.close();
+  }
   printWindow.focus();
 };
 
@@ -117,7 +159,6 @@ export const printMonthEndClosePackage = (
     businessPhone?: string;
     gstNumber?: string;
     workspaceLogoUrl?: string;
-    platformLogoUrl: string;
     poweredByText: string;
     checklist: Array<{ title: string; detail: string; status: string }>;
     profitAndLoss: Array<{ label: string; amount: number }>;
@@ -139,6 +180,16 @@ export const printMonthEndClosePackage = (
     }>;
   },
 ) => {
+  const checklist = payload.checklist ?? [];
+  const profitAndLoss = payload.profitAndLoss ?? [];
+  const balanceSheetAssets = payload.balanceSheet?.assets ?? [];
+  const balanceSheetLiabilities = payload.balanceSheet?.liabilities ?? [];
+  const balanceSheetEquity = payload.balanceSheet?.equity ?? [];
+  const cashFlowOperating = payload.cashFlow?.operating ?? [];
+  const cashFlowInvesting = payload.cashFlow?.investing ?? [];
+  const cashFlowFinancing = payload.cashFlow?.financing ?? [];
+  const generalLedger = payload.generalLedger ?? [];
+
   const sectionRows = (rows: Array<{ label: string; amount: number }>) =>
     rows
       .map(
@@ -151,7 +202,7 @@ export const printMonthEndClosePackage = (
       )
       .join('');
 
-  const generalLedgerRows = payload.generalLedger
+  const generalLedgerRows = generalLedger
     .map(
       (row) => `
         <tr>
@@ -164,7 +215,7 @@ export const printMonthEndClosePackage = (
     )
     .join('');
 
-  const checklistRows = payload.checklist
+  const checklistRows = checklist
     .map(
       (item) => `
         <tr>
@@ -176,68 +227,94 @@ export const printMonthEndClosePackage = (
     )
     .join('');
 
+  const pageSection = (titleLabel: string, innerHtml: string) => `
+    <section class="month-end-page">
+      <div class="month-end-section">
+        <div class="invoice-summary">
+          <div class="invoice-summary-row total">
+            <span>${escapeHtml(titleLabel)}</span>
+            <span></span>
+            <strong>${escapeHtml(payload.monthLabel)}</strong>
+          </div>
+        </div>
+        ${innerHtml}
+      </div>
+      <div class="month-end-footer">${escapeHtml(payload.poweredByText)}</div>
+    </section>
+  `;
+
   const body = `
     <div class="india-invoice">
-      <div class="invoice-brand">
-        <div class="invoice-logo-row">
-          <div class="invoice-logo-card">
-            ${payload.workspaceLogoUrl ? `<img src="${escapeHtml(payload.workspaceLogoUrl)}" alt="${escapeHtml(payload.companyName)} logo" class="invoice-logo" />` : ''}
-          </div>
-          <div class="invoice-logo-card">
-            <img src="${escapeHtml(payload.platformLogoUrl)}" alt="Aivyapari logo" class="invoice-logo" />
-            <div class="invoice-powered-by">${escapeHtml(payload.poweredByText)}</div>
-          </div>
-          <div></div>
+      <section class="month-end-page">
+        <div class="invoice-brand">
+          ${payload.workspaceLogoUrl ? `<img src="${escapeHtml(payload.workspaceLogoUrl)}" alt="${escapeHtml(payload.companyName)} logo" class="invoice-logo" />` : ''}
+          <div class="invoice-company">${escapeHtml(payload.companyName)}</div>
         </div>
-        <div class="invoice-company">${escapeHtml(payload.companyName)}</div>
         <div class="invoice-address">Month-end close package for ${escapeHtml(payload.monthLabel)}</div>
         <div class="invoice-address">${escapeHtml(payload.businessAddress)}</div>
         ${payload.businessPhone ? `<div class="invoice-address">PHONE : ${escapeHtml(payload.businessPhone)}</div>` : ''}
         ${payload.gstNumber ? `<div class="invoice-address">GSTIN : ${escapeHtml(payload.gstNumber)}</div>` : ''}
-      </div>
-      <div class="invoice-summary">
-        <div class="invoice-summary-row total">
-          <span>Month-end Checklist</span>
-          <span></span>
-          <strong>${payload.checklist.length} items</strong>
+        <div class="month-end-section">
+          <div class="invoice-summary">
+            <div class="invoice-summary-row total">
+              <span>Month-end Checklist</span>
+              <span></span>
+              <strong>${checklist.length} items</strong>
+            </div>
+          </div>
+          <table class="invoice-table">
+            <thead>
+              <tr>
+                <th>Step</th>
+                <th>Status</th>
+                <th>Detail</th>
+              </tr>
+            </thead>
+            <tbody>${checklistRows}</tbody>
+          </table>
         </div>
-      </div>
-      <table class="invoice-table">
-        <thead>
-          <tr>
-            <th>Step</th>
-            <th>Status</th>
-            <th>Detail</th>
-          </tr>
-        </thead>
-        <tbody>${checklistRows}</tbody>
-      </table>
+        <div class="month-end-footer">${escapeHtml(payload.poweredByText)}</div>
+      </section>
 
-      <div class="invoice-summary"><div class="invoice-summary-row total"><span>Profit and Loss Statement</span><span></span><strong>${escapeHtml(payload.monthLabel)}</strong></div></div>
-      <table class="invoice-table"><thead><tr><th>Line Item</th><th class="amt">Amount</th></tr></thead><tbody>${sectionRows(payload.profitAndLoss)}</tbody></table>
+      ${pageSection(
+        'Profit and Loss Statement',
+        `<table class="invoice-table"><thead><tr><th>Line Item</th><th style="text-align:right;">Amount</th></tr></thead><tbody>${sectionRows(profitAndLoss)}</tbody></table>`,
+      )}
 
-      <div class="invoice-summary"><div class="invoice-summary-row total"><span>Balance Sheet</span><span></span><strong>Month Close</strong></div></div>
-      <table class="invoice-table"><thead><tr><th>Assets</th><th class="amt">Amount</th></tr></thead><tbody>${sectionRows(payload.balanceSheet.assets)}</tbody></table>
-      <table class="invoice-table"><thead><tr><th>Liabilities</th><th class="amt">Amount</th></tr></thead><tbody>${sectionRows(payload.balanceSheet.liabilities)}</tbody></table>
-      <table class="invoice-table"><thead><tr><th>Equity</th><th class="amt">Amount</th></tr></thead><tbody>${sectionRows(payload.balanceSheet.equity)}</tbody></table>
+      ${pageSection(
+        'Balance Sheet',
+        `
+          <table class="invoice-table"><thead><tr><th>Assets</th><th style="text-align:right;">Amount</th></tr></thead><tbody>${sectionRows(balanceSheetAssets)}</tbody></table>
+          <table class="invoice-table"><thead><tr><th>Liabilities</th><th style="text-align:right;">Amount</th></tr></thead><tbody>${sectionRows(balanceSheetLiabilities)}</tbody></table>
+          <table class="invoice-table"><thead><tr><th>Equity</th><th style="text-align:right;">Amount</th></tr></thead><tbody>${sectionRows(balanceSheetEquity)}</tbody></table>
+        `,
+      )}
 
-      <div class="invoice-summary"><div class="invoice-summary-row total"><span>Cash Flow Statement</span><span></span><strong>${escapeHtml(payload.monthLabel)}</strong></div></div>
-      <table class="invoice-table"><thead><tr><th>Operating Activities</th><th class="amt">Amount</th></tr></thead><tbody>${sectionRows(payload.cashFlow.operating)}</tbody></table>
-      <table class="invoice-table"><thead><tr><th>Investing Activities</th><th class="amt">Amount</th></tr></thead><tbody>${sectionRows(payload.cashFlow.investing)}</tbody></table>
-      <table class="invoice-table"><thead><tr><th>Financing Activities</th><th class="amt">Amount</th></tr></thead><tbody>${sectionRows(payload.cashFlow.financing)}</tbody></table>
+      ${pageSection(
+        'Cash Flow Statement',
+        `
+          <table class="invoice-table"><thead><tr><th>Operating Activities</th><th style="text-align:right;">Amount</th></tr></thead><tbody>${sectionRows(cashFlowOperating)}</tbody></table>
+          <table class="invoice-table"><thead><tr><th>Investing Activities</th><th style="text-align:right;">Amount</th></tr></thead><tbody>${sectionRows(cashFlowInvesting)}</tbody></table>
+          <table class="invoice-table"><thead><tr><th>Financing Activities</th><th style="text-align:right;">Amount</th></tr></thead><tbody>${sectionRows(cashFlowFinancing)}</tbody></table>
+        `,
+      )}
 
-      <div class="invoice-summary"><div class="invoice-summary-row total"><span>General Ledger Snapshot</span><span></span><strong>${payload.generalLedger.length} accounts</strong></div></div>
-      <table class="invoice-table">
-        <thead>
-          <tr>
-            <th>Account</th>
-            <th class="amt">Opening</th>
-            <th class="amt">Movements</th>
-            <th class="amt">Closing</th>
-          </tr>
-        </thead>
-        <tbody>${generalLedgerRows}</tbody>
-      </table>
+      ${pageSection(
+        'General Ledger Snapshot',
+        `
+          <table class="invoice-table">
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th style="text-align:right;">Opening</th>
+                <th style="text-align:right;">Movements</th>
+                <th style="text-align:right;">Closing</th>
+              </tr>
+            </thead>
+            <tbody>${generalLedgerRows}</tbody>
+          </table>
+        `,
+      )}
     </div>
   `;
 
