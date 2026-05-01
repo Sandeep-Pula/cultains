@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion';
 import {
   BadgeIndianRupee,
-  Bot,
   Boxes,
   Check,
   Crown,
+  LayoutDashboard,
 } from 'lucide-react';
-import { BrandWordmark } from './BrandWordmark';
+import { ProductWordmark } from './BrandWordmark';
 import styles from './PricingPage.module.css';
 
 const fadeUp = {
@@ -17,53 +17,53 @@ const fadeUp = {
 };
 
 const trialHighlights = [
-  '1 month free trial on every plan',
-  'Free training support if needed',
+  '1 month free trial for every workspace',
+  'Free onboarding and training support if needed',
   'Monthly per-account billing starts after the trial',
 ];
 
 const plans = [
   {
-    name: 'Vyapar Starter',
+    name: 'Business OS Starter',
     badge: 'Trial launch',
     monthly: '%%%%',
     annual: '%%%%',
     cadence: 'per account / month',
     accent: 'starter',
-    intro: 'For businesses starting with a smaller rollout.',
+    intro: 'For businesses starting with a focused operating setup.',
     highlights: [
       'Choose a focused starting setup',
-      'Good for owner-led teams',
+      'Good for owner-led teams and first branches',
       'Clean foundation for first-time digital adoption',
     ],
-    why: 'A practical first step for getting the business online.',
+    why: 'A practical first step for bringing business operations into one OS.',
     icon: BadgeIndianRupee,
   },
   {
-    name: 'Vyapar Growth',
+    name: 'Business OS Growth',
     badge: 'Most popular',
     monthly: '%%%%',
     annual: '%%%%',
     cadence: 'per account / month',
     accent: 'growth',
-    intro: 'For growing businesses that need a wider rollout.',
+    intro: 'For growing teams that need a wider operating rollout.',
     highlights: [
-      'Choose 3 more core tools beyond your Starter setup',
+      'Choose more core tools beyond your Starter setup',
       'Up to 3 team members included',
       'Best fit for retail shops, service teams, and growing local brands',
       'Easy upgrade path as the business grows',
     ],
-    why: 'The best fit for teams ready to expand beyond the basics.',
+    why: 'The best fit for teams ready to connect more of the business.',
     icon: Boxes,
   },
   {
-    name: 'Vyapar Premium',
+    name: 'Business OS Premium',
     badge: 'Scale confidently',
     monthly: '%%%%',
     annual: '%%%%',
     cadence: 'per account / month',
     accent: 'premium',
-    intro: 'For established businesses rolling out the full workspace.',
+    intro: 'For established businesses rolling out the full operating workspace.',
     highlights: [
       'Everything across the dashboard included',
       'Advanced team workflows and access control',
@@ -80,16 +80,27 @@ export const PricingPage = () => {
   return (
     <div className={styles.page}>
       <section className={styles.hero}>
+        <div className={styles.pricingAnimation} aria-hidden="true">
+          <span className={styles.redShape} />
+          <span className={styles.blueShape} />
+          <span className={styles.redRing} />
+        </div>
         <div className={styles.heroCopy}>
+          <motion.img
+            src={`${import.meta.env.BASE_URL}pula-business-os-logo-transparent.png`}
+            alt="PULA Business OS"
+            className={styles.pricingLogo}
+            {...fadeUp}
+          />
           <motion.div className={styles.eyebrow} {...fadeUp}>
-            Pricing
+            Pricing for PULA Business OS
           </motion.div>
           <motion.h1 className={styles.title} {...fadeUp}>
-            Clear plans for businesses growing with <BrandWordmark />
+            Simple plans for running the business from one operating system.
           </motion.h1>
           <motion.p className={styles.lead} {...fadeUp}>
-            Start with a 1 month free trial and free training support. After that, billing continues monthly per
-            account.
+            Start with a 1 month free trial and free training support. After that, keep CRM, billing, inventory,
+            finance, teams, operations, and AI tools connected through <ProductWordmark />.
           </motion.p>
         </div>
       </section>
@@ -97,10 +108,10 @@ export const PricingPage = () => {
       <section className={styles.offerSection}>
         <motion.div className={styles.offerCard} {...fadeUp}>
           <div className={styles.offerBadge}>Start with zero risk</div>
-          <h2 className={styles.offerTitle}>Get 1 month free trial plus free training support.</h2>
+          <h2 className={styles.offerTitle}>Get 1 month free trial plus Business OS onboarding support.</h2>
           <p className={styles.offerLead}>
-            Start using the workspace first. If your team needs onboarding help, training support is included during
-            the trial.
+            Start using the operating system first. If your team needs onboarding help, training support is included
+            during the trial.
           </p>
           <div className={styles.offerPoints}>
             {trialHighlights.map((item) => (
@@ -116,7 +127,7 @@ export const PricingPage = () => {
       <section className={styles.planSection}>
         <motion.div className={styles.planIntroBlock} {...fadeUp}>
           <div className={styles.planIntroEyebrow}>After the trial</div>
-          <h2 className={styles.planIntroTitle}>Choose the plan that fits your business.</h2>
+          <h2 className={styles.planIntroTitle}>Choose the Business OS plan that fits your team.</h2>
           <p className={styles.planIntroText}>
             Monthly pricing is charged per account. The values below are masked for now.
           </p>
@@ -172,16 +183,16 @@ export const PricingPage = () => {
         <motion.div className={styles.aiCard} {...fadeUp}>
           <div className={styles.aiTop}>
             <div className={styles.aiIcon}>
-              <Bot size={20} />
+              <LayoutDashboard size={20} />
             </div>
             <div>
-              <div className={styles.aiEyebrow}>AI credits</div>
-              <h2 className={styles.aiTitle}>AI tools are billed separately from your plan</h2>
+              <div className={styles.aiEyebrow}>AI tools and credits</div>
+              <h2 className={styles.aiTitle}>AI usage can stay flexible inside Business OS</h2>
             </div>
           </div>
           <p className={styles.aiLead}>
-            Use AI credits only when you need them. This keeps your main subscription simple, while giving you the
-            freedom to use AI workflows, assistants, and generation tools on a pay-as-you-go basis.
+            Use AI credits only when you need them. This keeps the main Business OS subscription simple, while giving
+            your team freedom to use AI workflows, assistants, and generation tools on a pay-as-you-go basis.
           </p>
           <div className={styles.aiPoints}>
             <div className={styles.aiPoint}><Check size={16} /> Separate from monthly subscription</div>

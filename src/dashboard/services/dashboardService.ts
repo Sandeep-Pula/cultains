@@ -575,8 +575,8 @@ export const dashboardService = {
     const existing = await getDoc(ref);
     const nextProfile: UserProfileDoc = {
       userId: user.uid,
-      userName: user.displayName?.trim() || 'AIvyapari Super Admin',
-      companyName: 'AIvyapari Platform',
+      userName: user.displayName?.trim() || 'Pula Labs Super Admin',
+      companyName: 'Pula Labs Platform',
       accountType: 'super_admin',
       businessType: 'general_business',
       workspaceLogoUrl: '',
@@ -586,7 +586,7 @@ export const dashboardService = {
       studioAddress: '',
       gstNumber: '',
       teamSize: '',
-      website: 'https://aivyapari.com',
+      website: 'https://pulalabs.com',
       subscriptionPlan: 'freemium',
       subscriptionStatus: 'active',
       renewalDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),

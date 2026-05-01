@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { auth, firebaseStatus } from '../lib/firebase';
-import { BrandWordmark } from './BrandWordmark';
 import styles from './Navbar.module.css';
 
 export const Navbar = () => {
@@ -50,19 +49,17 @@ export const Navbar = () => {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
     >
-      <a href="#top" className={styles.logo} aria-label="AIvyapari home">
+      <a href="#top" className={styles.logo} aria-label="PULA labs home">
         <span className={styles.logoBadge}>
-          <img src={`${import.meta.env.BASE_URL}aivyapari-logo.png`} alt="AIvyapari logo" className={styles.logoMark} />
+          <img src={`${import.meta.env.BASE_URL}pula-labs-logo.png`} alt="PULA labs logo" className={styles.logoMark} />
         </span>
-        <BrandWordmark className={styles.logoText} />
       </a>
 
       <div className={styles.links}>
 
-        <a href="#workflow" className={styles.link}>Workflow</a>
-        <a href="#product" className={styles.link}>Modules</a>
-        <a href="#industries" className={styles.link}>Industries</a>
-        <a href="#ai" className={styles.link}>AI</a>
+        <a href="#product" className={styles.link}>Business OS</a>
+        <a href="#tools" className={styles.link}>AI tools</a>
+        <a href="#business-os" className={styles.link}>Why OS</a>
         <a href="#pricing" className={styles.link}>Pricing</a>
 
         {user ? (
@@ -81,7 +78,7 @@ export const Navbar = () => {
             openHomepageAuth('signup');
           }}
         >
-          {firebaseStatus.isConfigured ? 'Start Free' : 'View Launch Info'}
+          {firebaseStatus.isConfigured ? 'Try business OS' : 'View Launch Info'}
         </a>
       </div>
     </motion.nav>

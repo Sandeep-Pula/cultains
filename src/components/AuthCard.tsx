@@ -8,7 +8,7 @@ type AuthCardProps = {
   mode: 'login' | 'signup';
 };
 
-const SUPER_ADMIN_EMAIL = 'superadmin@aivyapari.com';
+const SUPER_ADMIN_EMAIL = 'superadmin@pulalabs.com';
 
 export const AuthCard = ({ mode }: AuthCardProps) => {
   const [isSignup, setIsSignup] = useState(mode === 'signup');
@@ -71,7 +71,14 @@ export const AuthCard = ({ mode }: AuthCardProps) => {
 
   return (
     <div className={styles.formCard}>
-      <h2 className={styles.formTitle}>{isForgotPassword ? 'Reset Password' : isSignup ? 'Create account' : 'Login'}</h2>
+      <div className={styles.formHeader}>
+        <h2 className={styles.formTitle}>{isForgotPassword ? 'Reset Password' : isSignup ? 'Create account' : 'Login'}</h2>
+        <img
+          src={`${import.meta.env.BASE_URL}pula-business-os-logo-transparent.png`}
+          alt="PULA Business OS"
+          className={styles.authProductLogo}
+        />
+      </div>
       <p className={styles.formText}>
         {isForgotPassword
           ? 'Enter your email and we will send password reset instructions.'

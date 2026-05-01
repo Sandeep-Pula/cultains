@@ -37,7 +37,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 3rem;
+  width: 12rem;
   height: auto;
   flex-shrink: 0;
 }
@@ -50,7 +50,7 @@
 }
 
 .logoText {
-  font-family: 'Sniglet', cursive;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
   line-height: 1;
 }
 
@@ -104,5 +104,9 @@
 
   .logoText {
     font-size: 1.25rem;
+  }
+
+  .logoBadge {
+    width: 10rem;
   }
 }

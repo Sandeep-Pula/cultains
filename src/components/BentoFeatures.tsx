@@ -1,29 +1,34 @@
 import { motion } from 'framer-motion';
-import { Bot, BriefcaseBusiness, LayoutDashboard } from 'lucide-react';
-import { BrandWordmark } from './BrandWordmark';
+import { BadgeIndianRupee, Boxes, Bot, Users } from 'lucide-react';
+import { ProductWordmark } from './BrandWordmark';
 import styles from './BentoFeatures.module.css';
 
-const steps = [
+const pillars = [
   {
-    title: 'Set up your workspace once',
-    description: 'Add your business identity, team, customers, and the modules you actually need.',
-    icon: <LayoutDashboard size={24} />,
+    title: 'Know every customer movement',
+    description: 'Track leads, follow-ups, customer history, ownership, and the next action without scattered notes.',
+    icon: <Users size={24} />,
   },
   {
-    title: 'Run daily operations from one place',
-    description: 'Track leads, billing, stock, payments, and accountability without jumping across apps.',
-    icon: <BriefcaseBusiness size={24} />,
+    title: 'Connect money and operations',
+    description: 'Create invoices, follow dues, read ledger activity, and keep sales context beside finance context.',
+    icon: <BadgeIndianRupee size={24} />,
   },
   {
-    title: 'Turn on AI only where it helps',
-    description: 'Use AI tools for follow-ups, summaries, forecasting, and industry-specific tasks when you want them.',
+    title: 'Watch stock before it hurts sales',
+    description: 'Maintain products, inventory status, reorder signals, and barcode workflows for everyday teams.',
+    icon: <Boxes size={24} />,
+  },
+  {
+    title: 'Bring AI into actual work',
+    description: 'Use the AI tools hub for practical assistance instead of keeping AI separate from business data.',
     icon: <Bot size={24} />,
   },
 ];
 
 export const BentoFeatures = () => {
   return (
-    <section id="workflow" className={styles.section}>
+    <section id="product" className={styles.section}>
       <div className={styles.container}>
         <motion.div
           className={styles.headingBlock}
@@ -32,24 +37,26 @@ export const BentoFeatures = () => {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6 }}
         >
-          <span className={styles.eyebrow}>Simple flow</span>
-          <h2 className={styles.heading}><BrandWordmark /> should feel easy on day one, then grow deeper with your business.</h2>
+          <span className={styles.eyebrow}>The first Pula Labs product</span>
+          <h2 className={styles.heading}>
+            <ProductWordmark /> turns the services already inside your dashboard into one operating layer.
+          </h2>
         </motion.div>
 
         <div className={styles.stepsGrid}>
-          {steps.map((step, index) => (
+          {pillars.map((pillar, index) => (
             <motion.div
-              key={step.title}
+              key={pillar.title}
               className={styles.stepCard}
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.55, delay: index * 0.08 }}
             >
-              <div className={styles.iconWrap}>{step.icon}</div>
+              <div className={styles.iconWrap}>{pillar.icon}</div>
               <div className={styles.cardMeta}>0{index + 1}</div>
-              <h3 className={styles.cardTitle}>{step.title}</h3>
-              <p className={styles.cardDescription}>{step.description}</p>
+              <h3 className={styles.cardTitle}>{pillar.title}</h3>
+              <p className={styles.cardDescription}>{pillar.description}</p>
             </motion.div>
           ))}
         </div>

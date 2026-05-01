@@ -93,9 +93,24 @@
   box-shadow: none;
 }
 
+.formHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .formTitle {
   color: var(--color-brand-dark);
   font-size: 1.8rem;
+  flex-shrink: 0;
+}
+
+.authProductLogo {
+  width: min(13rem, 48%);
+  height: auto;
+  object-fit: contain;
+  display: block;
 }
 
 .formText {
@@ -221,5 +236,14 @@
   .copyColumn,
   .formCard {
     padding: 1.25rem;
+  }
+
+  .formHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .authProductLogo {
+    width: min(14rem, 100%);
   }
 }

@@ -1,51 +1,23 @@
 import { motion } from 'framer-motion';
-import {
-  ArrowRight,
-  BadgeIndianRupee,
-  Bot,
-  Boxes,
-  ChartNoAxesCombined,
-  CircleCheckBig,
-  LayoutDashboard,
-  MessageSquareText,
-  Sparkles,
-} from 'lucide-react';
-import { BrandWordmark } from './BrandWordmark';
+import { ArrowRight, Bot, Building2, LayoutDashboard, Sparkles } from 'lucide-react';
+import { ProductWordmark } from './BrandWordmark';
 import { MagneticButton } from './MagneticButton';
 import styles from './HeroSection.module.css';
 
-const trustPills = [
-  'CRM, billing, stock, tax workflows',
-  'Adaptive for different business types',
-  'AI tools inside the same workspace',
+const productIdeas = [
+  'Business operating system',
+  'Industry AI assistants',
+  'Document and workflow automation',
+  'Analytics for owners',
 ];
 
-const ownerSignals = [
-  {
-    label: 'Pending follow-ups',
-    value: '18',
-    note: 'Sales and repeat customers',
-    icon: <MessageSquareText size={18} />,
-  },
-  {
-    label: 'Payments due',
-    value: '₹2.4L',
-    note: 'Invoices waiting this week',
-    icon: <BadgeIndianRupee size={18} />,
-  },
-  {
-    label: 'Stock watch',
-    value: '06',
-    note: 'Items below reorder level',
-    icon: <Boxes size={18} />,
-  },
-];
-
-const aiUseCases = [
-  'Draft follow-up messages',
-  'Suggest reorder priorities',
-  'Summarize customer calls',
-  'Launch industry AI tools',
+const operatingSystemModules = [
+  'Customer CRM',
+  'Sales and billing',
+  'Inventory control',
+  'Team workspace',
+  'Finance ledger',
+  'AI tools hub',
 ];
 
 const openHomepageAuth = (mode: 'login' | 'signup') => {
@@ -62,7 +34,6 @@ const openHomepageAuth = (mode: 'login' | 'signup') => {
 export const HeroSection = () => {
   return (
     <section id="welcome-home" className={styles.section}>
-      <div className={styles.bgGlow} />
       <div className={styles.content}>
         <motion.div
           className={styles.copyColumn}
@@ -71,35 +42,23 @@ export const HeroSection = () => {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.65 }}
         >
-          <span className={styles.eyebrow}>Built for business owners who want clarity, not chaos</span>
-
-          <h1 className={styles.title}>
-            One workspace for running the business.
-            <span> One brand that still feels like your own.</span>
-          </h1>
-
+          <span className={styles.eyebrow}>What Pula Labs is building</span>
+          <h2 className={styles.title}>
+            A product lab for useful AI tools, starting with one serious operating system.
+          </h2>
           <p className={styles.subtitle}>
-            <BrandWordmark />
-            {' '}gives growing businesses a clean operating layer for customers, billing, stock, teams,
-            reporting, and AI tools, without forcing every business into the same template.
+            Pula Labs is not a single dashboard company. It is a parent brand for practical AI products that help
+            businesses sell, operate, track, and decide better. <ProductWordmark /> is the first product in that lineup.
           </p>
 
           <div className={styles.ctaRow}>
             <MagneticButton onClick={() => openHomepageAuth('signup')}>
-              Start Free
+              Try PULA business OS
             </MagneticButton>
-            <a href="#product" className={styles.secondaryCta}>
-              See what owners get
+            <a href="#tools" className={styles.secondaryCta}>
+              Explore the product direction
               <ArrowRight size={18} />
             </a>
-          </div>
-
-          <div className={styles.trustRow}>
-            {trustPills.map((pill) => (
-              <span key={pill} className={styles.trustPill}>
-                {pill}
-              </span>
-            ))}
           </div>
         </motion.div>
 
@@ -110,60 +69,34 @@ export const HeroSection = () => {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7, delay: 0.08 }}
         >
-          <div className={styles.commandCard}>
-            <div className={styles.cardHeader}>
+          <div className={styles.systemPanel}>
+            <div className={styles.panelHeader}>
               <div>
-                <span className={styles.cardEyebrow}>Owner dashboard</span>
-                <h2>See what matters first.</h2>
+                <span>Product portfolio</span>
+                <h3>Pula Labs</h3>
               </div>
-              <div className={styles.headerBadge}>
-                <LayoutDashboard size={16} />
-                <span>Live workspace</span>
-              </div>
+              <Building2 size={24} />
             </div>
 
-            <div className={styles.signalGrid}>
-              {ownerSignals.map((item) => (
-                <div key={item.label} className={styles.signalCard}>
-                  <div className={styles.signalIcon}>{item.icon}</div>
-                  <span className={styles.signalValue}>{item.value}</span>
-                  <strong>{item.label}</strong>
-                  <p>{item.note}</p>
+            <div className={styles.productList}>
+              {productIdeas.map((item, index) => (
+                <div key={item} className={index === 0 ? styles.activeProduct : styles.productItem}>
+                  {index === 0 ? <LayoutDashboard size={18} /> : <Sparkles size={18} />}
+                  <span>{item}</span>
                 </div>
               ))}
             </div>
 
-            <div className={styles.storyGrid}>
-              <div className={styles.storyCardPrimary}>
-                <div className={styles.storyLabel}>
-                  <ChartNoAxesCombined size={16} />
-                  <span>Business snapshot</span>
-                </div>
-                <p>
-                  Sales, receivables, customer movement, team activity, and stock alerts stay on one screen so the
-                  owner can act faster.
-                </p>
+            <div className={styles.osPanel}>
+              <div className={styles.osHeader}>
+                <Bot size={18} />
+                <span>PULA business OS starts with</span>
               </div>
-
-              <div className={styles.storyCardSecondary}>
-                <div className={styles.storyLabel}>
-                  <Bot size={16} />
-                  <span>AI inside workflow</span>
-                </div>
-                <div className={styles.aiList}>
-                  {aiUseCases.map((item) => (
-                    <div key={item} className={styles.aiItem}>
-                      <Sparkles size={14} />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
+              <div className={styles.moduleGrid}>
+                {operatingSystemModules.map((item) => (
+                  <span key={item}>{item}</span>
+                ))}
               </div>
-            </div>
-
-            <div className={styles.ownerNote}>
-              <CircleCheckBig size={18} />
-              <span>Owners get one clean control room. Teams get the exact workspace they need.</span>
             </div>
           </div>
         </motion.div>

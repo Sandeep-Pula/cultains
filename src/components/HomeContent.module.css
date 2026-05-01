@@ -4,8 +4,17 @@
 }
 
 .section,
+.featureSection,
 .ctaSection {
-  padding: 0 0 3.5rem;
+  padding: 5rem 0;
+}
+
+.section {
+  background: #ffffff;
+}
+
+.featureSection {
+  background: #f5f7fb;
 }
 
 .eyebrow {
@@ -13,10 +22,11 @@
   align-items: center;
   padding: 0.48rem 0.88rem;
   border-radius: 999px;
-  background: rgba(46, 108, 196, 0.08);
-  border: 1px solid rgba(48, 76, 129, 0.1);
-  color: var(--color-brand-dark);
-  font-size: 0.8rem;
+  background: rgba(18, 53, 91, 0.08);
+  border: 1px solid rgba(18, 53, 91, 0.12);
+  color: var(--color-logo-blue);
+  font-size: 0.78rem;
+  font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -24,157 +34,128 @@
 .title {
   margin-top: 1rem;
   color: var(--color-brand-dark);
-  font-size: clamp(2rem, 4.8vw, 4rem);
-  line-height: 1.05;
-  letter-spacing: -0.05em;
+  font-size: clamp(2rem, 4.5vw, 4rem);
+  line-height: 1.04;
+  letter-spacing: -0.04em;
 }
 
 .lead {
   margin-top: 0.95rem;
   color: var(--color-body);
   font-size: clamp(1rem, 1.5vw, 1.12rem);
+  line-height: 1.75;
 }
 
-.valueGrid {
+.sectionIntro {
+  max-width: 840px;
+}
+
+.toolGrid {
   display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-  gap: 1.2rem;
-  align-items: start;
-}
-
-.valueIntro,
-.moduleCard,
-.industryCard,
-.aiCardPrimary,
-.aiCardSecondary,
-.ctaPanel,
-.promisePanel {
-  border-radius: 30px;
-  background: rgba(255, 255, 255, 0.84);
-  border: 1px solid rgba(48, 76, 129, 0.1);
-  box-shadow: var(--shadow-soft);
-}
-
-.valueIntro {
-  padding: 1.6rem;
-}
-
-.promisePanel {
-  margin-top: 1.5rem;
-  padding: 1rem;
-  background: linear-gradient(180deg, rgba(238, 245, 255, 0.88) 0%, rgba(255, 255, 255, 0.92) 100%);
-}
-
-.promiseLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  color: var(--color-brand-dark);
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.promiseList {
-  display: grid;
-  gap: 0.7rem;
-  margin-top: 1rem;
-}
-
-.promiseItem {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  color: var(--color-brand-dark);
-}
-
-.moduleGrid,
-.industryGrid {
-  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
+  margin-top: 2rem;
 }
 
-.moduleGrid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.toolCard,
+.fitPanel,
+.ctaPanel {
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid rgba(18, 53, 91, 0.1);
 }
 
-.moduleCard,
-.industryCard {
+.toolCard {
   padding: 1.35rem;
 }
 
-.moduleIcon {
+.iconWrap {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.9rem;
-  height: 2.9rem;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(46, 108, 196, 0.12) 0%, rgba(17, 166, 169, 0.12) 100%);
-  color: var(--color-brand-dark);
+  width: 3rem;
+  height: 3rem;
+  border-radius: 6px;
+  background: rgba(214, 40, 40, 0.08);
+  color: var(--color-logo-red);
   margin-bottom: 1rem;
 }
 
-.moduleCard h3,
-.industryCard h3 {
+.toolCard h3 {
   color: var(--color-brand-dark);
   font-size: 1.18rem;
-  letter-spacing: -0.03em;
 }
 
-.moduleCard p,
-.industryCard p {
+.toolCard p {
   margin-top: 0.65rem;
   color: var(--color-body);
   line-height: 1.6;
 }
 
-.sectionIntro {
+.osGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(320px, 0.75fr);
+  gap: 1.2rem;
+  align-items: stretch;
+}
+
+.osCopy {
   max-width: 760px;
 }
 
-.industryGrid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin-top: 1.8rem;
-}
-
-.aiGrid {
+.fitPanel {
+  padding: 1.3rem;
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  gap: 1rem;
-}
-
-.aiCardPrimary,
-.aiCardSecondary,
-.ctaPanel {
-  padding: 1.6rem;
-}
-
-.aiCardPrimary {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(236, 242, 255, 0.92) 100%);
-}
-
-.aiCardSecondary {
-  display: grid;
-  gap: 0.8rem;
   align-content: center;
-  background: linear-gradient(180deg, rgba(19, 33, 102, 0.98) 0%, rgba(24, 44, 129, 0.98) 100%);
+  gap: 0.8rem;
 }
 
-.aiMetric {
+.fitHeader {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  padding: 0.95rem 1rem;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #f5f7ff;
+  gap: 0.55rem;
+  color: var(--color-logo-blue);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.fitItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.9rem;
+  border-radius: 6px;
+  background: #f5f7fb;
+  color: var(--color-brand-dark);
+  line-height: 1.5;
+}
+
+.fitItem svg {
+  color: var(--color-logo-red);
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.ctaSection {
+  background: #ffffff;
 }
 
 .ctaPanel {
+  padding: 2rem;
   text-align: center;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(240, 244, 255, 0.96) 100%);
+  background:
+    linear-gradient(90deg, rgba(214, 40, 40, 0.06) 0%, transparent 34%),
+    #ffffff;
+  box-shadow: 0 24px 70px rgba(18, 53, 91, 0.1);
+}
+
+.ctaIcon {
+  display: inline-flex;
+  gap: 0.6rem;
+  color: var(--color-logo-blue);
+  margin-bottom: 1rem;
 }
 
 .buttonRow {
@@ -188,21 +169,25 @@
 .primaryButton,
 .secondaryButton {
   min-width: 180px;
-  padding: 0.95rem 1.15rem;
+  min-height: 3.25rem;
+  padding: 0.9rem 1.15rem;
   border-radius: 999px;
-  font-weight: 600;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  font-family: var(--font-sans);
+  font-weight: 800;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
 }
 
 .primaryButton {
-  background: linear-gradient(135deg, var(--color-brand-10) 0%, var(--color-brand-10-soft) 100%);
-  color: #f5f4fb;
+  background: var(--color-logo-blue);
+  color: #ffffff;
 }
 
 .secondaryButton {
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--color-brand-dark);
-  border: 1px solid rgba(48, 76, 129, 0.12);
+  background: #ffffff;
+  color: var(--color-logo-blue);
+  border-color: rgba(18, 53, 91, 0.16);
 }
 
 .primaryButton:hover,
@@ -210,31 +195,24 @@
   transform: translateY(-1px);
 }
 
-@media (max-width: 980px) {
-  .valueGrid,
-  .aiGrid,
-  .industryGrid {
+@media (max-width: 940px) {
+  .toolGrid,
+  .osGrid {
     grid-template-columns: 1fr;
-  }
-
-  .moduleGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 640px) {
   .container {
     width: min(1180px, calc(100vw - 1rem));
   }
 
-  .moduleGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .valueIntro,
-  .aiCardPrimary,
-  .aiCardSecondary,
   .ctaPanel {
     padding: 1.25rem;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
   }
 }

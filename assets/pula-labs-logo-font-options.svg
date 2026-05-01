@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1120" viewBox="0 0 1600 1120">
+  <title>PULA labs logo font options</title>
+  <rect width="1600" height="1120" fill="#ffffff"/>
+  <text x="110" y="105" font-family="Arial, Helvetica, sans-serif" font-size="34" fill="#444444">Avenir</text>
+  <text x="800" y="210" text-anchor="middle" dominant-baseline="middle" font-family="Avenir, Arial, Helvetica, sans-serif">
+    <tspan fill="#D62828" font-size="150" font-weight="800">PULA</tspan>
+    <tspan dx="32" fill="#12355B" font-size="106" font-weight="600">labs</tspan>
+  </text>
+  <line x1="110" y1="310" x2="1490" y2="310" stroke="#eeeeee" stroke-width="2"/>
+  <text x="110" y="385" font-family="Arial, Helvetica, sans-serif" font-size="34" fill="#444444">Helvetica</text>
+  <text x="800" y="490" text-anchor="middle" dominant-baseline="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" letter-spacing="-1">
+    <tspan fill="#D62828" font-size="146" font-weight="700">PULA</tspan>
+    <tspan dx="34" fill="#12355B" font-size="104" font-weight="500">labs</tspan>
+  </text>
+  <line x1="110" y1="590" x2="1490" y2="590" stroke="#eeeeee" stroke-width="2"/>
+  <text x="110" y="665" font-family="Arial, Helvetica, sans-serif" font-size="34" fill="#444444">Arial</text>
+  <text x="800" y="770" text-anchor="middle" dominant-baseline="middle" font-family="Arial, Helvetica, sans-serif">
+    <tspan fill="#D62828" font-size="148" font-weight="700">PULA</tspan>
+    <tspan dx="34" fill="#12355B" font-size="106" font-weight="600">labs</tspan>
+  </text>
+  <line x1="110" y1="870" x2="1490" y2="870" stroke="#eeeeee" stroke-width="2"/>
+  <text x="110" y="945" font-family="Arial, Helvetica, sans-serif" font-size="34" fill="#444444">Verdana</text>
+  <text x="800" y="1050" text-anchor="middle" dominant-baseline="middle" font-family="Verdana, Arial, Helvetica, sans-serif" letter-spacing="-2">
+    <tspan fill="#D62828" font-size="138" font-weight="700">PULA</tspan>
+    <tspan dx="30" fill="#12355B" font-size="96" font-weight="600">labs</tspan>
+  </text>
+</svg>

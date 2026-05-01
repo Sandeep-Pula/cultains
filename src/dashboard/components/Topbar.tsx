@@ -2,7 +2,7 @@ import { LayoutPanelLeft, LogOut, Menu, Search } from 'lucide-react';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
 import type { DashboardView } from '../types';
 import { viewTitles } from '../utils';
-import { BrandWordmark } from '../../components/BrandWordmark';
+import { ProductWordmark } from '../../components/BrandWordmark';
 
 type TopbarProps = {
   activeView: DashboardView;
@@ -65,9 +65,8 @@ export const Topbar = ({
           href="#top"
           className="hidden shrink-0 items-center gap-2 rounded-2xl border border-brand-dark/10 bg-white/55 px-3 py-2 text-xs font-semibold text-brand-dark/80 transition hover:bg-white xl:inline-flex"
         >
-          <img src={`${import.meta.env.BASE_URL}aivyapari-logo.png`} alt="AIvyapari" className="h-5 w-5 rounded-lg object-contain" />
           <span>
-            powered by <BrandWordmark showDotCom />
+            powered by <ProductWordmark />
           </span>
         </a>
 

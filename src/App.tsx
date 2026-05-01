@@ -2,11 +2,8 @@ import { motion } from 'framer-motion';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, firebaseStatus } from './lib/firebase';
-import { HeroSection } from './components/HeroSection';
-import { BentoFeatures } from './components/BentoFeatures';
-import { HomeContent } from './components/HomeContent';
+import { PublicHome } from './components/PublicHome';
 import { PricingPage } from './components/PricingPage';
-import { WelcomeSplash } from './components/WelcomeSplash';
 import { DashboardSkeleton } from './dashboard/components/DashboardSkeleton';
 import styles from './App.module.css';
 import './styles/global.css';
@@ -27,7 +24,7 @@ const surfaceLoader = (
   </section>
 );
 
-const SUPER_ADMIN_EMAIL = 'superadmin@aivyapari.com';
+const SUPER_ADMIN_EMAIL = 'superadmin@pulalabs.com';
 const pageLevelHashes = new Set(['', '#top', '#login', '#signup', '#pricing', '#try-once']);
 
 function App() {
@@ -146,12 +143,7 @@ function App() {
         ) : isPricingPage ? (
           <PricingPage />
         ) : (
-          <>
-          <WelcomeSplash mode={isSignupPage ? 'signup' : 'login'} />
-          <HeroSection />
-          <BentoFeatures />
-          <HomeContent />
-          </>
+          <PublicHome authMode={isSignupPage ? 'signup' : 'login'} showAuth={isAuthPage} />
         )}
       </main>
     </div>

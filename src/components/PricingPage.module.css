@@ -1,9 +1,14 @@
 .page {
   padding: 7rem 1.25rem 4rem;
+  --os-red: #d62828;
+  --os-blue: #12355b;
+  --os-ink: #252456;
+  --os-body: #454779;
+  --os-soft: #f4f3fa;
+  --os-line: rgba(37, 36, 86, 0.12);
   background:
-    radial-gradient(circle at top left, rgba(30, 103, 217, 0.14), transparent 28%),
-    radial-gradient(circle at top right, rgba(36, 180, 138, 0.14), transparent 30%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 247, 255, 0.98));
+    linear-gradient(90deg, rgba(214, 40, 40, 0.04), transparent 35%),
+    linear-gradient(180deg, #ffffff, var(--os-soft));
 }
 
 .hero,
@@ -15,15 +20,68 @@
 }
 
 .hero {
+  position: relative;
   padding: 2rem 0 1rem;
 }
 
+.pricingAnimation {
+  position: absolute;
+  inset: -2rem -1rem auto;
+  height: 18rem;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.pricingAnimation span {
+  position: absolute;
+  display: block;
+  opacity: 0.16;
+}
+
+.redShape {
+  width: 9rem;
+  height: 9rem;
+  border-radius: 24px;
+  background: var(--os-red);
+  left: -3rem;
+  top: 2rem;
+  rotate: 18deg;
+}
+
+.blueShape {
+  width: 11rem;
+  height: 11rem;
+  border-radius: 30px;
+  background: var(--os-blue);
+  right: -2rem;
+  top: 0;
+  rotate: -16deg;
+}
+
+.redRing {
+  width: 9rem;
+  height: 9rem;
+  border-radius: 50%;
+  border: 1rem solid var(--os-red);
+  right: 22%;
+  top: 3rem;
+  background: transparent;
+}
+
 .heroCopy {
-  border: 1px solid rgba(31, 34, 94, 0.1);
-  border-radius: 2rem;
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--os-line);
+  border-radius: 8px;
   padding: 2rem;
   background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 24px 80px rgba(31, 34, 94, 0.08);
+  box-shadow: 0 24px 80px rgba(37, 36, 86, 0.08);
+}
+
+.pricingLogo {
+  width: min(420px, 100%);
+  display: block;
+  margin-bottom: 1.5rem;
 }
 
 .eyebrow {
@@ -31,8 +89,8 @@
   align-items: center;
   padding: 0.5rem 0.9rem;
   border-radius: 999px;
-  background: rgba(31, 34, 94, 0.06);
-  color: var(--color-brand-dark);
+  background: rgba(18, 53, 91, 0.08);
+  color: var(--os-blue);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.16em;
@@ -41,10 +99,10 @@
 
 .title {
   margin: 1rem 0 0;
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-size: clamp(2.35rem, 5vw, 4.25rem);
   line-height: 1.02;
-  color: var(--color-brand-dark);
+  color: var(--os-ink);
 }
 
 .lead {
@@ -52,7 +110,7 @@
   margin: 1rem 0 0;
   font-size: 1.08rem;
   line-height: 1.9;
-  color: rgba(31, 34, 94, 0.74);
+  color: var(--os-body);
 }
 
 .planSection {
@@ -64,12 +122,11 @@
 }
 
 .offerCard {
-  border-radius: 2.25rem;
+  border-radius: 8px;
   padding: 2rem;
   background:
-    radial-gradient(circle at 12% 18%, rgba(36, 180, 138, 0.2), transparent 24%),
-    radial-gradient(circle at 84% 18%, rgba(30, 103, 217, 0.18), transparent 24%),
-    linear-gradient(135deg, rgba(21, 34, 92, 0.98), rgba(22, 81, 153, 0.98));
+    linear-gradient(90deg, rgba(214, 40, 40, 0.18), transparent 38%),
+    linear-gradient(135deg, #12355b, #252456);
   color: white;
   box-shadow: 0 28px 80px rgba(22, 45, 114, 0.2);
 }
@@ -87,7 +144,7 @@
 
 .offerTitle {
   margin: 1rem 0 0;
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-size: clamp(2rem, 4vw, 3.5rem);
   line-height: 1;
   letter-spacing: -0.05em;
@@ -135,7 +192,7 @@
   padding: 0.48rem 0.84rem;
   border-radius: 999px;
   background: rgba(31, 34, 94, 0.07);
-  color: var(--color-brand-dark);
+  color: var(--os-blue);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -144,10 +201,10 @@
 
 .planIntroTitle {
   margin: 0.95rem 0 0;
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-size: clamp(1.8rem, 3vw, 2.8rem);
   line-height: 1.06;
-  color: var(--color-brand-dark);
+  color: var(--os-ink);
 }
 
 .planIntroText {
@@ -166,26 +223,26 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  border-radius: 2rem;
+  border-radius: 8px;
   padding: 1.7rem;
-  border: 1px solid rgba(31, 34, 94, 0.12);
+  border: 1px solid var(--os-line);
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 20px 60px rgba(31, 34, 94, 0.08);
 }
 
 .starter {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(243, 250, 255, 0.96));
+  background: linear-gradient(180deg, #ffffff, #f8f9fd);
 }
 
 .growth {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 255, 248, 0.98));
+  background: linear-gradient(180deg, #ffffff, rgba(214, 40, 40, 0.05));
   transform: translateY(-0.5rem) scale(1.02);
-  border-color: rgba(36, 180, 138, 0.34);
-  box-shadow: 0 28px 80px rgba(36, 180, 138, 0.14);
+  border-color: rgba(214, 40, 40, 0.28);
+  box-shadow: 0 28px 80px rgba(214, 40, 40, 0.1);
 }
 
 .premium {
-  background: linear-gradient(180deg, rgba(23, 28, 84, 0.98), rgba(31, 74, 170, 0.98));
+  background: linear-gradient(180deg, #12355b, #252456);
   color: white;
 }
 
@@ -208,7 +265,8 @@
 }
 
 .growth .planBadge {
-  background: linear-gradient(135deg, rgba(30, 103, 217, 0.14), rgba(36, 180, 138, 0.18));
+  background: rgba(214, 40, 40, 0.1);
+  color: var(--os-red);
 }
 
 .premium .planBadge {
@@ -230,7 +288,7 @@
 
 .planName {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-size: 2rem;
   line-height: 1.05;
 }
@@ -254,13 +312,13 @@
 
 .cadence {
   font-size: 1rem;
-  color: rgba(31, 34, 94, 0.64);
+  color: var(--os-body);
 }
 
 .annualRow {
   font-size: 0.96rem;
   font-weight: 600;
-  color: rgba(31, 34, 94, 0.7);
+  color: var(--os-body);
 }
 
 .premium .annualRow,
@@ -271,7 +329,7 @@
 .planIntro {
   margin: 0;
   line-height: 1.8;
-  color: rgba(31, 34, 94, 0.74);
+  color: var(--os-body);
 }
 
 .premium .planIntro {
@@ -297,15 +355,15 @@
 
 .planNote {
   margin-top: auto;
-  border-top: 1px solid rgba(31, 34, 94, 0.1);
+  border-top: 1px solid var(--os-line);
   padding-top: 1rem;
   font-size: 0.96rem;
   line-height: 1.7;
-  color: rgba(31, 34, 94, 0.7);
+  color: var(--os-body);
 }
 
 .growth .planNote {
-  color: rgba(21, 67, 88, 0.8);
+  color: var(--os-body);
 }
 
 .premium .planNote {
@@ -320,9 +378,11 @@
 }
 
 .aiCard {
-  border-radius: 2rem;
-  border: 1px solid rgba(31, 34, 94, 0.12);
-  background: linear-gradient(135deg, rgba(20, 26, 77, 0.98), rgba(27, 87, 174, 0.98));
+  border-radius: 8px;
+  border: 1px solid var(--os-line);
+  background:
+    linear-gradient(90deg, rgba(214, 40, 40, 0.14), transparent 38%),
+    linear-gradient(135deg, #12355b, #252456);
   padding: 1.8rem;
   color: white;
   box-shadow: 0 24px 70px rgba(31, 34, 94, 0.16);
@@ -339,7 +399,7 @@
   place-items: center;
   width: 3rem;
   height: 3rem;
-  border-radius: 1rem;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.12);
 }
 
@@ -353,7 +413,7 @@
 
 .aiTitle {
   margin: 0.35rem 0 0;
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-size: clamp(1.7rem, 3vw, 2.5rem);
   line-height: 1.08;
 }
@@ -376,7 +436,7 @@
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  border-radius: 1rem;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.08);
   padding: 0.95rem 1rem;
   font-size: 0.95rem;

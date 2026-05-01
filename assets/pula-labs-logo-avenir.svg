@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320">
+  <title>PULA labs logo - Avenir</title>
+  <rect width="1200" height="320" fill="#ffffff"/>
+  <text x="600" y="186" text-anchor="middle" dominant-baseline="middle"
+    font-family="Avenir, Arial, Helvetica, sans-serif" letter-spacing="0">
+    <tspan fill="#D62828" font-size="150" font-weight="800">PULA</tspan>
+    <tspan dx="32" fill="#12355B" font-size="106" font-weight="600">labs</tspan>
+  </text>
+</svg>

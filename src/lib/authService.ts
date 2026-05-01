@@ -12,7 +12,7 @@ import { deleteApp, initializeApp } from 'firebase/app';
 import { auth, firebaseConfig } from './firebase';
 import { dashboardService } from '../dashboard/services/dashboardService';
 
-const SUPER_ADMIN_EMAIL = 'superadmin@aivyapari.com';
+const SUPER_ADMIN_EMAIL = 'superadmin@pulalabs.com';
 const SUPER_ADMIN_PASSWORD = 'Idi_Yaparam@1';
 const isSuperAdminEmail = (email: string) => email.trim().toLowerCase() === SUPER_ADMIN_EMAIL;
 
@@ -55,7 +55,7 @@ export const authService = {
       } catch {
         try {
           superAdminCredential = await createUserWithEmailAndPassword(authInstance, normalizedEmail, password);
-          await updateProfile(superAdminCredential.user, { displayName: 'AIvyapari Super Admin' });
+          await updateProfile(superAdminCredential.user, { displayName: 'Pula Labs Super Admin' });
         } catch (createError) {
           const createCode = createError instanceof Error && 'code' in createError ? String(createError.code) : '';
           if (createCode === 'auth/email-already-in-use') {

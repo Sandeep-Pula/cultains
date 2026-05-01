@@ -1690,7 +1690,7 @@ export const AccountLedgerPage = ({
       businessPhone: businessProfile.phone || undefined,
       gstNumber: businessProfile.gstNumber || undefined,
       workspaceLogoUrl: businessProfile.workspaceLogoUrl || undefined,
-      poweredByText: 'Powered by aivyapari.com',
+      poweredByText: 'Powered by PULA Business OS',
       checklist,
       profitAndLoss: profitAndLossRows,
       balanceSheet,
@@ -1801,7 +1801,6 @@ export const AccountLedgerPage = ({
               <button
                 type="button"
                 onClick={handlePrintMonthEnd}
-                disabled={!canPrepareNextMonth}
                 className="inline-flex items-center gap-2 rounded-2xl bg-brand-10 px-4 py-2.5 text-sm font-medium text-brand-60"
               >
                 <Printer size={16} />
@@ -1837,7 +1836,7 @@ export const AccountLedgerPage = ({
           </div>
 
           <div className="mt-5 rounded-[28px] border border-brand-30 bg-brand-60/20 px-5 py-4 text-sm leading-6 text-brand-dark/70">
-            Prepare-next-month close is intentionally limited to the last day of the selected live month so the final PDF package represents the true month-end position.
+            You can preview and export the selected month-end PDF anytime. Prepare-next-month close remains limited to the last day of the selected live month so the final close represents the true month-end position.
           </div>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">

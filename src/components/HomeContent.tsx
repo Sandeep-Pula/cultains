@@ -1,70 +1,39 @@
 import { motion } from 'framer-motion';
 import {
-  BadgeIndianRupee,
+  BadgeCheck,
   Bot,
-  Boxes,
-  BriefcaseBusiness,
+  BrainCircuit,
+  Building2,
+  FileText,
   LayoutDashboard,
-  Palette,
-  ShoppingBag,
+  MessagesSquare,
   Sparkles,
-  Store,
-  Trophy,
-  Users,
 } from 'lucide-react';
-import { BrandWordmark } from './BrandWordmark';
+import { BrandWordmark, ProductWordmark } from './BrandWordmark';
 import styles from './HomeContent.module.css';
 
-const modules = [
+const futureTools = [
   {
-    title: 'Customer and CRM flow',
-    description: 'Leads, follow-ups, notes, ownership, and movement through your sales pipeline.',
-    icon: <Users size={20} />,
+    title: 'AI communication tools',
+    description: 'Assist owners and teams with follow-ups, customer replies, summaries, and everyday business writing.',
+    icon: <MessagesSquare size={20} />,
   },
   {
-    title: 'Billing and collections',
-    description: 'Quotations, invoices, due payments, and finance visibility in one place.',
-    icon: <BadgeIndianRupee size={20} />,
+    title: 'AI document tools',
+    description: 'Help convert business documents, invoices, notes, and records into useful structured work.',
+    icon: <FileText size={20} />,
   },
   {
-    title: 'Inventory and operations',
-    description: 'Products, stock movement, reorder watch, and daily execution without spreadsheet mess.',
-    icon: <Boxes size={20} />,
-  },
-  {
-    title: 'AI tool layer',
-    description: 'Search, favorite, and use AI tools that match your business without changing your main workflow.',
-    icon: <Bot size={20} />,
+    title: 'AI decision tools',
+    description: 'Turn operational signals into clearer priorities for sales, inventory, collections, and teams.',
+    icon: <BrainCircuit size={20} />,
   },
 ];
 
-const industries = [
-  {
-    title: 'Retail stores',
-    description: 'For shoe shops, sports stores, fashion stores, and growing local retail brands.',
-    icon: <ShoppingBag size={20} />,
-  },
-  {
-    title: 'Interior businesses',
-    description: 'For decorators, design studios, and execution teams managing leads, materials, and billing.',
-    icon: <Palette size={20} />,
-  },
-  {
-    title: 'Trading and wholesale',
-    description: 'For businesses that need tighter stock visibility, payment tracking, and repeat order control.',
-    icon: <Store size={20} />,
-  },
-  {
-    title: 'Service companies',
-    description: 'For teams that manage customers, staff, jobs, and recurring follow-ups every day.',
-    icon: <BriefcaseBusiness size={20} />,
-  },
-];
-
-const promisePoints = [
-  'Your business logo and title stay primary inside the workspace',
-  'Pages adapt to your business type instead of showing generic labels',
-  'AI stays optional while core operations remain clean and practical',
+const osFit = [
+  'Retail, trading, service, and operations-heavy teams',
+  'Owners who need one place for CRM, billing, stock, team work, and ledger visibility',
+  'Businesses that want AI features without losing practical control of daily work',
 ];
 
 const fadeUp = {
@@ -88,101 +57,59 @@ const openHomepageAuth = (mode: 'login' | 'signup') => {
 export const HomeContent = () => {
   return (
     <>
-      <section id="about" className={styles.section}>
-        <div className={styles.container}>
-          <div className={styles.valueGrid}>
-            <motion.div className={styles.valueIntro} {...fadeUp}>
-              <span className={styles.eyebrow}>Why owners care</span>
-              <h2 className={styles.title}>The product should reduce decision fatigue, not add another dashboard to ignore.</h2>
-              <p className={styles.lead}>
-                <BrandWordmark />
-                {' '}is designed for owners who want one dependable business system that feels organized,
-                credible, and adaptable to the way their company actually works.
-              </p>
-
-              <div className={styles.promisePanel}>
-                <div className={styles.promiseLabel}>
-                  <LayoutDashboard size={16} />
-                  <span>Owner-first promise</span>
-                </div>
-                <div className={styles.promiseList}>
-                  {promisePoints.map((item) => (
-                    <div key={item} className={styles.promiseItem}>
-                      <Sparkles size={14} />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-
-            <div id="product" className={styles.moduleGrid}>
-              {modules.map((module, index) => (
-                <motion.div
-                  key={module.title}
-                  className={styles.moduleCard}
-                  {...fadeUp}
-                  transition={{ duration: 0.55, delay: index * 0.08 }}
-                >
-                  <div className={styles.moduleIcon}>{module.icon}</div>
-                  <h3>{module.title}</h3>
-                  <p>{module.description}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="industries" className={styles.section}>
+      <section id="tools" className={styles.section}>
         <div className={styles.container}>
           <motion.div className={styles.sectionIntro} {...fadeUp}>
-            <span className={styles.eyebrow}>Different businesses, same clarity</span>
-            <h2 className={styles.title}>A strong core for many businesses, with room to adapt for each one.</h2>
+            <span className={styles.eyebrow}>More than one product</span>
+            <h2 className={styles.title}>
+              <BrandWordmark /> is being shaped as a company for multiple AI tools, not just one app.
+            </h2>
+            <p className={styles.lead}>
+              The business OS is the starting point because companies need reliable operational data before AI can be
+              genuinely useful. From there, Pula Labs can keep adding focused tools around the same business reality.
+            </p>
           </motion.div>
 
-          <div className={styles.industryGrid}>
-            {industries.map((industry, index) => (
+          <div className={styles.toolGrid}>
+            {futureTools.map((tool, index) => (
               <motion.div
-                key={industry.title}
-                className={styles.industryCard}
+                key={tool.title}
+                className={styles.toolCard}
                 {...fadeUp}
                 transition={{ duration: 0.55, delay: index * 0.08 }}
               >
-                <div className={styles.moduleIcon}>{industry.icon}</div>
-                <h3>{industry.title}</h3>
-                <p>{industry.description}</p>
+                <div className={styles.iconWrap}>{tool.icon}</div>
+                <h3>{tool.title}</h3>
+                <p>{tool.description}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="ai" className={styles.section}>
+      <section id="business-os" className={styles.featureSection}>
         <div className={styles.container}>
-          <div className={styles.aiGrid}>
-            <motion.div className={styles.aiCardPrimary} {...fadeUp}>
-              <span className={styles.eyebrow}>AI that stays useful</span>
-              <h2 className={styles.title}>AI should support the business, not distract from it.</h2>
+          <div className={styles.osGrid}>
+            <motion.div className={styles.osCopy} {...fadeUp}>
+              <span className={styles.eyebrow}>Why business OS comes first</span>
+              <h2 className={styles.title}>AI gets stronger when the business has a clean operating base.</h2>
               <p className={styles.lead}>
-                Use AI for summaries, follow-ups, forecasts, catalogs, and industry-specific help right from the same
-                workspace your team already uses.
+                <ProductWordmark /> organizes the daily services already built into the dashboard: customers,
+                projects, invoices, inventory, team activity, sales views, account ledger, and AI tool discovery.
               </p>
             </motion.div>
 
-            <motion.div className={styles.aiCardSecondary} {...fadeUp}>
-              <div className={styles.aiMetric}>
-                <Bot size={18} />
-                <span>Search suitable AI tools</span>
+            <motion.div className={styles.fitPanel} {...fadeUp}>
+              <div className={styles.fitHeader}>
+                <LayoutDashboard size={20} />
+                <span>Designed for</span>
               </div>
-              <div className={styles.aiMetric}>
-                <Trophy size={18} />
-                <span>Favorite the ones that matter</span>
-              </div>
-              <div className={styles.aiMetric}>
-                <ShoppingBag size={18} />
-                <span>Keep the rest of the dashboard business-specific</span>
-              </div>
+              {osFit.map((item) => (
+                <div key={item} className={styles.fitItem}>
+                  <BadgeCheck size={18} />
+                  <span>{item}</span>
+                </div>
+              ))}
             </motion.div>
           </div>
         </div>
@@ -191,34 +118,25 @@ export const HomeContent = () => {
       <section id="contact" className={styles.ctaSection}>
         <div className={styles.container}>
           <motion.div className={styles.ctaPanel} {...fadeUp}>
-            <span className={styles.eyebrow}>Start your workspace</span>
-            <h2 className={styles.title}>Bring your business online with a dashboard that feels like it belongs to you.</h2>
+            <div className={styles.ctaIcon}>
+              <Building2 size={22} />
+              <Bot size={22} />
+              <Sparkles size={22} />
+            </div>
+            <span className={styles.eyebrow}>Start with the first Pula Labs product</span>
+            <h2 className={styles.title}>Try our business operating system.</h2>
             <p className={styles.lead}>
-              Set up your brand, invite your team, and start using a clean operational system that can grow with your business.
+              Create a workspace, set up your business profile, and start using the operating layer that future Pula
+              Labs AI tools can build on.
             </p>
 
             <div className={styles.buttonRow}>
-              <a
-                href="#signup"
-                className={styles.primaryButton}
-                onClick={(event) => {
-                  event.preventDefault();
-                  openHomepageAuth('signup');
-                }}
-              >
+              <button type="button" className={styles.primaryButton} onClick={() => openHomepageAuth('signup')}>
                 Create account
-              </a>
-              <a href="#pricing" className={styles.secondaryButton}>View pricing</a>
-              <a
-                href="#login"
-                className={styles.secondaryButton}
-                onClick={(event) => {
-                  event.preventDefault();
-                  openHomepageAuth('login');
-                }}
-              >
-                Log in
-              </a>
+              </button>
+              <button type="button" className={styles.secondaryButton} onClick={() => openHomepageAuth('login')}>
+                Login
+              </button>
             </div>
           </motion.div>
         </div>

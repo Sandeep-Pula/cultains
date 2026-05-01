@@ -113,24 +113,14 @@ const buildPrintDocument = (title: string, body: string) => `
 const printHtml = (title: string, body: string) => {
   const printWindow = window.open('', '_blank', 'width=1080,height=900');
   if (!printWindow) {
-    throw new Error('Popup blocked. Allow popups to print invoices.');
+    throw new Error('Popup blocked. Allow popups to preview and print documents.');
   }
-
-  const loadingTitle = escapeHtml(title);
-  printWindow.document.open();
-  printWindow.document.write(`
-    <html>
-      <head><title>${loadingTitle}</title><meta charset="utf-8" /></head>
-      <body style="font-family: Arial, sans-serif; padding: 24px; color: #1f2559;">Preparing print preview...</body>
-    </html>
-  `);
-  printWindow.document.close();
 
   try {
     const html = buildPrintDocument(title, body);
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    printWindow.location.replace(url);
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown print rendering error';
     printWindow.document.open();

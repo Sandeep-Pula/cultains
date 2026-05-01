@@ -59,7 +59,7 @@ const defaultFilters: CustomerFilters = {
   sortBy: 'latest',
 };
 
-const SUPER_ADMIN_EMAIL = 'superadmin@aivyapari.com';
+const SUPER_ADMIN_EMAIL = 'superadmin@pulalabs.com';
 
 export const DashboardApp = () => {
   const [user, setUser] = useState<User | null>(auth?.currentUser ?? null);

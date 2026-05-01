@@ -90,7 +90,7 @@ export const RaiseIssuePage = ({
           Raise an issue
         </div>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-brand-dark sm:text-4xl">
-          Stay connected with AIvyapari support.
+          Stay connected with Pula Labs support.
         </h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-brand-dark/70 sm:text-base">
           Raise support requests for {companyName || 'your business'}, track open and resolved tickets, and continue each conversation inside its own thread.
@@ -150,7 +150,7 @@ export const RaiseIssuePage = ({
                   onChange={(event) => setCreateMessage(event.target.value)}
                   rows={5}
                   className="w-full rounded-[24px] border border-brand-30 bg-brand-60/25 px-4 py-3 outline-none"
-                  placeholder="Describe the issue, share context, and explain what help you need from the AIvyapari platform team."
+                  placeholder="Describe the issue, share context, and explain what help you need from the Pula Labs platform team."
                 />
               </label>
               <button
