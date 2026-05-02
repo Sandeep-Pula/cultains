@@ -218,11 +218,10 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
         <div className={styles.container}>
           <div className={styles.footerTop}>
             <div className={styles.footerBrand}>
-              <img
-                src={`${import.meta.env.BASE_URL}pula-labs-logo.png`}
-                alt="PULA labs"
-                className={styles.footerLabsLogo}
-              />
+              <span className={styles.footerLabsLogo} aria-label="PULA labs">
+                <span>PULA</span>
+                <strong>labs</strong>
+              </span>
               <p>
                 Pula Labs Private Limited is building practical AI products for growing businesses in India. Our
                 products focus on daily operations, owner decisions, team visibility, and useful business intelligence.
@@ -235,7 +234,7 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
                 <span>Product roadmap</span>
               </div>
               <div className={styles.footerProductItem}>
-                <ProductWordmark className={styles.footerProductLogo} />
+                <ProductWordmark className={styles.footerProductLogo} productClassName={styles.footerBizText} />
                 <p>Live product for CRM, billing, inventory, finance, teams, operations, and AI-assisted workflows.</p>
               </div>
               <div className={styles.footerToolPreview}>
