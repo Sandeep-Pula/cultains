@@ -1354,8 +1354,13 @@ export const dashboardService = {
 
   async updateInventoryItem(userId: string, itemId: string, patch: Partial<InventoryItem>) {
     const timestamp = nowIso();
+    const existingSnapshot = await getDoc(inventoryItemDoc(userId, itemId));
+    const existing = existingSnapshot.data() as InventoryItem | undefined;
+    const stockWasManuallyUpdated = typeof patch.currentStock === 'number' && patch.currentStock !== existing?.currentStock;
+
     await updateDoc(inventoryItemDoc(userId, itemId), {
       ...patch,
+      ...(stockWasManuallyUpdated ? { lastRestockedAt: timestamp } : {}),
       updatedAt: timestamp,
     });
   },

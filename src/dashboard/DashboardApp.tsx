@@ -7,6 +7,7 @@ import { authService } from '../lib/authService';
 import { isAdminHost, isSuperAdminEmail, redirectToAdminDashboard } from '../lib/adminRouting';
 import { dashboardService } from './services/dashboardService';
 import { getBusinessConfig } from './businessConfig';
+import { getInventoryMovement } from './inventoryMovement';
 import { dashboardHash, filterDashboardViews, getStageProgress, isOwnerAccount, parseDashboardView } from './utils';
 import type {
   BillingDefaults,
@@ -27,7 +28,7 @@ import type {
 } from './types';
 import { DashboardSkeleton } from './components/DashboardSkeleton';
 import { Sidebar } from './components/Sidebar';
-import { Topbar } from './components/Topbar';
+import { Topbar, type TopbarSearchResult } from './components/Topbar';
 import { OverviewPage } from './pages/OverviewPage';
 import { SalesOverviewPage } from './pages/SalesOverviewPage';
 import { CustomersPage } from './pages/CustomersPage';
@@ -70,6 +71,7 @@ export const DashboardApp = () => {
   const [syncIssue, setSyncIssue] = useState<string | null>(null);
   const [filters, setFilters] = useState<CustomerFilters>(defaultFilters);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [focusedInventoryItemId, setFocusedInventoryItemId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -239,6 +241,56 @@ export const DashboardApp = () => {
 
   const selectedCustomer = data?.customers.find((customer) => customer.id === selectedCustomerId) ?? null;
   const selectedTeamMember = data?.team.find((member) => member.id === selectedTeamMemberId) ?? null;
+  const topbarSearchResults = useMemo<TopbarSearchResult[]>(() => {
+    if (!data) return [];
+    const query = filters.search.trim().toLowerCase();
+    if (!query) return [];
+
+    const includesQuery = (...values: Array<string | undefined>) =>
+      values.some((value) => value?.toLowerCase().includes(query));
+
+    const inventoryResults = data.inventory
+      .filter((item) =>
+        includesQuery(item.name, item.sku, item.itemCode, item.barcodeValue, item.storageLocation, item.supplierName),
+      )
+      .slice(0, 5)
+      .map<TopbarSearchResult>((item) => {
+        const movement = getInventoryMovement(item, data.salesInvoices);
+        return {
+          id: item.id,
+          type: 'inventory',
+          title: item.name,
+          subtitle: `${movement.stockLeft} ${item.unit} left • ${movement.soldSinceLastInventoryUpdate} sold since last inventory update`,
+          badge: 'Inventory',
+        };
+      });
+
+    const customerResults = data.customers
+      .filter((customer) =>
+        includesQuery(customer.customerName, customer.company, customer.email, customer.phone, customer.title),
+      )
+      .slice(0, 3)
+      .map<TopbarSearchResult>((customer) => ({
+        id: customer.id,
+        type: 'customer',
+        title: customer.customerName,
+        subtitle: `${customer.title || businessConfig.workLabel} • ${customer.stage.replace(/_/g, ' ')}`,
+        badge: businessConfig.customerLabel,
+      }));
+
+    const teamResults = data.team
+      .filter((member) => includesQuery(member.name, member.role, member.email, member.phone))
+      .slice(0, 2)
+      .map<TopbarSearchResult>((member) => ({
+        id: member.id,
+        type: 'team',
+        title: member.name,
+        subtitle: `${member.role} • ${member.status}`,
+        badge: 'Team',
+      }));
+
+    return [...inventoryResults, ...customerResults, ...teamResults].slice(0, 8);
+  }, [businessConfig.customerLabel, businessConfig.workLabel, data, filters.search]);
 
   const handleNavigate = (nextHash: string) => {
     window.location.hash = nextHash;
@@ -258,6 +310,25 @@ export const DashboardApp = () => {
 
   const handleOpenTeamMember = (teamMemberId: string) => {
     setSelectedTeamMemberId(teamMemberId);
+  };
+
+  const handleSearchResultSelect = (result: TopbarSearchResult) => {
+    setFilters((current) => ({ ...current, search: '' }));
+
+    if (result.type === 'inventory') {
+      setFocusedInventoryItemId(result.id);
+      handleNavigate(dashboardHash('inventory'));
+      return;
+    }
+
+    if (result.type === 'customer') {
+      handleNavigate(dashboardHash('customers'));
+      void handleOpenCustomer(result.id);
+      return;
+    }
+
+    handleNavigate(dashboardHash('team'));
+    handleOpenTeamMember(result.id);
   };
 
   const handleStageChange = async (customerId: string, stage: ProjectStage) => {
@@ -1093,6 +1164,8 @@ export const DashboardApp = () => {
           businessConfig={businessConfig}
           search={filters.search}
           onSearchChange={(value) => setFilters((current) => ({ ...current, search: value }))}
+          searchResults={topbarSearchResults}
+          onSearchResultSelect={handleSearchResultSelect}
           onOpenSidebar={() => setSidebarOpen(true)}
           onToggleDesktopSidebar={() => setDesktopSidebarCollapsed((current) => !current)}
           desktopSidebarCollapsed={desktopSidebarCollapsed}
@@ -1164,7 +1237,10 @@ export const DashboardApp = () => {
             <InventoryPage
               inventory={data.inventory}
               customers={data.customers}
+              salesInvoices={data.salesInvoices}
               businessConfig={businessConfig}
+              focusItemId={focusedInventoryItemId}
+              onFocusItemHandled={() => setFocusedInventoryItemId(null)}
               onAddItem={handleAddInventoryItem}
               onUpdateItem={handleUpdateInventoryItem}
               onDeleteItem={handleDeleteInventoryItem}

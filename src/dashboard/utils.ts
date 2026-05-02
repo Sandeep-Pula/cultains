@@ -170,31 +170,31 @@ export const relativeDate = (value: string) => {
 export const stageBadgeClass = (stage: ProjectStage) =>
   clsx(
     'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium',
-    stage === 'completed' && 'bg-[rgba(35,65,95,0.1)] text-[var(--color-brand-10)]',
-    stage === 'customer_approved' && 'bg-[rgba(102,117,138,0.13)] text-[var(--color-brand-30-strong)]',
-    stage === 'render_shared' && 'bg-[rgba(174,184,198,0.22)] text-[var(--color-brand-dark)]',
-    stage === 'design_in_progress' && 'bg-[rgba(102,117,138,0.11)] text-[var(--color-brand-30-strong)]',
-    stage === 'consultation' && 'bg-[rgba(102,117,138,0.09)] text-[var(--color-brand-dark)]',
-    stage === 'inquiry' && 'bg-[rgba(36,48,68,0.07)] text-[var(--color-brand-dark)]',
-    stage === 'execution_started' && 'bg-[rgba(35,65,95,0.09)] text-[var(--color-brand-10)]',
-    stage === 'on_hold' && 'bg-[rgba(36,48,68,0.1)] text-[var(--color-brand-dark)]',
+    stage === 'completed' && 'bg-[rgba(18,53,91,0.1)] text-[var(--color-brand-10)]',
+    stage === 'customer_approved' && 'bg-[rgba(18,53,91,0.08)] text-[var(--color-brand-30-strong)]',
+    stage === 'render_shared' && 'bg-[rgba(191,210,227,0.26)] text-[var(--color-brand-dark)]',
+    stage === 'design_in_progress' && 'bg-[rgba(111,136,164,0.11)] text-[var(--color-brand-30-strong)]',
+    stage === 'consultation' && 'bg-[rgba(111,136,164,0.09)] text-[var(--color-brand-dark)]',
+    stage === 'inquiry' && 'bg-[rgba(214,40,40,0.06)] text-[var(--color-brand-dark)]',
+    stage === 'execution_started' && 'bg-[rgba(18,53,91,0.09)] text-[var(--color-brand-10)]',
+    stage === 'on_hold' && 'bg-[rgba(214,40,40,0.08)] text-[var(--color-brand-dark)]',
   );
 
 export const siteBadgeClass = (status: SiteStatus) =>
   clsx(
     'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium',
-    status === 'ready' && 'bg-[rgba(174,184,198,0.18)] text-[var(--color-brand-dark)]',
-    status === 'in_progress' && 'bg-[rgba(102,117,138,0.11)] text-[var(--color-brand-30-strong)]',
-    status === 'under_construction' && 'bg-[rgba(36,48,68,0.08)] text-[var(--color-brand-dark)]',
+    status === 'ready' && 'bg-[rgba(191,210,227,0.2)] text-[var(--color-brand-dark)]',
+    status === 'in_progress' && 'bg-[rgba(18,53,91,0.08)] text-[var(--color-brand-30-strong)]',
+    status === 'under_construction' && 'bg-[rgba(214,40,40,0.06)] text-[var(--color-brand-dark)]',
   );
 
 export const renderApprovalBadgeClass = (status: RenderApprovalStatus) =>
   clsx(
     'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium',
-    status === 'approved' && 'bg-[rgba(35,65,95,0.1)] text-[var(--color-brand-10)]',
-    status === 'pending_review' && 'bg-[rgba(102,117,138,0.13)] text-[var(--color-brand-30-strong)]',
-    status === 'draft' && 'bg-[rgba(36,48,68,0.07)] text-[var(--color-brand-dark)]',
-    status === 'rejected' && 'bg-[rgba(36,48,68,0.1)] text-[var(--color-brand-dark)]',
+    status === 'approved' && 'bg-[rgba(18,53,91,0.1)] text-[var(--color-brand-10)]',
+    status === 'pending_review' && 'bg-[rgba(111,136,164,0.13)] text-[var(--color-brand-30-strong)]',
+    status === 'draft' && 'bg-[rgba(191,210,227,0.18)] text-[var(--color-brand-dark)]',
+    status === 'rejected' && 'bg-[rgba(214,40,40,0.08)] text-[var(--color-brand-dark)]',
   );
 
 export const getInventoryStatus = (

@@ -13,17 +13,21 @@ import {
   Warehouse,
   X,
 } from 'lucide-react';
-import type { CustomerProject, InventoryItem } from '../types';
+import type { CustomerProject, InventoryItem, SalesInvoice } from '../types';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
 import { EmptyStatePanel } from '../components/EmptyStatePanel';
 import { AddInventoryItemModal } from '../components/AddInventoryItemModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { formatCurrency, getInventoryFlags, relativeDate } from '../utils';
+import { getInventoryMovement } from '../inventoryMovement';
 
 type InventoryPageProps = {
   inventory: InventoryItem[];
   customers: CustomerProject[];
+  salesInvoices: SalesInvoice[];
   businessConfig: WorkspaceBusinessConfig;
+  focusItemId?: string | null;
+  onFocusItemHandled?: () => void;
   onAddItem: (payload: Pick<
     InventoryItem,
     | 'name'
@@ -391,7 +395,10 @@ const InventoryScanModal = ({
 export const InventoryPage = ({
   inventory,
   customers,
+  salesInvoices,
   businessConfig,
+  focusItemId,
+  onFocusItemHandled,
   onAddItem,
   onUpdateItem,
   onDeleteItem,
@@ -404,6 +411,15 @@ export const InventoryPage = ({
   const [deleteCandidateId, setDeleteCandidateId] = useState<string | null>(null);
   const [insightModal, setInsightModal] = useState<InventoryInsightKey | null>(null);
   const [scanModalOpen, setScanModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!focusItemId) return;
+    const item = inventory.find((candidate) => candidate.id === focusItemId);
+    if (!item) return;
+
+    setEditingItem(item);
+    onFocusItemHandled?.();
+  }, [focusItemId, inventory, onFocusItemHandled]);
 
   const filteredInventory = useMemo(() => {
     const lowered = query.trim().toLowerCase();
@@ -434,6 +450,11 @@ export const InventoryPage = ({
       })
       .sort((left, right) => new Date(right.lastRestockedAt).getTime() - new Date(left.lastRestockedAt).getTime());
   }, [filter, inventory, query]);
+
+  const movementByItemId = useMemo(
+    () => new Map(inventory.map((item) => [item.id, getInventoryMovement(item, salesInvoices)])),
+    [inventory, salesInvoices],
+  );
 
   const totalValue = inventory.reduce((sum, item) => sum + item.currentStock * item.costPerUnit, 0);
   const purchaseNeeded = inventory.filter(
@@ -615,7 +636,7 @@ export const InventoryPage = ({
                 <table className="min-w-full border-separate border-spacing-0">
                   <thead className="sticky top-0 z-10 bg-white">
                     <tr className="text-left text-xs font-bold uppercase tracking-wider text-brand-dark/55">
-                      {['Item', 'Code', 'Price', 'Category', 'Stock', 'Reserved', 'Reorder', 'Supplier', 'Flags', 'Status', 'Updated'].map((label) => (
+                      {['Item', 'Code', 'Price', 'Category', 'Stock left', 'Sold since update', 'Reserved', 'Reorder', 'Supplier', 'Flags', 'Status', 'Updated'].map((label) => (
                         <th key={label} className="border-b border-brand-30 px-5 py-4">
                           {label}
                         </th>
@@ -625,7 +646,7 @@ export const InventoryPage = ({
                   <tbody>
                     {filteredInventory.length ? (
                       filteredInventory.map((item) => {
-                        const available = Math.max(item.currentStock - item.reservedStock, 0);
+                        const movement = movementByItemId.get(item.id) ?? getInventoryMovement(item, salesInvoices);
                         const linkedProject = customers.find((customer) => item.assignedProjectIds.includes(customer.id));
                         const assignedCount = item.assignedTeamIds.length + item.assignedProjectIds.length;
                         const autoFlags = getInventoryFlags(item);
@@ -654,8 +675,14 @@ export const InventoryPage = ({
                             </td>
                             <td className="border-b border-brand-30/70 px-5 py-4 text-sm text-brand-dark/75">{item.category}</td>
                             <td className="border-b border-brand-30/70 px-5 py-4">
-                              <div className="font-semibold text-brand-dark">{item.currentStock} {item.unit}</div>
-                              <div className="mt-1 text-xs text-brand-dark/50">{available} available</div>
+                              <div className="font-semibold text-brand-dark">{movement.stockLeft} {item.unit}</div>
+                              <div className="mt-1 text-xs text-brand-dark/50">{movement.availableStock} available after reserved</div>
+                            </td>
+                            <td className="border-b border-brand-30/70 px-5 py-4">
+                              <div className="font-semibold text-brand-dark">{movement.soldSinceLastInventoryUpdate} {item.unit}</div>
+                              <div className="mt-1 text-xs text-brand-dark/50">
+                                {movement.invoiceCountSinceLastInventoryUpdate} sale{movement.invoiceCountSinceLastInventoryUpdate === 1 ? '' : 's'} • {formatCurrency(movement.revenueSinceLastInventoryUpdate)}
+                              </div>
                             </td>
                             <td className="border-b border-brand-30/70 px-5 py-4 text-sm text-brand-dark/75">
                               {item.reservedStock} {item.unit}
@@ -700,7 +727,7 @@ export const InventoryPage = ({
                       })
                     ) : (
                       <tr>
-                        <td colSpan={11} className="px-5 py-16 text-center text-sm text-brand-dark/55">
+                        <td colSpan={12} className="px-5 py-16 text-center text-sm text-brand-dark/55">
                           No inventory items match this filter.
                         </td>
                       </tr>
@@ -727,7 +754,7 @@ export const InventoryPage = ({
         open={!!editingItem}
         initialValues={editingItem}
         title="Edit inventory record"
-        subtitle="Update stock, supplier information, reorder rules, and storage details in one form."
+        subtitle={editingItem ? `${movementByItemId.get(editingItem.id)?.stockLeft ?? editingItem.currentStock} ${editingItem.unit} stock left • ${movementByItemId.get(editingItem.id)?.soldSinceLastInventoryUpdate ?? 0} sold since last inventory update.` : 'Update stock, supplier information, reorder rules, and storage details in one form.'}
         submitLabel="Save changes"
         onClose={() => setEditingItem(null)}
         onSubmit={async (payload) => {

@@ -4,11 +4,21 @@ import type { DashboardView } from '../types';
 import { viewTitles } from '../utils';
 import { ProductWordmark } from '../../components/BrandWordmark';
 
+export type TopbarSearchResult = {
+  id: string;
+  type: 'inventory' | 'customer' | 'team';
+  title: string;
+  subtitle: string;
+  badge: string;
+};
+
 type TopbarProps = {
   activeView: DashboardView;
   businessConfig: WorkspaceBusinessConfig;
   search: string;
   onSearchChange: (value: string) => void;
+  searchResults: TopbarSearchResult[];
+  onSearchResultSelect: (result: TopbarSearchResult) => void;
   onOpenSidebar: () => void;
   onToggleDesktopSidebar: () => void;
   desktopSidebarCollapsed: boolean;
@@ -20,11 +30,15 @@ export const Topbar = ({
   businessConfig,
   search,
   onSearchChange,
+  searchResults,
+  onSearchResultSelect,
   onOpenSidebar,
   onToggleDesktopSidebar,
   desktopSidebarCollapsed,
   onLogout,
 }: TopbarProps) => {
+  const hasSearch = search.trim().length > 0;
+
   return (
     <header className="sticky top-0 z-30 border-b border-brand-30 bg-brand-30">
       <div className="flex w-full items-center gap-3 px-4 py-4 sm:px-6">
@@ -50,16 +64,52 @@ export const Topbar = ({
           </div>
         </div>
 
-        <label className="flex w-full items-center gap-3 rounded-2xl border border-brand-30 bg-brand-60/50 px-4 py-3 text-brand-dark transition focus-within:bg-brand-60 focus-within:shadow-sm">
-          <Search size={18} className="text-brand-dark/60" />
-          <input
-            value={search}
-            onChange={(event) => onSearchChange(event.target.value)}
-            placeholder={`Search ${businessConfig.customerPlural.toLowerCase()}, ${businessConfig.workPlural.toLowerCase()}, inventory...`}
-            aria-label="Search dashboard"
-            className="w-full bg-transparent text-sm outline-none placeholder:text-brand-dark/50"
-          />
-        </label>
+        <div className="relative w-full">
+          <label className="flex w-full items-center gap-3 rounded-2xl border border-brand-30 bg-brand-60/60 px-4 py-3 text-brand-dark transition focus-within:border-brand-10/40 focus-within:bg-white focus-within:shadow-sm">
+            <Search size={18} className="text-brand-dark/60" />
+            <input
+              value={search}
+              onChange={(event) => onSearchChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && searchResults[0]) {
+                  event.preventDefault();
+                  onSearchResultSelect(searchResults[0]);
+                }
+              }}
+              placeholder={`Search ${businessConfig.customerPlural.toLowerCase()}, ${businessConfig.workPlural.toLowerCase()}, inventory...`}
+              aria-label="Search dashboard"
+              className="w-full bg-transparent text-sm outline-none placeholder:text-brand-dark/50"
+            />
+          </label>
+
+          {hasSearch ? (
+            <div className="absolute left-0 right-0 top-[calc(100%+0.55rem)] z-40 overflow-hidden rounded-[24px] border border-brand-30 bg-white shadow-xl">
+              {searchResults.length ? (
+                <div className="max-h-80 overflow-y-auto p-2">
+                  {searchResults.map((result) => (
+                    <button
+                      key={`${result.type}-${result.id}`}
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => onSearchResultSelect(result)}
+                      className="flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-brand-60"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold text-brand-dark">{result.title}</span>
+                        <span className="mt-0.5 block truncate text-xs text-brand-dark/60">{result.subtitle}</span>
+                      </span>
+                      <span className="shrink-0 rounded-full border border-brand-30 bg-brand-60 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-brand-dark/70">
+                        {result.badge}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="px-4 py-5 text-sm text-brand-dark/60">No matching dashboard records found.</div>
+              )}
+            </div>
+          ) : null}
+        </div>
 
         <a
           href="#top"

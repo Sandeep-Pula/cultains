@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-60: #f6f8fb;
-  --color-brand-30: #dbe3ec;
-  --color-brand-10: #23415f;
-  --color-brand-dark: #243044;
+  --color-brand-60: #f7fbff;
+  --color-brand-30: #d9e7f3;
+  --color-brand-10: #12355b;
+  --color-brand-dark: #1b3150;
 }
