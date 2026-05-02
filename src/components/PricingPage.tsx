@@ -127,6 +127,10 @@ export const PricingPage = () => {
             Start with a free first month, choose the dashboard tools your business needs, and keep AI usage flexible
             with monthly credits inside <ProductWordmark />.
           </motion.p>
+          <motion.div className={styles.billingNote} {...fadeUp}>
+            <span>Plan pricing is per business owner.</span>
+            <span>Staff accounts are ₹299 per user / month.</span>
+          </motion.div>
         </div>
       </section>
 
@@ -154,8 +158,9 @@ export const PricingPage = () => {
           <div className={styles.planIntroEyebrow}>After the trial</div>
           <h2 className={styles.planIntroTitle}>Choose the Biz plan that fits your team.</h2>
           <p className={styles.planIntroText}>
-            Plans are monthly. AI credits are included up to the plan limit and billed separately on a pay-as-you-go
-            basis if exceeded.
+            Plans are monthly and billed per business owner. Staff accounts are charged separately at ₹299 per user
+            per month. AI credits are included up to the plan limit and billed separately on a pay-as-you-go basis if
+            exceeded.
           </p>
         </motion.div>
         <div className={styles.planGrid}>
