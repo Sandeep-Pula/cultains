@@ -329,34 +329,63 @@ const parseLocalIntent = (input: string): AssistantIntent | null => {
   return null;
 };
 
-const getGeminiIntent = async (input: string, data: DashboardData): Promise<AssistantIntent | null> => {
+const getGeminiIntent = async (
+  input: string,
+  data: DashboardData,
+  history: AssistantMessage[]
+): Promise<AssistantIntent | null> => {
   if (!ai) return null;
 
-  const inventoryNames = data.inventory.slice(0, 80).map((item) => ({
+  const inventorySummary = data.inventory.slice(0, 80).map((item) => ({
     name: item.name,
     sku: item.sku,
-    itemCode: item.itemCode,
     stock: item.currentStock,
+    price: item.sellingPrice,
   }));
+
+  const salesSummary = {
+    totalInvoices: data.salesInvoices.length,
+    finalizedInvoices: data.salesInvoices.filter((i) => i.status === 'finalized').length,
+    totalSalesAmount: data.salesInvoices.filter((i) => i.status === 'finalized').reduce((sum, i) => sum + i.totalAmount, 0),
+  };
+
+  const customerSummary = {
+    totalCustomers: data.customers.length,
+    activeProjects: data.customers.filter((c) => c.stage !== 'completed' && c.stage !== 'on_hold').length,
+  };
+
+  const historyText = history
+    .map((msg) => `${msg.role === 'user' ? 'User' : 'AIVA'}: ${msg.content}`)
+    .join('\n');
 
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash',
     contents: {
       parts: [
         {
-          text: `You route dashboard requests into JSON only. Valid actions:
-{"action":"stock_lookup","productQuery":"..."}
-{"action":"dashboard_summary"}
+          text: `You are AIVA, a helpful, intelligent AI assistant for PULA Biz. You manage the user's dashboard data and answer their questions naturally.
+
+You MUST respond by returning a single JSON object.
+
+If the user wants to perform a local UI action, use one of these intents:
 {"action":"update_inventory_stock","productQuery":"...","stock":number}
 {"action":"delete_inventory_item","productQuery":"..."}
-{"action":"accounting_summary","month":number,"year":number}
-{"action":"trial_balance","month":number,"year":number}
-{"action":"general_ledger","accountQuery":"optional account name","month":number,"year":number}
 {"action":"export_accounting_pdf","reportType":"trial_balance|general_ledger|account_books","month":number,"year":number}
-{"action":"general_answer","answer":"..."}
 
-Use write actions only when the user clearly asks to change data. Use accounting actions for account ledger, trial balance, books reports, profit and loss, balance sheet, cash flow, and PDF export. Inventory available: ${JSON.stringify(inventoryNames)}.
-User request: ${input}`,
+If the user is just asking a question (e.g. summarizing data, asking about stock, asking who the best customer is, or general chat), use the general_answer intent and provide your natural language response in the "answer" field. You have full access to their business data, use it to answer intelligently.
+{"action":"general_answer","answer":"Your natural language response here..."}
+
+Here is the current business data context:
+- Inventory: ${JSON.stringify(inventorySummary)}
+- Sales: ${JSON.stringify(salesSummary)}
+- Customers: ${JSON.stringify(customerSummary)}
+
+Conversation History:
+${historyText}
+
+User's latest request: ${input}
+
+Return ONLY the JSON object. Do not include markdown code blocks around it.`,
         },
       ],
     },
@@ -624,7 +653,7 @@ export const AIBusinessAssistant = ({
     setBusy(true);
 
     try {
-      const intent = parseLocalIntent(trimmed) ?? await getGeminiIntent(trimmed, data);
+      const intent = parseLocalIntent(trimmed) ?? await getGeminiIntent(trimmed, data, messages.slice(-10));
       if (!intent) {
         addMessage('assistant', 'I can answer dashboard summary and inventory questions now. Try “how much stock is left for Sparks shoes?” or upload a CSV from Excel to update inventory.');
         return;
