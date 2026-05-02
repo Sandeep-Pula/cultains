@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --port 8080",
     "build": "tsc -b && vite build",
+    "deploy:both": "bash scripts/deploy-both.sh",
     "lint": "eslint .",
     "preview": "vite preview"
   },
