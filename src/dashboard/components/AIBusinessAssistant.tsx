@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import { Database, Loader2, Send, Sparkles, Trash2, Upload, X } from 'lucide-react';
+import { createId } from '../../lib/id';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
 import {
   accountingMonthNames,
@@ -386,7 +387,7 @@ export const AIBusinessAssistant = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [messages, setMessages] = useState<AssistantMessage[]>([
     {
-      id: crypto.randomUUID(),
+      id: createId(),
       role: 'assistant',
       content: 'Hi, I’m AIVA. I can read your dashboard, answer stock and sales questions, and update inventory from chat or CSV exported from Excel.',
     },
@@ -398,7 +399,7 @@ export const AIBusinessAssistant = ({
   );
 
   const addMessage = (role: AssistantMessage['role'], content: string) => {
-    setMessages((current) => [...current, { id: crypto.randomUUID(), role, content }]);
+    setMessages((current) => [...current, { id: createId(), role, content }]);
   };
 
   const answerStockLookup = (productQuery: string) => {

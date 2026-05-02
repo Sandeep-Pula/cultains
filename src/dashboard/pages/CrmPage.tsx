@@ -7,6 +7,7 @@ import { StatusBadge } from '../components/StatusBadge';
 import { AddCrmTouchpointModal } from '../components/AddCrmTouchpointModal';
 import { DevelopmentFlag } from '../components/DevelopmentFlag';
 import { relativeDate } from '../utils';
+import { createId } from '../../lib/id';
 
 type CrmPageProps = {
   customers: CustomerProject[];
@@ -92,7 +93,7 @@ export const CrmPage = ({
     await onUpdateCustomer(selectedCustomer.id, {
       communicationLog: [
         {
-          id: crypto.randomUUID(),
+          id: createId(),
           type: payload.type,
           createdAt: new Date().toISOString(),
           actorName,
@@ -103,7 +104,7 @@ export const CrmPage = ({
       ].slice(0, 20),
       activities: [
         {
-          id: crypto.randomUUID(),
+          id: createId(),
           type: 'comment' as const,
           title: `${channelLabels[payload.type]} logged`,
           description: payload.summary,

@@ -11,6 +11,7 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { createId } from '../../lib/id';
 import type {
   AccountType,
   AccountingSource,
@@ -198,7 +199,7 @@ const emptyDashboardData = (user: User, profile?: Partial<UserProfileDoc>): Dash
 });
 
 const normalizeNote = (value: Partial<NoteItem> | undefined): NoteItem => ({
-  id: value?.id || crypto.randomUUID(),
+  id: value?.id || createId(),
   authorId: value?.authorId || '',
   authorName: value?.authorName || 'Unknown',
   createdAt: value?.createdAt || nowIso(),
@@ -206,7 +207,7 @@ const normalizeNote = (value: Partial<NoteItem> | undefined): NoteItem => ({
 });
 
 const normalizeActivity = (value: Partial<ActivityItem> | undefined): ActivityItem => ({
-  id: value?.id || crypto.randomUUID(),
+  id: value?.id || createId(),
   type: value?.type || 'comment',
   title: value?.title || 'Activity updated',
   description: value?.description || '',
@@ -215,7 +216,7 @@ const normalizeActivity = (value: Partial<ActivityItem> | undefined): ActivityIt
 });
 
 const normalizeCommunication = (value: Partial<CommunicationLog> | undefined): CommunicationLog => ({
-  id: value?.id || crypto.randomUUID(),
+  id: value?.id || createId(),
   type: value?.type || 'comment',
   createdAt: value?.createdAt || nowIso(),
   actorName: value?.actorName || 'System',
@@ -224,7 +225,7 @@ const normalizeCommunication = (value: Partial<CommunicationLog> | undefined): C
 });
 
 const normalizeRender = (value: Partial<RenderAsset> | undefined): RenderAsset => ({
-  id: value?.id || crypto.randomUUID(),
+  id: value?.id || createId(),
   name: value?.name || 'Untitled render',
   type: value?.type || 'combined',
   version: value?.version || 'v1',
@@ -242,7 +243,7 @@ const normalizeRender = (value: Partial<RenderAsset> | undefined): RenderAsset =
 });
 
 const normalizeRenderRequest = (value: Partial<RenderRequest> | undefined): RenderRequest => ({
-  id: value?.id || crypto.randomUUID(),
+  id: value?.id || createId(),
   title: value?.title || 'New render request',
   requestedAt: value?.requestedAt || nowIso(),
   status: value?.status || 'queued',
@@ -442,7 +443,7 @@ const normalizeSalesInvoice = (invoiceId: string, value: Partial<SalesInvoice> |
 });
 
 const normalizeSupportMessage = (value: Partial<SupportMessage> | undefined): SupportMessage => ({
-  id: value?.id || crypto.randomUUID(),
+  id: value?.id || createId(),
   senderType: value?.senderType || 'business',
   senderName: value?.senderName || 'Unknown sender',
   senderEmail: value?.senderEmail || '',
@@ -523,7 +524,7 @@ const buildCustomerPayload = (
     activityScore: 12,
     communicationLog: [
       {
-        id: crypto.randomUUID(),
+        id: createId(),
         type: 'comment',
         createdAt: now,
         actorName,
@@ -542,7 +543,7 @@ const buildCustomerPayload = (
     renderQueue: [],
     activities: [
       {
-        id: crypto.randomUUID(),
+        id: createId(),
         type: 'customer',
         title: 'Customer added',
         description: `${payload.customerName.trim()} was added to the dashboard.`,

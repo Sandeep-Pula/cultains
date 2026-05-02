@@ -4,6 +4,7 @@ import { onAuthStateChanged, type User } from 'firebase/auth';
 import { AlertTriangle } from 'lucide-react';
 import { auth } from '../lib/firebase';
 import { authService } from '../lib/authService';
+import { createId } from '../lib/id';
 import { isAdminHost, isSuperAdminEmail, redirectToAdminDashboard } from '../lib/adminRouting';
 import { dashboardService } from './services/dashboardService';
 import { getBusinessConfig } from './businessConfig';
@@ -88,7 +89,7 @@ export const DashboardApp = () => {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const pushToast = useCallback((title: string, description?: string) => {
-    setToasts((current) => [...current, { id: crypto.randomUUID(), title, description }]);
+    setToasts((current) => [...current, { id: createId(), title, description }]);
   }, []);
 
   useEffect(() => {
@@ -343,7 +344,7 @@ export const DashboardApp = () => {
         progress: getStageProgress(stage),
         activities: [
           {
-            id: crypto.randomUUID(),
+            id: createId(),
             type: 'status' as const,
             title: 'Project stage updated',
             description: `Stage moved to ${stage.replace(/_/g, ' ')}.`,
@@ -413,7 +414,7 @@ export const DashboardApp = () => {
       await dashboardService.updateCustomer(workspaceUserId, customerId, {
         internalNotes: [
           {
-            id: crypto.randomUUID(),
+            id: createId(),
             authorId: user.uid,
             authorName: data.userName,
             createdAt: new Date().toISOString(),
@@ -423,7 +424,7 @@ export const DashboardApp = () => {
         ],
         activities: [
           {
-            id: crypto.randomUUID(),
+            id: createId(),
             type: 'comment' as const,
             title: 'Internal note added',
             description: note,

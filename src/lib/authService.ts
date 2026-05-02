@@ -11,6 +11,7 @@ import {
 import { deleteApp, initializeApp } from 'firebase/app';
 import { auth, firebaseConfig } from './firebase';
 import { isSuperAdminEmail } from './adminRouting';
+import { createId } from './id';
 import { dashboardService } from '../dashboard/services/dashboardService';
 
 const SUPER_ADMIN_PASSWORD = 'Idi_Yaparam@1';
@@ -124,7 +125,7 @@ export const authService = {
       throw new Error('Firebase authentication is not configured yet. Add the required VITE_FIREBASE_* variables and reload the app.');
     }
 
-    const secondaryApp = initializeApp(firebaseConfig, `team-member-${crypto.randomUUID()}`);
+    const secondaryApp = initializeApp(firebaseConfig, `team-member-${createId()}`);
     try {
       const secondaryAuth = getAuth(secondaryApp);
       let credential;
