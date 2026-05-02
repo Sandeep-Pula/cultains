@@ -6,6 +6,7 @@ import { isAdminHost, isSuperAdminEmail, redirectToAdminDashboard } from './lib/
 import { AdminHome } from './components/AdminHome';
 import { PublicHome } from './components/PublicHome';
 import { PricingPage } from './components/PricingPage';
+import { DashboardErrorBoundary } from './components/DashboardErrorBoundary';
 import { DashboardSkeleton } from './dashboard/components/DashboardSkeleton';
 import styles from './App.module.css';
 import './styles/global.css';
@@ -171,9 +172,11 @@ function App() {
         ) : showSetupGuide ? (
           <SetupGuide missingFields={firebaseStatus.missingFields} />
         ) : isDashboardPage && user ? (
-          <Suspense fallback={<DashboardSkeleton />}>
-            <Dashboard />
-          </Suspense>
+          <DashboardErrorBoundary>
+            <Suspense fallback={<DashboardSkeleton />}>
+              <Dashboard />
+            </Suspense>
+          </DashboardErrorBoundary>
         ) : adminHost ? (
           <AdminHome />
         ) : isTryOncePage ? (

@@ -1069,7 +1069,34 @@ export const DashboardApp = () => {
   }
 
   if (!user) {
-    return null;
+    return (
+      <div className="min-h-screen bg-brand-60 px-6 py-10 text-brand-dark">
+        <div className="mx-auto max-w-xl rounded-[32px] border border-brand-30 bg-white p-8 shadow-sm">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
+            <AlertTriangle size={22} />
+          </div>
+          <h1 className="mt-5 text-2xl font-semibold tracking-tight">Reconnecting your dashboard session</h1>
+          <p className="mt-2 text-sm text-brand-dark/75">
+            The dashboard is waiting for Firebase Auth to confirm your login. If this stays here for more than a few seconds, return to login and sign in again.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              onClick={() => window.location.reload()}
+              className="rounded-2xl bg-brand-10 px-4 py-2.5 text-sm font-medium text-brand-60"
+            >
+              Reload
+            </button>
+            <a
+              href="#login"
+              className="rounded-2xl border border-brand-30 bg-brand-60 px-4 py-2.5 text-sm font-medium text-brand-dark"
+            >
+              Back to login
+            </a>
+          </div>
+        </div>
+        <ToastStack toasts={toasts} />
+      </div>
+    );
   }
   if (!data) {
     if (syncIssue && !hasInitialSnapshot) {
