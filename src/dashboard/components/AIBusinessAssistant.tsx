@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import { Bot, Database, Loader2, Send, Sparkles, Trash2, Upload, X } from 'lucide-react';
+import { Database, Loader2, Send, Sparkles, Trash2, Upload, X } from 'lucide-react';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
 import { getInventoryMovement } from '../inventoryMovement';
 import type { DashboardData, InventoryItem, InventoryUnit } from '../types';
@@ -57,6 +57,22 @@ type AIBusinessAssistantProps = {
 };
 
 const unitOptions: InventoryUnit[] = ['pcs', 'rolls', 'boxes', 'sets', 'sqm', 'kg', 'litres'];
+
+const AivaAvatar = ({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) => {
+  const dimensions = size === 'lg' ? 'h-14 w-14' : size === 'sm' ? 'h-9 w-9' : 'h-12 w-12';
+  const textSize = size === 'lg' ? 'text-[15px]' : size === 'sm' ? 'text-[10px]' : 'text-xs';
+
+  return (
+    <span
+      className={`relative inline-flex ${dimensions} shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/35 bg-[linear-gradient(135deg,#D62828_0%,#D62828_38%,#12355B_39%,#12355B_100%)] text-white shadow-lg shadow-brand-10/25`}
+      aria-hidden="true"
+    >
+      <span className="absolute -left-2 -top-3 h-9 w-9 rounded-full bg-white/24 blur-md" />
+      <span className="absolute bottom-1 right-1 h-3 w-3 rounded-full bg-white/85 shadow-sm" />
+      <span className={`relative font-black tracking-[0.08em] ${textSize}`}>AI</span>
+    </span>
+  );
+};
 
 const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
@@ -267,7 +283,7 @@ export const AIBusinessAssistant = ({
     {
       id: crypto.randomUUID(),
       role: 'assistant',
-      content: 'Hi, I can read your dashboard, answer stock and sales questions, and update inventory from chat or CSV exported from Excel.',
+      content: 'Hi, I’m AIVA. I can read your dashboard, answer stock and sales questions, and update inventory from chat or CSV exported from Excel.',
     },
   ]);
 
@@ -435,23 +451,26 @@ export const AIBusinessAssistant = ({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-[150] inline-flex h-14 w-14 items-center justify-center rounded-full bg-brand-10 text-white shadow-2xl shadow-brand-10/25 transition hover:-translate-y-0.5 hover:bg-brand-dark"
-        aria-label="Open AI business assistant"
+        className="fixed bottom-5 right-5 z-[150] inline-flex h-16 w-16 items-center justify-center rounded-[24px] bg-white p-1 shadow-2xl shadow-brand-10/25 ring-1 ring-brand-30 transition hover:-translate-y-0.5"
+        aria-label="Open AIVA assistant"
       >
-        <Bot size={24} />
+        <AivaAvatar size="lg" />
       </button>
 
       {open ? (
         <div className="fixed bottom-5 right-5 z-[160] flex h-[min(720px,calc(100vh-2.5rem))] w-[min(420px,calc(100vw-2rem))] flex-col overflow-hidden rounded-[28px] border border-brand-30 bg-white shadow-2xl">
           <div className="flex items-start justify-between gap-3 border-b border-brand-30 bg-brand-60 px-4 py-4">
-            <div>
-              <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.16em] text-brand-dark/70">
-                <Sparkles size={16} />
-                PULA Biz Assistant
+            <div className="flex items-start gap-3">
+              <AivaAvatar />
+              <div>
+                <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.16em] text-brand-dark/70">
+                  <Sparkles size={16} />
+                  AIVA
+                </div>
+                <p className="mt-1 text-xs text-brand-dark/60">
+                  AI virtual assistant for PULA Biz operations.
+                </p>
               </div>
-              <p className="mt-1 text-xs text-brand-dark/60">
-                Reads dashboard data. CRUD actions run through your app services.
-              </p>
             </div>
             <button type="button" onClick={() => setOpen(false)} className="rounded-2xl border border-brand-30 bg-white p-2 text-brand-dark">
               <X size={18} />
