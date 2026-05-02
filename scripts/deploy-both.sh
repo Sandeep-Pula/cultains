@@ -40,6 +40,8 @@ rsync -a --delete \
   --exclude='node_modules/' \
   --exclude='dist/' \
   --exclude='dist-ssr/' \
+  --exclude='outputs/' \
+  --exclude='tmp/' \
   --exclude='.env' \
   --exclude='.env.*' \
   --exclude='*.tsbuildinfo' \
