@@ -50,6 +50,7 @@ rsync -a --delete \
 mkdir -p "${ADMIN_DIR}/public" "${ADMIN_DIR}/.github/workflows"
 printf 'admin.pulalabs.com\n' > "${ADMIN_DIR}/public/CNAME"
 cp "${ROOT_DIR}/scripts/admin-ci.yml" "${ADMIN_DIR}/.github/workflows/ci.yml"
+git -C "${ADMIN_DIR}" rm -r --cached --ignore-unmatch outputs tmp >/dev/null 2>&1 || true
 
 echo "Building admin site..."
 (
