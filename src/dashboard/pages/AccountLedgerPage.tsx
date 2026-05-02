@@ -1690,7 +1690,7 @@ export const AccountLedgerPage = ({
       businessPhone: businessProfile.phone || undefined,
       gstNumber: businessProfile.gstNumber || undefined,
       workspaceLogoUrl: businessProfile.workspaceLogoUrl || undefined,
-      poweredByText: 'Powered by PULA Business OS',
+      poweredByText: 'Powered by PULA Biz',
       checklist,
       profitAndLoss: profitAndLossRows,
       balanceSheet,

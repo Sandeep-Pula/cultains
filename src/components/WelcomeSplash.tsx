@@ -37,12 +37,12 @@ export const WelcomeSplash = ({ mode = 'login', showAuth = false }: WelcomeSplas
           </h1>
           <p className={styles.subtitle}>
             <BrandWordmark /> creates focused AI tools for daily company work. The first product is{' '}
-            <ProductWordmark />, a business operating system for CRM, billing, inventory, teams, and workflow visibility.
+            <ProductWordmark />, a business workspace for CRM, billing, inventory, teams, and workflow visibility.
           </p>
 
           <div className={styles.buttonRow}>
             <button type="button" className={styles.primaryButton} onClick={() => openHomepageAuth('signup')}>
-              Try our business operating system
+              Try PULA Biz
               <ArrowRight size={18} />
             </button>
             <button type="button" className={styles.secondaryButton} onClick={() => openHomepageAuth('login')}>
@@ -64,15 +64,15 @@ export const WelcomeSplash = ({ mode = 'login', showAuth = false }: WelcomeSplas
             <div className={styles.productPanel}>
               <span className={styles.panelLabel}>First product</span>
               <img
-                src={`${import.meta.env.BASE_URL}pula-business-os-logo-transparent.png`}
-                alt="PULA business OS"
+                src={`${import.meta.env.BASE_URL}pula-biz-logo-transparent.png`}
+                alt="PULA Biz"
                 className={styles.productLogo}
               />
               <p>
                 One workspace for owners and teams to manage customers, follow-ups, invoices, stock, operations,
                 finance, and AI-powered assistance.
               </p>
-              <div className={styles.panelStats} aria-label="PULA business OS modules">
+              <div className={styles.panelStats} aria-label="PULA Biz modules">
                 <span>CRM</span>
                 <span>Billing</span>
                 <span>Inventory</span>

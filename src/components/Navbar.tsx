@@ -57,9 +57,9 @@ export const Navbar = () => {
 
       <div className={styles.links}>
 
-        <a href="#product" className={styles.link}>Business OS</a>
+        <a href="#product" className={styles.link}>Biz</a>
         <a href="#tools" className={styles.link}>AI tools</a>
-        <a href="#business-os" className={styles.link}>Why OS</a>
+        <a href="#business-os" className={styles.link}>Why Biz</a>
         <a href="#pricing" className={styles.link}>Pricing</a>
 
         {user ? (
@@ -78,7 +78,7 @@ export const Navbar = () => {
             openHomepageAuth('signup');
           }}
         >
-          {firebaseStatus.isConfigured ? 'Try business OS' : 'View Launch Info'}
+          {firebaseStatus.isConfigured ? 'Try Biz' : 'View Launch Info'}
         </a>
       </div>
     </motion.nav>

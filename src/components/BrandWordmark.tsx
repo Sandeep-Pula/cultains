@@ -41,8 +41,8 @@ export const ProductWordmark = ({
     <span className={clsx(pulaClassName)} style={{ color: 'var(--color-logo-red)', marginRight: '0.25em' }}>
       PULA
     </span>
-    <span className={clsx(productClassName)} style={{ color: 'var(--color-logo-blue)' }}>
-      Business OS
+    <span className={clsx(productClassName)} style={{ color: 'var(--color-logo-blue)', fontSize: '0.78em', fontWeight: 700 }}>
+      Biz
     </span>
   </span>
 );

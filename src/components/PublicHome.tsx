@@ -108,7 +108,7 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
             </p>
             <div className={styles.heroActions}>
               <button type="button" className={styles.primaryButton} onClick={() => openHomepageAuth('signup')}>
-                Try PULA Business OS
+                Try PULA Biz
                 <ArrowRight size={18} />
               </button>
               <button type="button" className={styles.secondaryButton} onClick={() => openHomepageAuth('login')}>
@@ -127,10 +127,10 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
               <AuthCard mode={authMode} />
             ) : (
               <div className={styles.productCard}>
-                <span className={styles.productLabel}>Business operating system</span>
+                <span className={styles.productLabel}>PULA Biz</span>
                 <img
-                  src={`${import.meta.env.BASE_URL}pula-business-os-logo-transparent.png`}
-                  alt="PULA Business OS"
+                  src={`${import.meta.env.BASE_URL}pula-biz-logo-transparent.png`}
+                  alt="PULA Biz"
                   className={styles.businessLogo}
                 />
                 <p>
@@ -150,7 +150,7 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
             </span>
             <h2>One operating layer for the services your dashboard already supports.</h2>
             <p>
-              Business OS starts with the work companies do every day. It gives owners a cleaner way to see what is
+              Biz starts with the work companies do every day. It gives owners a cleaner way to see what is
               happening across customers, sales, billing, stock, team activity, and AI assistance.
             </p>
           </motion.div>
@@ -176,10 +176,10 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
         <div className={styles.container}>
           <div className={styles.labGrid}>
             <motion.div className={styles.labCopy} {...fadeUp}>
-              <span className={styles.eyebrow}>Why Business OS</span>
+              <span className={styles.eyebrow}>Why Biz</span>
               <h2>Business software should connect the work, not scatter it into separate tools.</h2>
               <p>
-                PULA Business OS keeps the daily operating layer together so owners can see customers, stock, invoices,
+                PULA Biz keeps the daily operating layer together so owners can see customers, stock, invoices,
                 finance, teams, and AI assistance in the same environment.
               </p>
             </motion.div>
@@ -219,8 +219,8 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
           <div className={styles.footerTop}>
             <div className={styles.footerBrand}>
               <img
-                src={`${import.meta.env.BASE_URL}pula-business-os-logo-transparent.png`}
-                alt="PULA Business OS"
+                src={`${import.meta.env.BASE_URL}pula-biz-logo-transparent.png`}
+                alt="PULA Biz"
                 className={styles.footerBusinessLogo}
               />
               <img
@@ -229,7 +229,7 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
                 className={styles.footerLabsLogo}
               />
               <p>
-                PULA Business OS is a business operating system for CRM, billing, inventory, finance, teams,
+                PULA Biz is a business workspace for CRM, billing, inventory, finance, teams,
                 operations, and AI-assisted workflows from Pula Labs Private Limited, India.
               </p>
             </div>
@@ -263,14 +263,14 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
               <span className={styles.footerHeading}>Pula Labs Private Limited</span>
               <a href="https://pulalabs.com/careers" target="_blank" rel="noreferrer">Careers</a>
               <a href="https://pulalabs.com/collaborate" target="_blank" rel="noreferrer">Collaborate with Pula Labs Private Limited</a>
-              <a href="mailto:contact@pulalabs.com?subject=Partnership%20with%20PULA%20Business%20OS">Partner with Business OS</a>
+              <a href="mailto:contact@pulalabs.com?subject=Partnership%20with%20PULA%20Biz">Partner with Biz</a>
               <a href="#contact">Start a workspace</a>
             </div>
           </div>
 
           <div className={styles.footerBottom}>
             <span>© {new Date().getFullYear()} Pula Labs Private Limited. All rights reserved.</span>
-            <span>PULA Business OS is a product of Pula Labs Private Limited, registered in India.</span>
+            <span>PULA Biz is a product of Pula Labs Private Limited, registered in India.</span>
             <div className={styles.legalLinks}>
               <a href="https://pulalabs.com/privacy" target="_blank" rel="noreferrer">Privacy</a>
               <a href="https://pulalabs.com/terms" target="_blank" rel="noreferrer">Terms</a>

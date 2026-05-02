@@ -25,8 +25,8 @@ export const AdminHome = () => (
       <div className={styles.copyColumn}>
         <div className={styles.productTab}>
           <img
-            src={`${import.meta.env.BASE_URL}pula-business-os-logo-transparent.png`}
-            alt="PULA Business OS"
+            src={`${import.meta.env.BASE_URL}pula-biz-logo-transparent.png`}
+            alt="PULA Biz"
           />
           <span>Admin access</span>
         </div>
@@ -36,9 +36,9 @@ export const AdminHome = () => (
           <span>Pula Labs Private Limited</span>
         </div>
 
-        <h1>PULA Business OS administration.</h1>
+        <h1>PULA Biz administration.</h1>
         <p>
-          Sign in with manually created super admin credentials to manage the PULA Business OS dashboard,
+          Sign in with manually created super admin credentials to manage the PULA Biz dashboard,
           users, support flow, and operational controls.
         </p>
 

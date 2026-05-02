@@ -5,7 +5,7 @@ import { MagneticButton } from './MagneticButton';
 import styles from './HeroSection.module.css';
 
 const productIdeas = [
-  'Business operating system',
+  'PULA Biz',
   'Industry AI assistants',
   'Document and workflow automation',
   'Analytics for owners',
@@ -53,7 +53,7 @@ export const HeroSection = () => {
 
           <div className={styles.ctaRow}>
             <MagneticButton onClick={() => openHomepageAuth('signup')}>
-              Try PULA business OS
+              Try PULA Biz
             </MagneticButton>
             <a href="#tools" className={styles.secondaryCta}>
               Explore the product direction
@@ -90,7 +90,7 @@ export const HeroSection = () => {
             <div className={styles.osPanel}>
               <div className={styles.osHeader}>
                 <Bot size={18} />
-                <span>PULA business OS starts with</span>
+                <span>PULA Biz starts with</span>
               </div>
               <div className={styles.moduleGrid}>
                 {operatingSystemModules.map((item) => (

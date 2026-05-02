@@ -65,7 +65,7 @@ export const HomeContent = () => {
               <BrandWordmark /> is being shaped as a company for multiple AI tools, not just one app.
             </h2>
             <p className={styles.lead}>
-              The business OS is the starting point because companies need reliable operational data before AI can be
+              PULA Biz is the starting point because companies need reliable operational data before AI can be
               genuinely useful. From there, Pula Labs can keep adding focused tools around the same business reality.
             </p>
           </motion.div>
@@ -91,7 +91,7 @@ export const HomeContent = () => {
         <div className={styles.container}>
           <div className={styles.osGrid}>
             <motion.div className={styles.osCopy} {...fadeUp}>
-              <span className={styles.eyebrow}>Why business OS comes first</span>
+              <span className={styles.eyebrow}>Why Biz comes first</span>
               <h2 className={styles.title}>AI gets stronger when the business has a clean operating base.</h2>
               <p className={styles.lead}>
                 <ProductWordmark /> organizes the daily services already built into the dashboard: customers,
@@ -124,7 +124,7 @@ export const HomeContent = () => {
               <Sparkles size={22} />
             </div>
             <span className={styles.eyebrow}>Start with the first Pula Labs product</span>
-            <h2 className={styles.title}>Try our business operating system.</h2>
+            <h2 className={styles.title}>Try PULA Biz.</h2>
             <p className={styles.lead}>
               Create a workspace, set up your business profile, and start using the operating layer that future Pula
               Labs AI tools can build on.

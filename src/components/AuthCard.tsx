@@ -97,8 +97,8 @@ export const AuthCard = ({ mode, adminOnly = false }: AuthCardProps) => {
           {isForgotPassword ? 'Reset Password' : isSignup ? 'Create account' : adminOnly ? 'Admin login' : 'Login'}
         </h2>
         <img
-          src={`${import.meta.env.BASE_URL}pula-business-os-logo-transparent.png`}
-          alt="PULA Business OS"
+          src={`${import.meta.env.BASE_URL}pula-biz-logo-transparent.png`}
+          alt="PULA Biz"
           className={styles.authProductLogo}
         />
       </div>
@@ -110,7 +110,7 @@ export const AuthCard = ({ mode, adminOnly = false }: AuthCardProps) => {
           : isSignup
             ? 'Create the main business owner account here. Team member logins can be added later from the dashboard.'
             : adminOnly
-              ? 'Use manually created PULA Business OS super admin credentials for this admin portal.'
+              ? 'Use manually created PULA Biz super admin credentials for this admin portal.'
               : 'Business owners and team members both log in here using the credentials assigned to them.'}
       </p>
 

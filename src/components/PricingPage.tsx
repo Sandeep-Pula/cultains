@@ -24,7 +24,7 @@ const trialHighlights = [
 
 const plans = [
   {
-    name: 'Business OS Starter',
+    name: 'Biz Starter',
     badge: 'Trial launch',
     monthly: '%%%%',
     annual: '%%%%',
@@ -40,7 +40,7 @@ const plans = [
     icon: BadgeIndianRupee,
   },
   {
-    name: 'Business OS Growth',
+    name: 'Biz Growth',
     badge: 'Most popular',
     monthly: '%%%%',
     annual: '%%%%',
@@ -57,7 +57,7 @@ const plans = [
     icon: Boxes,
   },
   {
-    name: 'Business OS Premium',
+    name: 'Biz Premium',
     badge: 'Scale confidently',
     monthly: '%%%%',
     annual: '%%%%',
@@ -87,13 +87,13 @@ export const PricingPage = () => {
         </div>
         <div className={styles.heroCopy}>
           <motion.img
-            src={`${import.meta.env.BASE_URL}pula-business-os-logo-transparent.png`}
-            alt="PULA Business OS"
+            src={`${import.meta.env.BASE_URL}pula-biz-logo-transparent.png`}
+            alt="PULA Biz"
             className={styles.pricingLogo}
             {...fadeUp}
           />
           <motion.div className={styles.eyebrow} {...fadeUp}>
-            Pricing for PULA Business OS
+            Pricing for PULA Biz
           </motion.div>
           <motion.h1 className={styles.title} {...fadeUp}>
             Simple plans for running the business from one operating system.
@@ -108,7 +108,7 @@ export const PricingPage = () => {
       <section className={styles.offerSection}>
         <motion.div className={styles.offerCard} {...fadeUp}>
           <div className={styles.offerBadge}>Start with zero risk</div>
-          <h2 className={styles.offerTitle}>Get 1 month free trial plus Business OS onboarding support.</h2>
+          <h2 className={styles.offerTitle}>Get 1 month free trial plus Biz onboarding support.</h2>
           <p className={styles.offerLead}>
             Start using the operating system first. If your team needs onboarding help, training support is included
             during the trial.
@@ -127,7 +127,7 @@ export const PricingPage = () => {
       <section className={styles.planSection}>
         <motion.div className={styles.planIntroBlock} {...fadeUp}>
           <div className={styles.planIntroEyebrow}>After the trial</div>
-          <h2 className={styles.planIntroTitle}>Choose the Business OS plan that fits your team.</h2>
+          <h2 className={styles.planIntroTitle}>Choose the Biz plan that fits your team.</h2>
           <p className={styles.planIntroText}>
             Monthly pricing is charged per account. The values below are masked for now.
           </p>
@@ -187,11 +187,11 @@ export const PricingPage = () => {
             </div>
             <div>
               <div className={styles.aiEyebrow}>AI tools and credits</div>
-              <h2 className={styles.aiTitle}>AI usage can stay flexible inside Business OS</h2>
+              <h2 className={styles.aiTitle}>AI usage can stay flexible inside Biz</h2>
             </div>
           </div>
           <p className={styles.aiLead}>
-            Use AI credits only when you need them. This keeps the main Business OS subscription simple, while giving
+            Use AI credits only when you need them. This keeps the main Biz subscription simple, while giving
             your team freedom to use AI workflows, assistants, and generation tools on a pay-as-you-go basis.
           </p>
           <div className={styles.aiPoints}>
