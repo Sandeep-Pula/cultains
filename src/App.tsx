@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { auth, firebaseStatus } from './lib/firebase';
+import { isAdminHost, isSuperAdminEmail, redirectToAdminDashboard } from './lib/adminRouting';
+import { AdminHome } from './components/AdminHome';
 import { PublicHome } from './components/PublicHome';
 import { PricingPage } from './components/PricingPage';
 import { DashboardSkeleton } from './dashboard/components/DashboardSkeleton';
@@ -24,7 +26,6 @@ const surfaceLoader = (
   </section>
 );
 
-const SUPER_ADMIN_EMAIL = 'superadmin@pulalabs.com';
 const pageLevelHashes = new Set(['', '#top', '#login', '#signup', '#pricing', '#try-once']);
 
 function App() {
@@ -97,6 +98,7 @@ function App() {
   const isPricingPage = hash === '#pricing';
   const isDashboardPage = hash.startsWith('#dashboard');
   const isAuthPage = isLoginPage || isSignupPage;
+  const adminHost = isAdminHost();
   const showSetupGuide = !firebaseStatus.isConfigured && (isAuthPage || isDashboardPage);
 
   // Protect Dashboard route
@@ -106,19 +108,55 @@ function App() {
     }
   }, [authReady, user, isDashboardPage]);
 
+  useEffect(() => {
+    if (!authReady || !user || !adminHost || isSuperAdminEmail(user.email)) return;
+
+    if (auth) {
+      void signOut(auth);
+    }
+
+    if (window.location.hash !== '#login') {
+      window.location.hash = '#login';
+    }
+  }, [adminHost, authReady, user]);
+
   // Autoredirect to dashboard if logged in and visiting login/signup
   useEffect(() => {
     if (authReady && user && isAuthPage) {
-      window.location.hash =
-        user.email?.trim().toLowerCase() === SUPER_ADMIN_EMAIL ? '#dashboard/super-admin' : '#dashboard';
+      if (adminHost && !isSuperAdminEmail(user.email)) {
+        return;
+      }
+
+      if (isSuperAdminEmail(user.email)) {
+        redirectToAdminDashboard();
+        return;
+      }
+
+      window.location.hash = '#dashboard';
     }
-  }, [authReady, user, isAuthPage]);
+  }, [adminHost, authReady, user, isAuthPage]);
+
+  useEffect(() => {
+    if (!authReady || !user) return;
+    if (!isSuperAdminEmail(user.email)) return;
+
+    if (hash.startsWith('#dashboard/super-admin')) {
+      if (!isAdminHost()) {
+        redirectToAdminDashboard();
+      }
+      return;
+    }
+
+    if (isAdminHost() && hash.startsWith('#dashboard')) {
+      window.location.hash = '#dashboard/super-admin';
+    }
+  }, [authReady, hash, user]);
 
   return (
     <div className={styles.appContainer}>
-      {!isDashboardPage ? <Navbar /> : null}
+      {!isDashboardPage && !adminHost ? <Navbar /> : null}
 
-      {!isDashboardPage ? (
+      {!isDashboardPage && !adminHost ? (
         <motion.div
           className={styles.liquidTransition}
           initial={{ scaleY: 1 }}
@@ -136,6 +174,8 @@ function App() {
           <Suspense fallback={<DashboardSkeleton />}>
             <Dashboard />
           </Suspense>
+        ) : adminHost ? (
+          <AdminHome />
         ) : isTryOncePage ? (
           <Suspense fallback={surfaceLoader}>
             <AIInteriorDesigner />

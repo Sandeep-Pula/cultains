@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { authService } from '../lib/authService';
+import { isSuperAdminEmail, redirectToAdminDashboard } from '../lib/adminRouting';
 import { BrandWordmark } from './BrandWordmark';
 import styles from './AuthPage.module.css';
 
 type AuthCardProps = {
   mode: 'login' | 'signup';
+  adminOnly?: boolean;
 };
 
-const SUPER_ADMIN_EMAIL = 'superadmin@pulalabs.com';
-
-export const AuthCard = ({ mode }: AuthCardProps) => {
-  const [isSignup, setIsSignup] = useState(mode === 'signup');
+export const AuthCard = ({ mode, adminOnly = false }: AuthCardProps) => {
+  const [isSignup, setIsSignup] = useState(!adminOnly && mode === 'signup');
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,8 +22,8 @@ export const AuthCard = ({ mode }: AuthCardProps) => {
 
   useEffect(() => {
     if (isForgotPassword) return;
-    setIsSignup(mode === 'signup');
-  }, [isForgotPassword, mode]);
+    setIsSignup(!adminOnly && mode === 'signup');
+  }, [adminOnly, isForgotPassword, mode]);
 
   const isSubmitDisabled = useMemo(() => {
     if (loading) return true;
@@ -44,9 +44,17 @@ export const AuthCard = ({ mode }: AuthCardProps) => {
       const normalizedName = name.trim();
 
       if (isForgotPassword) {
+        if (adminOnly && !isSuperAdminEmail(normalizedEmail)) {
+          throw new Error('Use the PULA super admin email for admin password reset.');
+        }
+
         await authService.requestPasswordReset(normalizedEmail);
         setSuccessMsg('A password reset link has been sent to your email.');
       } else if (isSignup) {
+        if (adminOnly) {
+          throw new Error('Admin accounts are created manually inside the admin dashboard.');
+        }
+
         if (password.length < 8) {
           throw new Error('Use at least 8 characters for the password.');
         }
@@ -58,8 +66,21 @@ export const AuthCard = ({ mode }: AuthCardProps) => {
           throw new Error('Use at least 8 characters for the password.');
         }
 
+        if (adminOnly && !isSuperAdminEmail(normalizedEmail)) {
+          throw new Error('Admin access is available only for PULA super admin credentials.');
+        }
+
+        if (!adminOnly && isSuperAdminEmail(normalizedEmail)) {
+          throw new Error('Super admin credentials can only be used at admin.pulalabs.com.');
+        }
+
         await authService.signIn(normalizedEmail, password);
-        window.location.hash = normalizedEmail.toLowerCase() === SUPER_ADMIN_EMAIL ? '#dashboard/super-admin' : '#dashboard';
+        if (isSuperAdminEmail(normalizedEmail)) {
+          redirectToAdminDashboard();
+          return;
+        }
+
+        window.location.hash = '#dashboard';
       }
     } catch (err) {
       console.error(err);
@@ -72,7 +93,9 @@ export const AuthCard = ({ mode }: AuthCardProps) => {
   return (
     <div className={styles.formCard}>
       <div className={styles.formHeader}>
-        <h2 className={styles.formTitle}>{isForgotPassword ? 'Reset Password' : isSignup ? 'Create account' : 'Login'}</h2>
+        <h2 className={styles.formTitle}>
+          {isForgotPassword ? 'Reset Password' : isSignup ? 'Create account' : adminOnly ? 'Admin login' : 'Login'}
+        </h2>
         <img
           src={`${import.meta.env.BASE_URL}pula-business-os-logo-transparent.png`}
           alt="PULA Business OS"
@@ -81,10 +104,14 @@ export const AuthCard = ({ mode }: AuthCardProps) => {
       </div>
       <p className={styles.formText}>
         {isForgotPassword
-          ? 'Enter your email and we will send password reset instructions.'
+          ? adminOnly
+            ? 'Enter the PULA super admin email and we will send password reset instructions.'
+            : 'Enter your email and we will send password reset instructions.'
           : isSignup
             ? 'Create the main business owner account here. Team member logins can be added later from the dashboard.'
-            : 'Business owners and team members both log in here using the credentials assigned to them.'}
+            : adminOnly
+              ? 'Use manually created PULA Business OS super admin credentials for this admin portal.'
+              : 'Business owners and team members both log in here using the credentials assigned to them.'}
       </p>
 
       {error ? (
@@ -161,6 +188,7 @@ export const AuthCard = ({ mode }: AuthCardProps) => {
         </p>
       ) : null}
 
+      {!adminOnly ? (
       <p className={styles.switchText}>
         {isForgotPassword ? 'Remembered your password?' : isSignup ? 'Already have an account?' : <>New to <BrandWordmark />?</>}
         {' '}
@@ -183,6 +211,24 @@ export const AuthCard = ({ mode }: AuthCardProps) => {
           {isForgotPassword ? 'Login here' : isSignup ? 'Login' : 'Create account'}
         </button>
       </p>
+      ) : isForgotPassword ? (
+        <p className={styles.switchText}>
+          Remembered your password?{' '}
+          <button
+            type="button"
+            className={styles.inlineButtonStrong}
+            onClick={() => {
+              setError(null);
+              setSuccessMsg(null);
+              setIsForgotPassword(false);
+              setIsSignup(false);
+              window.location.hash = '#login';
+            }}
+          >
+            Login here
+          </button>
+        </p>
+      ) : null}
     </div>
   );
 };

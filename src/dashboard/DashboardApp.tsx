@@ -4,6 +4,7 @@ import { onAuthStateChanged, type User } from 'firebase/auth';
 import { AlertTriangle } from 'lucide-react';
 import { auth } from '../lib/firebase';
 import { authService } from '../lib/authService';
+import { isAdminHost, isSuperAdminEmail, redirectToAdminDashboard } from '../lib/adminRouting';
 import { dashboardService } from './services/dashboardService';
 import { getBusinessConfig } from './businessConfig';
 import { dashboardHash, filterDashboardViews, getStageProgress, isOwnerAccount, parseDashboardView } from './utils';
@@ -58,8 +59,6 @@ const defaultFilters: CustomerFilters = {
   completion: 'all',
   sortBy: 'latest',
 };
-
-const SUPER_ADMIN_EMAIL = 'superadmin@pulalabs.com';
 
 export const DashboardApp = () => {
   const [user, setUser] = useState<User | null>(auth?.currentUser ?? null);
@@ -149,7 +148,7 @@ export const DashboardApp = () => {
       .then((profile) => {
         if (profile) return;
 
-        if (user.email?.trim().toLowerCase() === SUPER_ADMIN_EMAIL) {
+        if (isSuperAdminEmail(user.email)) {
           return dashboardService.ensureSuperAdminProfile(user).then(() => undefined);
         }
 
@@ -195,7 +194,7 @@ export const DashboardApp = () => {
   const activeView = parseDashboardView(hash);
   const businessConfig = getBusinessConfig(data?.profile.businessType ?? 'general_business');
   const workspaceUserId = data?.profile.workspaceOwnerId || user?.uid || '';
-  const isSuperAdminIdentity = user?.email?.trim().toLowerCase() === SUPER_ADMIN_EMAIL;
+  const isSuperAdminIdentity = isSuperAdminEmail(user?.email);
   const isSuperAdmin = data?.profile.accountType === 'super_admin' || isSuperAdminIdentity;
   const isOwner = isOwnerAccount(data?.profile.accountType);
   const allowedViews = filterDashboardViews(data?.profile.sidebarViews);
@@ -213,6 +212,11 @@ export const DashboardApp = () => {
   useEffect(() => {
     if (!user || !data) return;
     if (isSuperAdmin) {
+      if (!isAdminHost()) {
+        redirectToAdminDashboard();
+        return;
+      }
+
       if (activeView !== 'super-admin') {
         window.location.hash = '#dashboard/super-admin';
       }

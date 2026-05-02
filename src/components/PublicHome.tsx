@@ -230,7 +230,7 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
               />
               <p>
                 PULA Business OS is a business operating system for CRM, billing, inventory, finance, teams,
-                operations, and AI-assisted workflows.
+                operations, and AI-assisted workflows from Pula Labs Private Limited, India.
               </p>
             </div>
 
@@ -260,17 +260,17 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
             </div>
 
             <div className={styles.footerLinks}>
-              <span className={styles.footerHeading}>Company</span>
+              <span className={styles.footerHeading}>Pula Labs Private Limited</span>
               <a href="https://pulalabs.com/careers" target="_blank" rel="noreferrer">Careers</a>
-              <a href="https://pulalabs.com/collaborate" target="_blank" rel="noreferrer">Collaborate with PULA labs</a>
+              <a href="https://pulalabs.com/collaborate" target="_blank" rel="noreferrer">Collaborate with Pula Labs Private Limited</a>
               <a href="mailto:contact@pulalabs.com?subject=Partnership%20with%20PULA%20Business%20OS">Partner with Business OS</a>
               <a href="#contact">Start a workspace</a>
             </div>
           </div>
 
           <div className={styles.footerBottom}>
-            <span>© {new Date().getFullYear()} PULA Business OS. All rights reserved.</span>
-            <span>PULA Business OS is built and operated under the PULA labs product ecosystem.</span>
+            <span>© {new Date().getFullYear()} Pula Labs Private Limited. All rights reserved.</span>
+            <span>PULA Business OS is a product of Pula Labs Private Limited, registered in India.</span>
             <div className={styles.legalLinks}>
               <a href="https://pulalabs.com/privacy" target="_blank" rel="noreferrer">Privacy</a>
               <a href="https://pulalabs.com/terms" target="_blank" rel="noreferrer">Terms</a>
