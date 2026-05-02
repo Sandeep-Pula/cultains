@@ -3,17 +3,18 @@ import { GoogleGenAI } from '@google/genai';
 import { Database, Loader2, Send, Sparkles, Trash2, Upload, X } from 'lucide-react';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
 import {
-  buildBalanceSheet,
-  buildCashFlow,
-  buildChecklist,
-  buildFinanceJournalGroup,
-  buildLedgerSections,
-  buildProfitAndLoss,
-  buildSalesSummaryJournalGroups,
-  buildTrialBalance,
-  monthNames,
-  type JournalGroup,
-} from '../pages/AccountLedgerPage';
+  accountingMonthNames,
+  buildAccountingBalanceSheet,
+  buildAccountingCashFlow,
+  buildAccountingChecklist,
+  buildAccountingFinanceJournalGroup,
+  buildAccountingLedgerSections,
+  buildAccountingProfitAndLoss,
+  buildAccountingSalesSummaryJournalGroups,
+  buildAccountingTrialBalance,
+  isWithinAccountingMonth,
+  type AccountingJournalGroup,
+} from '../accountingReports';
 import { getInventoryMovement } from '../inventoryMovement';
 import { printAccountingReport, printMonthEndClosePackage } from '../invoicePrint';
 import type { DashboardData, InventoryItem, InventoryUnit } from '../types';
@@ -80,45 +81,34 @@ const currentMonthYear = () => {
   return { month: now.getMonth() + 1, year: now.getFullYear() };
 };
 
-const monthPattern = monthNames.map((month) => month.slice(0, 3).toLowerCase()).join('|');
+const monthPattern = accountingMonthNames.map((month) => month.slice(0, 3).toLowerCase()).join('|');
 
 const parseMonthYear = (input: string) => {
   const current = currentMonthYear();
-  const monthMatch = input.toLowerCase().match(new RegExp(`\\b(${monthPattern}|${monthNames.map((month) => month.toLowerCase()).join('|')})\\b`));
+  const monthMatch = input.toLowerCase().match(new RegExp(`\\b(${monthPattern}|${accountingMonthNames.map((month) => month.toLowerCase()).join('|')})\\b`));
   const yearMatch = input.match(/\b(20\d{2}|19\d{2})\b/);
   const month = monthMatch
-    ? monthNames.findIndex((name) => name.toLowerCase().startsWith(monthMatch[1].slice(0, 3))) + 1
+    ? accountingMonthNames.findIndex((name) => name.toLowerCase().startsWith(monthMatch[1].slice(0, 3))) + 1
     : current.month;
   const year = yearMatch ? Number(yearMatch[1]) : current.year;
   return { month: month || current.month, year };
 };
 
-const getMonthRange = (month: number, year: number) => ({
-  start: new Date(year, month - 1, 1, 0, 0, 0, 0),
-  end: new Date(year, month, 0, 23, 59, 59, 999),
-});
-
-const withinMonth = (value: string, month: number, year: number) => {
-  const { start, end } = getMonthRange(month, year);
-  const time = new Date(value).getTime();
-  return time >= start.getTime() && time <= end.getTime();
-};
-
 const buildAccountingContext = (data: DashboardData, month: number, year: number) => {
   const financeGroups = data.financeEntries
-    .map((entry) => buildFinanceJournalGroup(entry, data.customers))
-    .filter((group): group is JournalGroup => Boolean(group));
-  const salesGroups = buildSalesSummaryJournalGroups(data.salesInvoices, data.inventory);
+    .map((entry) => buildAccountingFinanceJournalGroup(entry, data.customers))
+    .filter((group): group is AccountingJournalGroup => Boolean(group));
+  const salesGroups = buildAccountingSalesSummaryJournalGroups(data.salesInvoices, data.inventory);
   const journalGroups = [...financeGroups, ...salesGroups].sort((left, right) => new Date(left.date).getTime() - new Date(right.date).getTime());
-  const filteredJournalGroups = journalGroups.filter((group) => withinMonth(group.date, month, year));
-  const ledgerSections = buildLedgerSections(journalGroups, month, year);
-  const trialBalanceRows = buildTrialBalance(journalGroups, month, year);
-  const profitAndLossRows = buildProfitAndLoss(filteredJournalGroups);
+  const filteredJournalGroups = journalGroups.filter((group) => isWithinAccountingMonth(group.date, month, year));
+  const ledgerSections = buildAccountingLedgerSections(journalGroups, month, year);
+  const trialBalanceRows = buildAccountingTrialBalance(journalGroups, month, year);
+  const profitAndLossRows = buildAccountingProfitAndLoss(filteredJournalGroups);
   const netProfit = profitAndLossRows.find((row) => row.label === 'Net Profit / Loss')?.amount || 0;
-  const balanceSheet = buildBalanceSheet(trialBalanceRows, netProfit);
-  const cashFlow = buildCashFlow(filteredJournalGroups);
-  const monthLabel = `${monthNames[month - 1]} ${year}`;
-  const checklist = buildChecklist(monthLabel, filteredJournalGroups, data.financeEntries, data.inventory, trialBalanceRows, month, year);
+  const balanceSheet = buildAccountingBalanceSheet(trialBalanceRows, netProfit);
+  const cashFlow = buildAccountingCashFlow(filteredJournalGroups);
+  const monthLabel = `${accountingMonthNames[month - 1]} ${year}`;
+  const checklist = buildAccountingChecklist(monthLabel, filteredJournalGroups, data.financeEntries, data.inventory, trialBalanceRows, month, year);
   const generalLedger = ledgerSections.map((section) => ({
     account: section.account,
     openingBalance: section.openingBalance,

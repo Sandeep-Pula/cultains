@@ -1,0 +1,372 @@
+import type { CustomerProject, FinanceEntry, InventoryItem, InvoicePaymentMethod, SalesInvoice } from './types';
+
+export type AccountingJournalLine = {
+  account: string;
+  debit: number;
+  credit: number;
+};
+
+export type AccountingJournalGroup = {
+  id: string;
+  financeEntryId?: string;
+  date: string;
+  title: string;
+  reference: string;
+  sourceLabel: string;
+  narration: string;
+  lines: AccountingJournalLine[];
+  deletable: boolean;
+};
+
+export type AccountingLedgerSection = {
+  account: string;
+  openingBalance: number;
+  rows: Array<{
+    entryId: string;
+    financeEntryId?: string;
+    date: string;
+    particulars: string;
+    reference: string;
+    sourceLabel: string;
+    debit: number;
+    credit: number;
+    deletable: boolean;
+  }>;
+  closingBalance: number;
+};
+
+export type AccountingStatementRow = {
+  label: string;
+  amount: number;
+};
+
+export const accountingMonthNames = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+const moneyAccountLabel: Record<InvoicePaymentMethod, string> = {
+  cash: 'Cash in Hand',
+  upi: 'UPI Clearing',
+  bank_transfer: 'Bank Account',
+  credit_card: 'Card Settlement',
+  debit_card: 'Card Settlement',
+  mixed: 'Mixed Collections',
+};
+
+const revenueAccounts = new Set(['Sales Revenue', 'Other Income']);
+const expenseAccounts = new Set(['Cost of Goods Sold', 'Labour Expense', 'Salary Expense', 'Vendor Expense', 'Operating Expense']);
+const assetAccounts = new Set(['Cash in Hand', 'UPI Clearing', 'Bank Account', 'Card Settlement', 'Mixed Collections', 'Accounts Receivable', 'Inventory Asset', 'Petty Cash', 'Prepaid Expense', 'Fixed Assets']);
+const liabilityAccounts = new Set(['Accounts Payable', 'Output Tax Payable', 'Bank Loan', 'Loan Payable']);
+const cashAccounts = new Set(['Cash in Hand', 'UPI Clearing', 'Bank Account', 'Card Settlement', 'Mixed Collections']);
+
+const toDateKey = (value: string) => {
+  const date = new Date(value);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+export const getAccountingMonthRange = (month: number, year: number) => ({
+  start: new Date(year, month - 1, 1, 0, 0, 0, 0),
+  end: new Date(year, month, 0, 23, 59, 59, 999),
+});
+
+export const isWithinAccountingMonth = (value: string, month: number, year: number) => {
+  const { start, end } = getAccountingMonthRange(month, year);
+  const time = new Date(value).getTime();
+  return time >= start.getTime() && time <= end.getTime();
+};
+
+const prettifyOption = (value: string) => value.replace(/_/g, ' ');
+
+const getCashOrReceivableAccount = (status: FinanceEntry['status'], paymentMethod?: InvoicePaymentMethod) =>
+  status === 'paid' ? moneyAccountLabel[paymentMethod || 'cash'] : 'Accounts Receivable';
+
+const getCashOrPayableAccount = (status: FinanceEntry['status'], paymentMethod?: InvoicePaymentMethod) =>
+  status === 'paid' ? moneyAccountLabel[paymentMethod || 'cash'] : 'Accounts Payable';
+
+const getIncomeAccount = (entry: FinanceEntry) => entry.category === 'client_payment' ? 'Sales Revenue' : 'Other Income';
+
+const getExpenseAccount = (entry: FinanceEntry) => {
+  if (entry.category === 'project_material') return 'Inventory Asset';
+  if (entry.category === 'labour') return 'Labour Expense';
+  if (entry.category === 'salary') return 'Salary Expense';
+  if (entry.category === 'vendor') return 'Vendor Expense';
+  return 'Operating Expense';
+};
+
+export const buildAccountingFinanceJournalGroup = (entry: FinanceEntry, customers: CustomerProject[]): AccountingJournalGroup | null => {
+  if (entry.sourceInvoiceId) return null;
+
+  const customer = entry.customerId ? customers.find((item) => item.id === entry.customerId) : null;
+  const debitAccount = entry.kind === 'income'
+    ? getCashOrReceivableAccount(entry.status, entry.paymentMethod)
+    : getExpenseAccount(entry);
+  const creditAccount = entry.kind === 'income'
+    ? getIncomeAccount(entry)
+    : getCashOrPayableAccount(entry.status, entry.paymentMethod);
+
+  const detailParts = [
+    entry.linkedCustomerName || customer?.customerName,
+    entry.projectTitle,
+    entry.transactionFlow ? `Flow: ${prettifyOption(entry.transactionFlow)}` : '',
+    entry.notes,
+  ].filter(Boolean);
+
+  return {
+    id: `finance-${entry.id}`,
+    financeEntryId: entry.id,
+    date: entry.referenceDate || entry.dueAt || entry.createdAt,
+    title: entry.title,
+    reference: entry.paycheckNumber || `BOOK-${entry.id.slice(0, 6).toUpperCase()}`,
+    sourceLabel:
+      entry.accountingSource === 'weekly_misc_summary'
+        ? 'Automated weekly misc close'
+        : entry.accountingSource === 'salary' || entry.category === 'salary' || entry.paycheckNumber
+          ? 'Salary record'
+          : 'Manual entry',
+    narration: detailParts.join(' • ') || 'Manually posted transaction.',
+    deletable: !(entry.autoGenerated || entry.accountingSource === 'weekly_misc_summary'),
+    lines: [
+      { account: debitAccount, debit: entry.amount, credit: 0 },
+      { account: creditAccount, debit: 0, credit: entry.amount },
+    ],
+  };
+};
+
+export const buildAccountingSalesSummaryJournalGroups = (salesInvoices: SalesInvoice[], inventory: InventoryItem[]) => {
+  const inventoryIndex = new Map(inventory.map((item) => [item.id, item]));
+  const grouped = new Map<string, SalesInvoice[]>();
+  const now = new Date();
+  const todayKey = toDateKey(now.toISOString());
+  const closingHourReached = now.getHours() >= 22;
+
+  salesInvoices
+    .filter((invoice) => invoice.status === 'finalized')
+    .forEach((invoice) => {
+      const key = toDateKey(invoice.createdAt);
+      if (key === todayKey && !closingHourReached) return;
+      const current = grouped.get(key) || [];
+      current.push(invoice);
+      grouped.set(key, current);
+    });
+
+  return Array.from(grouped.entries())
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([dateKey, invoices]) => {
+      let cashPaid = 0;
+      let upiPaid = 0;
+      let bankPaid = 0;
+      let receivable = 0;
+      let subtotal = 0;
+      let taxAmount = 0;
+      let costOfGoodsSold = 0;
+
+      invoices.forEach((invoice) => {
+        subtotal += invoice.subtotal;
+        taxAmount += invoice.taxAmount;
+        if (invoice.paymentStatus === 'paid') {
+          if (invoice.paymentMethod === 'cash') cashPaid += invoice.totalAmount;
+          else if (invoice.paymentMethod === 'upi') upiPaid += invoice.totalAmount;
+          else bankPaid += invoice.totalAmount;
+        } else {
+          receivable += invoice.totalAmount;
+        }
+        invoice.lineItems.forEach((line) => {
+          costOfGoodsSold += (inventoryIndex.get(line.inventoryItemId)?.costPerUnit ?? 0) * line.quantity;
+        });
+      });
+
+      const lines: AccountingJournalLine[] = [];
+      if (cashPaid > 0) lines.push({ account: 'Cash in Hand', debit: cashPaid, credit: 0 });
+      if (upiPaid > 0) lines.push({ account: 'UPI Clearing', debit: upiPaid, credit: 0 });
+      if (bankPaid > 0) lines.push({ account: 'Bank Account', debit: bankPaid, credit: 0 });
+      if (receivable > 0) lines.push({ account: 'Accounts Receivable', debit: receivable, credit: 0 });
+      if (costOfGoodsSold > 0) lines.push({ account: 'Cost of Goods Sold', debit: costOfGoodsSold, credit: 0 });
+      if (subtotal > 0) lines.push({ account: 'Sales Revenue', debit: 0, credit: subtotal });
+      if (taxAmount > 0) lines.push({ account: 'Output Tax Payable', debit: 0, credit: taxAmount });
+      if (costOfGoodsSold > 0) lines.push({ account: 'Inventory Asset', debit: 0, credit: costOfGoodsSold });
+
+      return {
+        id: `sales-close-${dateKey}`,
+        date: `${dateKey}T22:00:00`,
+        title: 'Daily sales close',
+        reference: `CLOSE-${dateKey.replace(/-/g, '')}`,
+        sourceLabel: 'Automated 10 PM close',
+        narration: `${invoices.length} invoice${invoices.length > 1 ? 's' : ''} summarized into one sales book entry.`,
+        deletable: false,
+        lines,
+      } satisfies AccountingJournalGroup;
+    })
+    .filter((group) => group.lines.length > 0);
+};
+
+export const buildAccountingLedgerSections = (groups: AccountingJournalGroup[], month: number, year: number) => {
+  const accountRows = new Map<string, AccountingLedgerSection['rows']>();
+
+  groups
+    .slice()
+    .sort((left, right) => new Date(left.date).getTime() - new Date(right.date).getTime())
+    .forEach((group) => {
+      group.lines.forEach((line) => {
+        const contraAccounts = group.lines
+          .filter((item) => item.account !== line.account)
+          .map((item) => item.account)
+          .join(', ');
+
+        const bucket = accountRows.get(line.account) || [];
+        bucket.push({
+          entryId: group.id,
+          financeEntryId: group.financeEntryId,
+          date: group.date,
+          particulars: `${group.title}${contraAccounts ? ` • Against ${contraAccounts}` : ''}`,
+          reference: group.reference,
+          sourceLabel: group.sourceLabel,
+          debit: line.debit,
+          credit: line.credit,
+          deletable: group.deletable,
+        });
+        accountRows.set(line.account, bucket);
+      });
+    });
+
+  return Array.from(accountRows.entries())
+    .map(([account, rows]) => {
+      const orderedRows = rows.slice().sort((left, right) => new Date(left.date).getTime() - new Date(right.date).getTime());
+      const openingBalance = orderedRows
+        .filter((row) => !isWithinAccountingMonth(row.date, month, year) && new Date(row.date).getTime() < getAccountingMonthRange(month, year).start.getTime())
+        .reduce((sum, row) => sum + row.debit - row.credit, 0);
+      const visibleRows = orderedRows.filter((row) => isWithinAccountingMonth(row.date, month, year));
+      const closingBalance = openingBalance + visibleRows.reduce((sum, row) => sum + row.debit - row.credit, 0);
+      return { account, openingBalance, rows: visibleRows, closingBalance };
+    })
+    .filter((section) => section.rows.length || section.openingBalance !== 0 || section.closingBalance !== 0)
+    .sort((left, right) => left.account.localeCompare(right.account));
+};
+
+export const buildAccountingTrialBalance = (groups: AccountingJournalGroup[], month: number, year: number) => {
+  const { end } = getAccountingMonthRange(month, year);
+  const totals = new Map<string, number>();
+
+  groups.forEach((group) => {
+    if (new Date(group.date).getTime() > end.getTime()) return;
+    group.lines.forEach((line) => {
+      totals.set(line.account, (totals.get(line.account) || 0) + line.debit - line.credit);
+    });
+  });
+
+  return Array.from(totals.entries())
+    .map(([account, balance]) => ({
+      account,
+      debit: balance > 0 ? balance : 0,
+      credit: balance < 0 ? Math.abs(balance) : 0,
+    }))
+    .filter((row) => row.debit > 0 || row.credit > 0)
+    .sort((left, right) => left.account.localeCompare(right.account));
+};
+
+const sumRows = (rows: AccountingStatementRow[]) => rows.reduce((sum, row) => sum + row.amount, 0);
+
+export const buildAccountingProfitAndLoss = (groups: AccountingJournalGroup[]) => {
+  const revenues = new Map<string, number>();
+  const expenses = new Map<string, number>();
+
+  groups.forEach((group) => {
+    group.lines.forEach((line) => {
+      if (revenueAccounts.has(line.account)) revenues.set(line.account, (revenues.get(line.account) || 0) + line.credit - line.debit);
+      if (expenseAccounts.has(line.account)) expenses.set(line.account, (expenses.get(line.account) || 0) + line.debit - line.credit);
+    });
+  });
+
+  const revenueRows = Array.from(revenues.entries()).map(([label, amount]) => ({ label, amount }));
+  const expenseRows = Array.from(expenses.entries()).map(([label, amount]) => ({ label, amount }));
+  const totalRevenue = sumRows(revenueRows);
+  const totalExpenses = sumRows(expenseRows);
+
+  return [
+    ...revenueRows,
+    { label: 'Total Revenue', amount: totalRevenue },
+    ...expenseRows,
+    { label: 'Total Expenses', amount: totalExpenses },
+    { label: 'Net Profit / Loss', amount: totalRevenue - totalExpenses },
+  ];
+};
+
+export const buildAccountingBalanceSheet = (rows: ReturnType<typeof buildAccountingTrialBalance>, netProfit: number) => {
+  const assets: AccountingStatementRow[] = [];
+  const liabilities: AccountingStatementRow[] = [];
+  const equity: AccountingStatementRow[] = [];
+
+  rows.forEach((row) => {
+    const net = row.debit - row.credit;
+    if (assetAccounts.has(row.account)) assets.push({ label: row.account, amount: net });
+    else if (liabilityAccounts.has(row.account)) liabilities.push({ label: row.account, amount: row.credit - row.debit });
+    else if (!revenueAccounts.has(row.account) && !expenseAccounts.has(row.account)) equity.push({ label: row.account, amount: row.credit - row.debit });
+  });
+  equity.push({ label: 'Current Period Earnings', amount: netProfit });
+
+  return { assets, liabilities, equity };
+};
+
+export const buildAccountingCashFlow = (groups: AccountingJournalGroup[]) => {
+  const operating = new Map<string, number>();
+  const investing = new Map<string, number>();
+  const financing = new Map<string, number>();
+
+  groups.forEach((group) => {
+    const cashMovement = group.lines.reduce((sum, line) => cashAccounts.has(line.account) ? sum + line.debit - line.credit : sum, 0);
+    if (cashMovement === 0) return;
+    const target = group.lines.some((line) => line.account === 'Fixed Assets')
+      ? investing
+      : group.lines.some((line) => line.account === 'Bank Loan' || line.account === 'Loan Payable')
+        ? financing
+        : operating;
+    target.set(group.title, (target.get(group.title) || 0) + cashMovement);
+  });
+
+  const toRows = (map: Map<string, number>) => {
+    const rows = Array.from(map.entries()).map(([label, amount]) => ({ label, amount }));
+    rows.push({ label: 'Net Cash Movement', amount: sumRows(rows) });
+    return rows;
+  };
+
+  return { operating: toRows(operating), investing: toRows(investing), financing: toRows(financing) };
+};
+
+export const buildAccountingChecklist = (
+  monthLabel: string,
+  groups: AccountingJournalGroup[],
+  financeEntries: FinanceEntry[],
+  inventory: InventoryItem[],
+  trialBalanceRows: ReturnType<typeof buildAccountingTrialBalance>,
+  month: number,
+  year: number,
+) => {
+  const totalDebits = trialBalanceRows.reduce((sum, row) => sum + row.debit, 0);
+  const totalCredits = trialBalanceRows.reduce((sum, row) => sum + row.credit, 0);
+  const payableAttention = financeEntries.filter((entry) => entry.kind === 'expense' && entry.status !== 'paid' && isWithinAccountingMonth(entry.referenceDate || entry.dueAt || entry.createdAt, month, year)).length;
+
+  return [
+    { title: 'Record incoming cash', status: groups.some((group) => group.title === 'Daily sales close') ? 'Ready' : 'Attention', detail: 'Revenue, invoice payments, and other cash receipts are posted into the monthly books.' },
+    { title: 'Update accounts payable', status: payableAttention ? 'Attention' : 'Ready', detail: payableAttention ? `${payableAttention} unpaid expense entries still need review.` : 'No unpaid expense entries are pending for the period.' },
+    { title: 'Reconcile accounts', status: Math.abs(totalDebits - totalCredits) < 0.5 ? 'Ready' : 'Attention', detail: `Trial balance totals for ${monthLabel} are debit ${totalDebits} and credit ${totalCredits}.` },
+    { title: 'Review petty cash and bank movement', status: 'Review', detail: 'Use the cash flow statement and cash-ledger accounts to verify petty cash, bank, and digital settlement movement.' },
+    { title: 'Count inventory', status: inventory.length ? 'Ready' : 'Attention', detail: `${inventory.length} inventory records are available for monthly stock review and valuation checks.` },
+    { title: 'Organize financial statements', status: 'Ready', detail: 'Profit and loss, balance sheet, cash flow, and general ledger are available for this month-end close package.' },
+    { title: 'Check revenue and expense accounts', status: 'Review', detail: 'Use the profit and loss statement below to verify revenue and expense classification before close.' },
+    { title: 'Review information before closing', status: 'Review', detail: 'A final manual review is still recommended before considering the month formally closed.' },
+    { title: 'Prepare for next month', status: 'Ready', detail: 'Export the month-end package PDF after review so the closed month is archived cleanly.' },
+  ];
+};
