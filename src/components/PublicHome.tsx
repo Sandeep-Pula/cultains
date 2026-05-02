@@ -235,15 +235,14 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
                 <span>Product roadmap</span>
               </div>
               <div className={styles.footerProductItem}>
-                <img
-                  src={`${import.meta.env.BASE_URL}pula-biz-logo-transparent.png`}
-                  alt="PULA Biz"
-                  className={styles.footerBusinessLogo}
-                />
+                <ProductWordmark className={styles.footerProductLogo} />
                 <p>Live product for CRM, billing, inventory, finance, teams, operations, and AI-assisted workflows.</p>
               </div>
               <div className={styles.footerToolPreview}>
-                <strong>PULA Coach</strong>
+                <span className={styles.footerCoachLogo}>
+                  <span>PULA</span>
+                  <strong>Coach</strong>
+                </span>
                 <span>Upcoming business coach to help owners manage their business better.</span>
               </div>
             </div>
@@ -257,28 +256,30 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
               <p>Built with practical business workflows, retail operations, and owner-led execution in mind.</p>
             </div>
 
-            <div className={styles.footerContact}>
-              <div className={styles.footerSectionTitle}>
-                <Mail size={18} />
-                <span>Contact</span>
+            <div className={styles.footerMeta}>
+              <div className={styles.footerContact}>
+                <div className={styles.footerSectionTitle}>
+                  <Mail size={18} />
+                  <span>Contact</span>
+                </div>
+                <a href="mailto:contact@pulalabs.com">contact@pulalabs.com</a>
+                <a href="https://pulalabs.com" target="_blank" rel="noreferrer">
+                  <Globe size={16} />
+                  pulalabs.com
+                </a>
+                <span>
+                  <MapPin size={16} />
+                  India
+                </span>
               </div>
-              <a href="mailto:contact@pulalabs.com">contact@pulalabs.com</a>
-              <a href="https://pulalabs.com" target="_blank" rel="noreferrer">
-                <Globe size={16} />
-                pulalabs.com
-              </a>
-              <span>
-                <MapPin size={16} />
-                India
-              </span>
-            </div>
 
-            <div className={styles.footerLinks}>
-              <span className={styles.footerHeading}>Pula Labs Private Limited</span>
-              <a href="https://pulalabs.com/careers" target="_blank" rel="noreferrer">Careers</a>
-              <a href="https://pulalabs.com/collaborate" target="_blank" rel="noreferrer">Collaborate with Pula Labs Private Limited</a>
-              <a href="mailto:contact@pulalabs.com?subject=Partnership%20with%20Pula%20Labs">Partner with Pula Labs</a>
-              <a href="#contact">Try PULA Biz</a>
+              <div className={styles.footerLinks}>
+                <span className={styles.footerHeading}>Pula Labs Private Limited</span>
+                <a href="https://pulalabs.com/careers" target="_blank" rel="noreferrer">Careers</a>
+                <a href="https://pulalabs.com/collaborate" target="_blank" rel="noreferrer">Collaborate with Pula Labs Private Limited</a>
+                <a href="mailto:contact@pulalabs.com?subject=Partnership%20with%20Pula%20Labs">Partner with Pula Labs</a>
+                <a href="#contact">Try PULA Biz</a>
+              </div>
             </div>
           </div>
 

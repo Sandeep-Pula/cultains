@@ -398,8 +398,8 @@
 
 .footerTop {
   display: grid;
-  grid-template-columns: minmax(280px, 1.05fr) minmax(260px, 1fr) minmax(220px, 0.82fr) minmax(220px, 0.72fr) minmax(220px, 0.76fr);
-  gap: 2rem;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 1.18fr) minmax(0, 0.9fr) minmax(0, 1fr);
+  gap: clamp(1.25rem, 2.5vw, 2.5rem);
   align-items: start;
 }
 
@@ -407,9 +407,11 @@
 .footerProducts,
 .footerCollab,
 .footerContact,
-.footerLinks {
+.footerLinks,
+.footerMeta {
   display: grid;
   gap: 0.85rem;
+  min-width: 0;
 }
 
 .footerBusinessLogo {
@@ -420,7 +422,7 @@
 }
 
 .footerLabsLogo {
-  width: 230px;
+  width: min(230px, 100%);
   display: block;
   filter: brightness(0) invert(1);
   opacity: 0.96;
@@ -438,6 +440,15 @@
   gap: 0.65rem;
 }
 
+.footerProductLogo {
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-size: clamp(2rem, 3.7vw, 3.8rem);
+  font-weight: 800;
+  line-height: 1;
+  width: fit-content;
+  max-width: 100%;
+}
+
 .footerToolPreview {
   display: grid;
   gap: 0.35rem;
@@ -447,9 +458,26 @@
   border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-.footerToolPreview strong {
+.footerCoachLogo {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.26em;
+  width: fit-content;
+  max-width: 100%;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-size: clamp(1.2rem, 2.1vw, 1.8rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.footerCoachLogo span {
+  color: #ff4a42;
+}
+
+.footerCoachLogo strong {
   color: #ffffff;
-  font-size: 1.05rem;
+  font-size: 0.78em;
+  font-weight: 800;
 }
 
 .footerToolPreview span {
@@ -458,7 +486,8 @@
 
 .footerCollab strong {
   color: #ffffff;
-  font-size: 1.2rem;
+  font-size: clamp(1rem, 1.45vw, 1.2rem);
+  line-height: 1.35;
 }
 
 .sinceText {
@@ -496,6 +525,7 @@
   text-decoration: none;
   line-height: 1.5;
   transition: color 0.2s ease;
+  overflow-wrap: anywhere;
 }
 
 .footerContact a:hover,
@@ -537,6 +567,11 @@
   .footerTop {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .footerMeta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 900px) {
@@ -568,6 +603,23 @@
 
   .footerTop {
     grid-template-columns: 1fr;
+    gap: 1.8rem;
+  }
+
+  .footer {
+    padding: 3rem 0 1.75rem;
+  }
+
+  .footerMeta {
+    grid-template-columns: 1fr;
+  }
+
+  .footerProductLogo {
+    font-size: 2.35rem;
+  }
+
+  .footerCoachLogo {
+    font-size: 1.45rem;
   }
 
   .footerBottom {
