@@ -12,8 +12,8 @@ html, body {
   scroll-behavior: smooth;
   scroll-padding-top: 6.5rem;
   background:
-    radial-gradient(circle at top left, rgba(134, 134, 172, 0.22), transparent 32%),
-    linear-gradient(180deg, #f9f8fd 0%, var(--color-brand-60) 42%, #f4f3fb 100%);
+    radial-gradient(circle at top left, rgba(174, 184, 198, 0.18), transparent 32%),
+    linear-gradient(180deg, #fbfcfe 0%, var(--color-brand-60) 44%, #eef3f7 100%);
   color: var(--color-brand-dark);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -64,7 +64,7 @@ ul {
 /* Scrollbar customization for webkit */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-brand-30-strong) var(--color-brand-60-soft);
+  scrollbar-color: var(--color-brand-60-strong) var(--color-brand-60-soft);
 }
 
 ::-webkit-scrollbar {
@@ -77,12 +77,12 @@ ul {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-brand-30-strong);
+  background: var(--color-brand-60-strong);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-brand-10);
+  background: var(--color-brand-30-strong);
 }
 
 .ui-scrollable {

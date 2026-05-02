@@ -1,54 +1,54 @@
 :root {
   /* 60 / 30 / 10 brand system */
-  --color-brand-dark: #272757;
-  --color-brand-60-base: #8686ac;
-  --color-brand-30-base: #505081;
-  --color-brand-10-base: #0f0e47;
+  --color-brand-dark: #243044;
+  --color-brand-60-base: #aeb8c6;
+  --color-brand-30-base: #66758a;
+  --color-brand-10-base: #23415f;
 
   /* Dominant 60% surfaces */
-  --color-brand-60: #f5f4fb;
-  --color-brand-60-soft: #ecebf6;
-  --color-brand-60-strong: #8686ac;
+  --color-brand-60: #f6f8fb;
+  --color-brand-60-soft: #eef3f7;
+  --color-brand-60-strong: #aeb8c6;
 
   /* Secondary 30% structure */
-  --color-brand-30: #dddcef;
-  --color-brand-30-soft: #c9c8e3;
-  --color-brand-30-strong: #505081;
+  --color-brand-30: #dbe3ec;
+  --color-brand-30-soft: #c9d3df;
+  --color-brand-30-strong: #66758a;
 
   /* Accent 10% moments */
-  --color-brand-10: #0f0e47;
-  --color-brand-10-soft: #1f1d66;
+  --color-brand-10: #23415f;
+  --color-brand-10-soft: #2f5274;
   --color-logo-red: #D62828;
   --color-logo-blue: #12355B;
 
   /* Shared semantic colors */
   --color-oled-black: #171411;
-  --color-deep-slate: #272757;
-  --color-slate-hover: #1f1d66;
-  --color-soft-white: #f8f7fc;
+  --color-deep-slate: #243044;
+  --color-slate-hover: #2f5274;
+  --color-soft-white: #f8fafc;
   --color-pure-white: #ffffff;
-  --color-muted-text: #676790;
-  --color-accent-border: rgba(39, 39, 87, 0.1);
-  --color-accent-glow: #a8a8d0;
-  --color-accent-blue: #8686ac;
-  --color-ink: #272757;
-  --color-body: #414173;
-  --color-muted-brown: #666690;
-  --color-earth-brown: #505081;
-  --color-sand: #efeff8;
-  --color-cream: #fbfaff;
+  --color-muted-text: #66758a;
+  --color-accent-border: rgba(36, 48, 68, 0.1);
+  --color-accent-glow: #bfd0dc;
+  --color-accent-blue: #7b8fa6;
+  --color-ink: #243044;
+  --color-body: #475569;
+  --color-muted-brown: #66758a;
+  --color-earth-brown: #66758a;
+  --color-sand: #eef3f7;
+  --color-cream: #fbfcfe;
 
   /* Typography */
   --font-serif: 'Fraunces', serif;
   --font-sans: 'Sora', sans-serif;
 
   /* Glassmorphism */
-  --glass-bg: rgba(255, 255, 255, 0.75);
-  --glass-border: rgba(80, 80, 129, 0.14);
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(102, 117, 138, 0.16);
 
   /* Shadows */
-  --shadow-soft: 0 18px 40px rgba(39, 39, 87, 0.08);
-  --shadow-medium: 0 24px 60px rgba(39, 39, 87, 0.12);
+  --shadow-soft: 0 18px 40px rgba(36, 48, 68, 0.07);
+  --shadow-medium: 0 24px 60px rgba(36, 48, 68, 0.1);
 
   /* Spacing */
   --spacing-sm: 0.5rem;

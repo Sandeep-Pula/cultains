@@ -95,7 +95,7 @@
 
 .primaryButton {
   background: linear-gradient(135deg, var(--color-brand-10) 0%, var(--color-brand-10-soft) 100%);
-  color: #f4f3fb;
+  color: #f8fafc;
   box-shadow: 0 16px 28px rgba(15, 14, 71, 0.18);
 }
 

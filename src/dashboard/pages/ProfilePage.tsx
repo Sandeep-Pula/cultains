@@ -109,7 +109,7 @@ export const ProfilePage = ({
   return (
     <div className="space-y-6">
       <section className="overflow-hidden rounded-[36px] border border-brand-30 bg-white shadow-sm">
-        <div className="grid gap-6 bg-[linear-gradient(135deg,rgba(80,80,129,0.08),rgba(255,255,255,0.96))] p-6 sm:p-8 xl:grid-cols-[1.2fr_0.8fr]">
+        <div className="grid gap-6 bg-[linear-gradient(135deg,rgba(102,117,138,0.08),rgba(255,255,255,0.96))] p-6 sm:p-8 xl:grid-cols-[1.2fr_0.8fr]">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
               <Building2 size={14} />
