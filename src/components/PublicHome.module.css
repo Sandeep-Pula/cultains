@@ -398,12 +398,13 @@
 
 .footerTop {
   display: grid;
-  grid-template-columns: minmax(280px, 1.3fr) minmax(220px, 0.9fr) minmax(220px, 0.8fr) minmax(220px, 0.8fr);
+  grid-template-columns: minmax(280px, 1.05fr) minmax(260px, 1fr) minmax(220px, 0.82fr) minmax(220px, 0.72fr) minmax(220px, 0.76fr);
   gap: 2rem;
   align-items: start;
 }
 
 .footerBrand,
+.footerProducts,
 .footerCollab,
 .footerContact,
 .footerLinks {
@@ -412,24 +413,47 @@
 }
 
 .footerBusinessLogo {
-  width: min(360px, 100%);
+  width: min(240px, 100%);
   display: block;
   filter: brightness(0) invert(1);
   opacity: 0.96;
 }
 
 .footerLabsLogo {
-  width: 190px;
+  width: 230px;
   display: block;
-  margin-top: 0.35rem;
   filter: brightness(0) invert(1);
-  opacity: 0.88;
+  opacity: 0.96;
 }
 
 .footerBrand p,
-.footerCollab p {
+.footerCollab p,
+.footerProductItem p {
   max-width: 32rem;
   line-height: 1.65;
+}
+
+.footerProductItem {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.footerToolPreview {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.9rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.footerToolPreview strong {
+  color: #ffffff;
+  font-size: 1.05rem;
+}
+
+.footerToolPreview span {
+  line-height: 1.55;
 }
 
 .footerCollab strong {

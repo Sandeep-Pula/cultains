@@ -219,19 +219,33 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
           <div className={styles.footerTop}>
             <div className={styles.footerBrand}>
               <img
-                src={`${import.meta.env.BASE_URL}pula-biz-logo-transparent.png`}
-                alt="PULA Biz"
-                className={styles.footerBusinessLogo}
-              />
-              <img
                 src={`${import.meta.env.BASE_URL}pula-labs-logo.png`}
                 alt="PULA labs"
                 className={styles.footerLabsLogo}
               />
               <p>
-                PULA Biz is a business workspace for CRM, billing, inventory, finance, teams,
-                operations, and AI-assisted workflows from Pula Labs Private Limited, India.
+                Pula Labs Private Limited is building practical AI products for growing businesses in India. Our
+                products focus on daily operations, owner decisions, team visibility, and useful business intelligence.
               </p>
+            </div>
+
+            <div className={styles.footerProducts}>
+              <div className={styles.footerSectionTitle}>
+                <Bot size={18} />
+                <span>Product roadmap</span>
+              </div>
+              <div className={styles.footerProductItem}>
+                <img
+                  src={`${import.meta.env.BASE_URL}pula-biz-logo-transparent.png`}
+                  alt="PULA Biz"
+                  className={styles.footerBusinessLogo}
+                />
+                <p>Live product for CRM, billing, inventory, finance, teams, operations, and AI-assisted workflows.</p>
+              </div>
+              <div className={styles.footerToolPreview}>
+                <strong>PULA Coach</strong>
+                <span>Upcoming business coach to help owners manage their business better.</span>
+              </div>
             </div>
 
             <div className={styles.footerCollab}>
@@ -263,14 +277,14 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
               <span className={styles.footerHeading}>Pula Labs Private Limited</span>
               <a href="https://pulalabs.com/careers" target="_blank" rel="noreferrer">Careers</a>
               <a href="https://pulalabs.com/collaborate" target="_blank" rel="noreferrer">Collaborate with Pula Labs Private Limited</a>
-              <a href="mailto:contact@pulalabs.com?subject=Partnership%20with%20PULA%20Biz">Partner with Biz</a>
-              <a href="#contact">Start a workspace</a>
+              <a href="mailto:contact@pulalabs.com?subject=Partnership%20with%20Pula%20Labs">Partner with Pula Labs</a>
+              <a href="#contact">Try PULA Biz</a>
             </div>
           </div>
 
           <div className={styles.footerBottom}>
             <span>© {new Date().getFullYear()} Pula Labs Private Limited. All rights reserved.</span>
-            <span>PULA Biz is a product of Pula Labs Private Limited, registered in India.</span>
+            <span>PULA Biz is live. PULA Coach is an upcoming product from Pula Labs Private Limited.</span>
             <div className={styles.legalLinks}>
               <a href="https://pulalabs.com/privacy" target="_blank" rel="noreferrer">Privacy</a>
               <a href="https://pulalabs.com/terms" target="_blank" rel="noreferrer">Terms</a>
