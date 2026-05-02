@@ -50,6 +50,7 @@ import { AddCustomerModal } from './components/AddCustomerModal';
 import { AddProjectModal } from './components/AddProjectModal';
 import { AddTeamMemberModal } from './components/AddTeamMemberModal';
 import { TeamMemberDrawer } from './components/TeamMemberDrawer';
+import { AIBusinessAssistant } from './components/AIBusinessAssistant';
 import { OperationsPage } from './pages/OperationsPage';
 import { AccountLedgerPage } from './pages/AccountLedgerPage';
 
@@ -1419,6 +1420,14 @@ export const DashboardApp = () => {
         confirmLabel="Remove member"
         onCancel={() => setDeleteTeamCandidateId(null)}
         onConfirm={handleDeleteTeamMember}
+      />
+      <AIBusinessAssistant
+        data={data}
+        businessConfig={businessConfig}
+        canWrite={isOwner}
+        onAddInventoryItem={handleAddInventoryItem}
+        onUpdateInventoryItem={handleUpdateInventoryItem}
+        onDeleteInventoryItem={handleDeleteInventoryItem}
       />
     </div>
   );
