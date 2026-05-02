@@ -2,7 +2,20 @@ import { useMemo, useRef, useState } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import { Database, Loader2, Send, Sparkles, Trash2, Upload, X } from 'lucide-react';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
+import {
+  buildBalanceSheet,
+  buildCashFlow,
+  buildChecklist,
+  buildFinanceJournalGroup,
+  buildLedgerSections,
+  buildProfitAndLoss,
+  buildSalesSummaryJournalGroups,
+  buildTrialBalance,
+  monthNames,
+  type JournalGroup,
+} from '../pages/AccountLedgerPage';
 import { getInventoryMovement } from '../inventoryMovement';
+import { printAccountingReport, printMonthEndClosePackage } from '../invoicePrint';
 import type { DashboardData, InventoryItem, InventoryUnit } from '../types';
 import { formatCurrency } from '../utils';
 
@@ -45,6 +58,10 @@ type AssistantIntent =
   | { action: 'dashboard_summary' }
   | { action: 'update_inventory_stock'; productQuery: string; stock: number }
   | { action: 'delete_inventory_item'; productQuery: string }
+  | { action: 'accounting_summary'; month?: number; year?: number }
+  | { action: 'trial_balance'; month?: number; year?: number }
+  | { action: 'general_ledger'; accountQuery?: string; month?: number; year?: number }
+  | { action: 'export_accounting_pdf'; reportType: 'trial_balance' | 'general_ledger' | 'account_books'; month?: number; year?: number }
   | { action: 'general_answer'; answer: string };
 
 type AIBusinessAssistantProps = {
@@ -57,6 +74,74 @@ type AIBusinessAssistantProps = {
 };
 
 const unitOptions: InventoryUnit[] = ['pcs', 'rolls', 'boxes', 'sets', 'sqm', 'kg', 'litres'];
+
+const currentMonthYear = () => {
+  const now = new Date();
+  return { month: now.getMonth() + 1, year: now.getFullYear() };
+};
+
+const monthPattern = monthNames.map((month) => month.slice(0, 3).toLowerCase()).join('|');
+
+const parseMonthYear = (input: string) => {
+  const current = currentMonthYear();
+  const monthMatch = input.toLowerCase().match(new RegExp(`\\b(${monthPattern}|${monthNames.map((month) => month.toLowerCase()).join('|')})\\b`));
+  const yearMatch = input.match(/\b(20\d{2}|19\d{2})\b/);
+  const month = monthMatch
+    ? monthNames.findIndex((name) => name.toLowerCase().startsWith(monthMatch[1].slice(0, 3))) + 1
+    : current.month;
+  const year = yearMatch ? Number(yearMatch[1]) : current.year;
+  return { month: month || current.month, year };
+};
+
+const getMonthRange = (month: number, year: number) => ({
+  start: new Date(year, month - 1, 1, 0, 0, 0, 0),
+  end: new Date(year, month, 0, 23, 59, 59, 999),
+});
+
+const withinMonth = (value: string, month: number, year: number) => {
+  const { start, end } = getMonthRange(month, year);
+  const time = new Date(value).getTime();
+  return time >= start.getTime() && time <= end.getTime();
+};
+
+const buildAccountingContext = (data: DashboardData, month: number, year: number) => {
+  const financeGroups = data.financeEntries
+    .map((entry) => buildFinanceJournalGroup(entry, data.customers))
+    .filter((group): group is JournalGroup => Boolean(group));
+  const salesGroups = buildSalesSummaryJournalGroups(data.salesInvoices, data.inventory);
+  const journalGroups = [...financeGroups, ...salesGroups].sort((left, right) => new Date(left.date).getTime() - new Date(right.date).getTime());
+  const filteredJournalGroups = journalGroups.filter((group) => withinMonth(group.date, month, year));
+  const ledgerSections = buildLedgerSections(journalGroups, month, year);
+  const trialBalanceRows = buildTrialBalance(journalGroups, month, year);
+  const profitAndLossRows = buildProfitAndLoss(filteredJournalGroups);
+  const netProfit = profitAndLossRows.find((row) => row.label === 'Net Profit / Loss')?.amount || 0;
+  const balanceSheet = buildBalanceSheet(trialBalanceRows, netProfit);
+  const cashFlow = buildCashFlow(filteredJournalGroups);
+  const monthLabel = `${monthNames[month - 1]} ${year}`;
+  const checklist = buildChecklist(monthLabel, filteredJournalGroups, data.financeEntries, data.inventory, trialBalanceRows, month, year);
+  const generalLedger = ledgerSections.map((section) => ({
+    account: section.account,
+    openingBalance: section.openingBalance,
+    closingBalance: section.closingBalance,
+    movements: section.rows.length,
+  }));
+
+  return {
+    monthLabel,
+    journalGroups,
+    filteredJournalGroups,
+    ledgerSections,
+    trialBalanceRows,
+    profitAndLossRows,
+    balanceSheet,
+    cashFlow,
+    checklist,
+    generalLedger,
+    totalDebits: trialBalanceRows.reduce((sum, row) => sum + row.debit, 0),
+    totalCredits: trialBalanceRows.reduce((sum, row) => sum + row.credit, 0),
+    netProfit,
+  };
+};
 
 const AivaAvatar = ({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) => {
   const dimensions = size === 'lg' ? 'h-14 w-14' : size === 'sm' ? 'h-9 w-9' : 'h-12 w-12';
@@ -199,6 +284,32 @@ const buildInventoryPatch = (existing: InventoryItem, row: InventoryCreatePayloa
 
 const parseLocalIntent = (input: string): AssistantIntent | null => {
   const lowered = input.toLowerCase();
+  const requestedMonth = parseMonthYear(input);
+
+  if (/(download|export|pdf|print).*(trial|trail)\s*balance/i.test(input) || /(trial|trail)\s*balance.*(download|export|pdf|print)/i.test(input)) {
+    return { action: 'export_accounting_pdf', reportType: 'trial_balance', ...requestedMonth };
+  }
+
+  if (/(download|export|pdf|print).*(general\s*ledger|ledger|account\s*books|books\s*report)/i.test(input) || /(general\s*ledger|account\s*books|books\s*report).*(download|export|pdf|print)/i.test(input)) {
+    return {
+      action: 'export_accounting_pdf',
+      reportType: /trial|trail/i.test(input) ? 'trial_balance' : /account\s*books|books\s*report/i.test(input) ? 'account_books' : 'general_ledger',
+      ...requestedMonth,
+    };
+  }
+
+  if (/(trial|trail)\s*balance/i.test(input)) {
+    return { action: 'trial_balance', ...requestedMonth };
+  }
+
+  if (/(general\s*ledger|ledger|account\s*book|account\s*books)/i.test(input)) {
+    const accountMatch = input.match(/(?:for|of|account)\s+([a-z0-9\s-]+?)(?:\s+(?:in|for|during)\s+|$)/i);
+    return { action: 'general_ledger', accountQuery: accountMatch?.[1]?.trim(), ...requestedMonth };
+  }
+
+  if (/(accounting|books|profit|loss|balance\s*sheet|cash\s*flow|ledger page)/i.test(input)) {
+    return { action: 'accounting_summary', ...requestedMonth };
+  }
 
   if (/(summary|overview|how is|business today|dashboard)/i.test(input)) {
     return { action: 'dashboard_summary' };
@@ -247,9 +358,13 @@ const getGeminiIntent = async (input: string, data: DashboardData): Promise<Assi
 {"action":"dashboard_summary"}
 {"action":"update_inventory_stock","productQuery":"...","stock":number}
 {"action":"delete_inventory_item","productQuery":"..."}
+{"action":"accounting_summary","month":number,"year":number}
+{"action":"trial_balance","month":number,"year":number}
+{"action":"general_ledger","accountQuery":"optional account name","month":number,"year":number}
+{"action":"export_accounting_pdf","reportType":"trial_balance|general_ledger|account_books","month":number,"year":number}
 {"action":"general_answer","answer":"..."}
 
-Use write actions only when the user clearly asks to change data. Inventory available: ${JSON.stringify(inventoryNames)}.
+Use write actions only when the user clearly asks to change data. Use accounting actions for account ledger, trial balance, books reports, profit and loss, balance sheet, cash flow, and PDF export. Inventory available: ${JSON.stringify(inventoryNames)}.
 User request: ${input}`,
         },
       ],
@@ -320,6 +435,119 @@ export const AIBusinessAssistant = ({
     );
   };
 
+  const answerAccountingSummary = (month = currentMonthYear().month, year = currentMonthYear().year) => {
+    const context = buildAccountingContext(data, month, year);
+    addMessage(
+      'assistant',
+      `${context.monthLabel} accounting summary: ${context.filteredJournalGroups.length} journal entries, ${context.ledgerSections.length} ledger accounts, trial balance debit ${formatCurrency(context.totalDebits)} and credit ${formatCurrency(context.totalCredits)}. Net profit/loss is ${formatCurrency(context.netProfit)}. Balance sheet has ${context.balanceSheet.assets.length} asset lines, ${context.balanceSheet.liabilities.length} liability lines, and ${context.balanceSheet.equity.length} equity lines.`,
+    );
+  };
+
+  const answerTrialBalance = (month = currentMonthYear().month, year = currentMonthYear().year) => {
+    const context = buildAccountingContext(data, month, year);
+    if (!context.trialBalanceRows.length) {
+      addMessage('assistant', `No trial balance rows are available for ${context.monthLabel}.`);
+      return;
+    }
+
+    const topRows = context.trialBalanceRows
+      .slice(0, 8)
+      .map((row) => `${row.account}: Dr ${formatCurrency(row.debit)} / Cr ${formatCurrency(row.credit)}`)
+      .join('\n');
+
+    addMessage(
+      'assistant',
+      `Trial balance for ${context.monthLabel}\nTotal debit: ${formatCurrency(context.totalDebits)}\nTotal credit: ${formatCurrency(context.totalCredits)}\nDifference: ${formatCurrency(Math.abs(context.totalDebits - context.totalCredits))}\n\nTop rows:\n${topRows}`,
+    );
+  };
+
+  const answerGeneralLedger = (accountQuery = '', month = currentMonthYear().month, year = currentMonthYear().year) => {
+    const context = buildAccountingContext(data, month, year);
+    const target = normalize(accountQuery);
+    const sections = target
+      ? context.ledgerSections.filter((section) => normalize(section.account).includes(target) || target.includes(normalize(section.account)))
+      : context.ledgerSections;
+
+    if (!sections.length) {
+      addMessage('assistant', `No general ledger activity found for ${accountQuery ? `“${accountQuery}” in ` : ''}${context.monthLabel}.`);
+      return;
+    }
+
+    const lines = sections.slice(0, 6).map((section) => {
+      const debit = section.rows.reduce((sum, row) => sum + row.debit, 0);
+      const credit = section.rows.reduce((sum, row) => sum + row.credit, 0);
+      return `${section.account}: opening ${formatCurrency(section.openingBalance)}, debit ${formatCurrency(debit)}, credit ${formatCurrency(credit)}, closing ${formatCurrency(section.closingBalance)} (${section.rows.length} movement${section.rows.length === 1 ? '' : 's'})`;
+    });
+
+    addMessage('assistant', `General ledger for ${context.monthLabel}:\n${lines.join('\n')}`);
+  };
+
+  const exportAccountingPdf = (reportType: 'trial_balance' | 'general_ledger' | 'account_books', month = currentMonthYear().month, year = currentMonthYear().year) => {
+    const context = buildAccountingContext(data, month, year);
+    const commonPayload = {
+      companyName: data.profile.companyName,
+      monthLabel: context.monthLabel,
+      businessAddress: data.profile.studioAddress || data.profile.city || 'Business address not set yet',
+      businessPhone: data.profile.phone || undefined,
+      gstNumber: data.profile.gstNumber || undefined,
+      workspaceLogoUrl: data.profile.workspaceLogoUrl || undefined,
+      poweredByText: 'Powered by PULA Biz',
+    };
+
+    if (reportType === 'account_books') {
+      printMonthEndClosePackage(`Account Books Report - ${context.monthLabel}`, {
+        ...commonPayload,
+        checklist: context.checklist,
+        profitAndLoss: context.profitAndLossRows,
+        balanceSheet: context.balanceSheet,
+        cashFlow: context.cashFlow,
+        generalLedger: context.generalLedger,
+      });
+      addMessage('assistant', `Opened the ${context.monthLabel} account books PDF preview. Use “Print / Save as PDF” in the preview window to download it.`);
+      return;
+    }
+
+    if (reportType === 'trial_balance') {
+      printAccountingReport(`Trial Balance - ${context.monthLabel}`, {
+        ...commonPayload,
+        sections: [
+          {
+            title: 'Trial Balance',
+            columns: ['Account', 'Debit', 'Credit'],
+            rows: context.trialBalanceRows.map((row) => [row.account, formatCurrency(row.debit), formatCurrency(row.credit)]),
+          },
+          {
+            title: 'Trial Balance Totals',
+            columns: ['Total', 'Debit', 'Credit'],
+            rows: [['Closing totals', formatCurrency(context.totalDebits), formatCurrency(context.totalCredits)]],
+          },
+        ],
+      });
+      addMessage('assistant', `Opened the ${context.monthLabel} trial balance PDF preview. Use “Print / Save as PDF” in the preview window to download it.`);
+      return;
+    }
+
+    printAccountingReport(`General Ledger - ${context.monthLabel}`, {
+      ...commonPayload,
+      sections: context.ledgerSections.map((section) => ({
+        title: section.account,
+        columns: ['Date', 'Particulars', 'Debit', 'Credit', 'Closing'],
+        rows: [
+          ['Opening balance', '', '', '', formatCurrency(section.openingBalance)],
+          ...section.rows.map((row) => [
+            new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(row.date)),
+            row.particulars,
+            row.debit ? formatCurrency(row.debit) : '',
+            row.credit ? formatCurrency(row.credit) : '',
+            '',
+          ]),
+          ['Closing balance', '', '', '', formatCurrency(section.closingBalance)],
+        ],
+      })),
+    });
+    addMessage('assistant', `Opened the ${context.monthLabel} general ledger PDF preview. Use “Print / Save as PDF” in the preview window to download it.`);
+  };
+
   const updateInventoryStock = async (productQuery: string, stock: number) => {
     if (!canWrite) {
       addMessage('assistant', 'Only a business owner can update inventory from the assistant.');
@@ -370,6 +598,26 @@ export const AIBusinessAssistant = ({
 
     if (intent.action === 'delete_inventory_item') {
       prepareDeleteInventoryItem(intent.productQuery);
+      return;
+    }
+
+    if (intent.action === 'accounting_summary') {
+      answerAccountingSummary(intent.month, intent.year);
+      return;
+    }
+
+    if (intent.action === 'trial_balance') {
+      answerTrialBalance(intent.month, intent.year);
+      return;
+    }
+
+    if (intent.action === 'general_ledger') {
+      answerGeneralLedger(intent.accountQuery, intent.month, intent.year);
+      return;
+    }
+
+    if (intent.action === 'export_accounting_pdf') {
+      exportAccountingPdf(intent.reportType, intent.month, intent.year);
       return;
     }
 

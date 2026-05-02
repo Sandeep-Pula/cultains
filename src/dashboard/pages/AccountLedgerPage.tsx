@@ -48,13 +48,13 @@ type AccountLedgerPageProps = {
 
 type BookView = 'journal' | 'ledger' | 'trial-balance';
 
-type JournalLine = {
+export type JournalLine = {
   account: string;
   debit: number;
   credit: number;
 };
 
-type JournalGroup = {
+export type JournalGroup = {
   id: string;
   financeEntryId?: string;
   date: string;
@@ -66,7 +66,7 @@ type JournalGroup = {
   deletable: boolean;
 };
 
-type LedgerRow = {
+export type LedgerRow = {
   entryId: string;
   financeEntryId?: string;
   date: string;
@@ -78,14 +78,14 @@ type LedgerRow = {
   deletable: boolean;
 };
 
-type LedgerSection = {
+export type LedgerSection = {
   account: string;
   openingBalance: number;
   rows: LedgerRow[];
   closingBalance: number;
 };
 
-type TrialBalanceRow = {
+export type TrialBalanceRow = {
   account: string;
   debit: number;
   credit: number;
@@ -96,7 +96,7 @@ type BookInsight =
   | { type: 'ledger'; title: string; subtitle: string; lines: JournalLine[]; detail: string; deletable: boolean; financeEntryId?: string }
   | { type: 'trial-balance'; title: string; subtitle: string; lines: JournalLine[]; detail: string; account: string; deletable?: false; financeEntryId?: undefined };
 
-type StatementRow = {
+export type StatementRow = {
   label: string;
   amount: number;
 };
@@ -125,7 +125,7 @@ type WeeklyMiscForm = {
   notes: string;
 };
 
-const monthNames = [
+export const monthNames = [
   'January',
   'February',
   'March',
@@ -241,7 +241,7 @@ const getExpenseAccount = (entry: FinanceEntry) => {
   return 'Operating Expense';
 };
 
-const buildFinanceJournalGroup = (entry: FinanceEntry, customers: CustomerProject[]): JournalGroup | null => {
+export const buildFinanceJournalGroup = (entry: FinanceEntry, customers: CustomerProject[]): JournalGroup | null => {
   if (entry.sourceInvoiceId) {
     return null;
   }
@@ -282,7 +282,7 @@ const buildFinanceJournalGroup = (entry: FinanceEntry, customers: CustomerProjec
   };
 };
 
-const buildSalesSummaryJournalGroups = (salesInvoices: SalesInvoice[], inventory: InventoryItem[]) => {
+export const buildSalesSummaryJournalGroups = (salesInvoices: SalesInvoice[], inventory: InventoryItem[]) => {
   const inventoryIndex = new Map(inventory.map((item) => [item.id, item]));
   const grouped = new Map<string, SalesInvoice[]>();
   const now = new Date();
@@ -353,7 +353,7 @@ const buildSalesSummaryJournalGroups = (salesInvoices: SalesInvoice[], inventory
     .filter((group) => group.lines.length > 0);
 };
 
-const buildLedgerSections = (groups: JournalGroup[], month: number, year: number) => {
+export const buildLedgerSections = (groups: JournalGroup[], month: number, year: number) => {
   const accountRows = new Map<string, LedgerRow[]>();
 
   groups
@@ -402,7 +402,7 @@ const buildLedgerSections = (groups: JournalGroup[], month: number, year: number
     .sort((left, right) => left.account.localeCompare(right.account));
 };
 
-const buildTrialBalance = (groups: JournalGroup[], month: number, year: number) => {
+export const buildTrialBalance = (groups: JournalGroup[], month: number, year: number) => {
   const { end } = getMonthRange(month, year);
   const totals = new Map<string, number>();
 
@@ -432,7 +432,7 @@ const liabilityAccounts = new Set(['Accounts Payable', 'Output Tax Payable', 'Ba
 
 const sumRows = (rows: StatementRow[]) => rows.reduce((sum, row) => sum + row.amount, 0);
 
-const buildProfitAndLoss = (groups: JournalGroup[]) => {
+export const buildProfitAndLoss = (groups: JournalGroup[]) => {
   const revenues = new Map<string, number>();
   const expenses = new Map<string, number>();
 
@@ -461,7 +461,7 @@ const buildProfitAndLoss = (groups: JournalGroup[]) => {
   ];
 };
 
-const buildBalanceSheet = (rows: TrialBalanceRow[], netProfit: number) => {
+export const buildBalanceSheet = (rows: TrialBalanceRow[], netProfit: number) => {
   const assets: StatementRow[] = [];
   const liabilities: StatementRow[] = [];
   const equity: StatementRow[] = [];
@@ -489,7 +489,7 @@ const buildBalanceSheet = (rows: TrialBalanceRow[], netProfit: number) => {
   };
 };
 
-const buildCashFlow = (groups: JournalGroup[]) => {
+export const buildCashFlow = (groups: JournalGroup[]) => {
   const operating = new Map<string, number>();
   const investing = new Map<string, number>();
   const financing = new Map<string, number>();
@@ -523,7 +523,7 @@ const buildCashFlow = (groups: JournalGroup[]) => {
   };
 };
 
-const buildChecklist = (
+export const buildChecklist = (
   monthLabel: string,
   groups: JournalGroup[],
   financeEntries: FinanceEntry[],

@@ -311,6 +311,79 @@ export const printMonthEndClosePackage = (
   printHtml(title, body);
 };
 
+export const printAccountingReport = (
+  title: string,
+  payload: {
+    companyName: string;
+    monthLabel: string;
+    businessAddress: string;
+    businessPhone?: string;
+    gstNumber?: string;
+    workspaceLogoUrl?: string;
+    poweredByText: string;
+    sections: Array<{
+      title: string;
+      columns: string[];
+      rows: Array<Array<string | number>>;
+    }>;
+  },
+) => {
+  const renderSections = payload.sections
+    .map((section) => {
+      const header = section.columns
+        .map((column, index) => `<th${index > 0 ? ' style="text-align:right;"' : ''}>${escapeHtml(column)}</th>`)
+        .join('');
+      const rows = section.rows
+        .map(
+          (row) => `
+            <tr>
+              ${row.map((cell, index) => `<td${index > 0 ? ' style="text-align:right;"' : ''}>${escapeHtml(cell)}</td>`).join('')}
+            </tr>
+          `,
+        )
+        .join('');
+
+      return `
+        <section class="month-end-page">
+          <div class="month-end-section">
+            <div class="invoice-summary">
+              <div class="invoice-summary-row total">
+                <span>${escapeHtml(section.title)}</span>
+                <span></span>
+                <strong>${escapeHtml(payload.monthLabel)}</strong>
+              </div>
+            </div>
+            <table class="invoice-table">
+              <thead><tr>${header}</tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+          <div class="month-end-footer">${escapeHtml(payload.poweredByText)}</div>
+        </section>
+      `;
+    })
+    .join('');
+
+  const body = `
+    <div class="india-invoice">
+      <section class="month-end-page">
+        <div class="invoice-brand">
+          ${payload.workspaceLogoUrl ? `<img src="${escapeHtml(payload.workspaceLogoUrl)}" alt="${escapeHtml(payload.companyName)} logo" class="invoice-logo" />` : ''}
+          <div class="invoice-company">${escapeHtml(payload.companyName)}</div>
+        </div>
+        <div class="invoice-address">${escapeHtml(title)} for ${escapeHtml(payload.monthLabel)}</div>
+        <div class="invoice-address">${escapeHtml(payload.businessAddress)}</div>
+        ${payload.businessPhone ? `<div class="invoice-address">PHONE : ${escapeHtml(payload.businessPhone)}</div>` : ''}
+        ${payload.gstNumber ? `<div class="invoice-address">GSTIN : ${escapeHtml(payload.gstNumber)}</div>` : ''}
+        <div class="month-end-footer">${escapeHtml(payload.poweredByText)}</div>
+      </section>
+      ${renderSections}
+    </div>
+  `;
+
+  printHtml(title, body);
+};
+
 export const printSalesInvoice = (
   invoice: SalesInvoice,
   companyName: string,
