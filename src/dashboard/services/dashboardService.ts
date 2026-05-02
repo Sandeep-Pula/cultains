@@ -593,8 +593,8 @@ export const dashboardService = {
       recentlyViewedIds: [],
       sidebarViews: [],
       billingDefaults: defaultBillingDefaults,
-      workspaceOwnerId: undefined,
-      linkedTeamMemberId: undefined,
+      workspaceOwnerId: user.uid,
+      linkedTeamMemberId: '',
       createdAt: existing.exists() ? String(existing.data().createdAt || timestamp) : timestamp,
       updatedAt: timestamp,
     };
@@ -626,8 +626,8 @@ export const dashboardService = {
       recentlyViewedIds: [],
       sidebarViews: defaultSidebarViews,
       billingDefaults: defaultBillingDefaults,
-      workspaceOwnerId: undefined,
-      linkedTeamMemberId: undefined,
+      workspaceOwnerId: user.uid,
+      linkedTeamMemberId: '',
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -665,8 +665,8 @@ export const dashboardService = {
         defaultPaymentMethod: data.billingDefaults?.defaultPaymentMethod || defaultBillingDefaults.defaultPaymentMethod,
         defaultInvoiceNotes: data.billingDefaults?.defaultInvoiceNotes || defaultBillingDefaults.defaultInvoiceNotes,
       },
-      workspaceOwnerId: data.workspaceOwnerId,
-      linkedTeamMemberId: data.linkedTeamMemberId,
+      workspaceOwnerId: data.workspaceOwnerId || fallbackProfile.workspaceOwnerId,
+      linkedTeamMemberId: data.linkedTeamMemberId || fallbackProfile.linkedTeamMemberId,
       createdAt: data.createdAt || timestamp,
       updatedAt: timestamp,
     };

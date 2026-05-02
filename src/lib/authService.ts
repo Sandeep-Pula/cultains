@@ -10,11 +10,10 @@ import {
 } from 'firebase/auth';
 import { deleteApp, initializeApp } from 'firebase/app';
 import { auth, firebaseConfig } from './firebase';
+import { isSuperAdminEmail } from './adminRouting';
 import { dashboardService } from '../dashboard/services/dashboardService';
 
-const SUPER_ADMIN_EMAIL = 'superadmin@pulalabs.com';
 const SUPER_ADMIN_PASSWORD = 'Idi_Yaparam@1';
-const isSuperAdminEmail = (email: string) => email.trim().toLowerCase() === SUPER_ADMIN_EMAIL;
 
 const requireAuth = () => {
   if (!auth) {
