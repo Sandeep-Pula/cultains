@@ -4,7 +4,9 @@ import {
   Boxes,
   Check,
   Crown,
+  Handshake,
   LayoutDashboard,
+  ShieldCheck,
 } from 'lucide-react';
 import { ProductWordmark } from './BrandWordmark';
 import styles from './PricingPage.module.css';
@@ -17,62 +19,85 @@ const fadeUp = {
 };
 
 const trialHighlights = [
-  '1 month free trial for every workspace',
-  'Free onboarding and training support if needed',
-  'Monthly per-account billing starts after the trial',
+  'First month free trial',
+  'Free onboarding and migration',
+  'Complaints and grievance portal',
 ];
 
 const plans = [
   {
-    name: 'Biz Starter',
-    badge: 'Trial launch',
-    monthly: '%%%%',
-    annual: '%%%%',
-    cadence: 'per account / month',
+    name: 'Starter',
+    badge: 'Focused setup',
+    price: '₹999',
+    cadence: '/ month',
+    tools: '3 tools',
+    credits: '50 AI credits / month',
     accent: 'starter',
-    intro: 'For businesses starting with a focused operating setup.',
+    intro: 'For owner-led businesses that want to begin with the most important dashboard tools.',
     highlights: [
-      'Choose a focused starting setup',
-      'Good for owner-led teams and first branches',
-      'Clean foundation for first-time digital adoption',
+      'Choose 3 tools from the dashboard',
+      'Limited usability for controlled MVP adoption',
+      '50 AI credits included every month',
+      'Best for testing PULA Biz with a small operating workflow',
     ],
-    why: 'A practical first step for bringing business operations into one OS.',
+    why: 'A practical entry point for businesses that want structure before scaling usage.',
     icon: BadgeIndianRupee,
   },
   {
-    name: 'Biz Growth',
+    name: 'Growth',
     badge: 'Most popular',
-    monthly: '%%%%',
-    annual: '%%%%',
-    cadence: 'per account / month',
+    price: '₹2,999',
+    cadence: '/ month',
+    tools: '6 tools total',
+    credits: '100 AI credits / month',
     accent: 'growth',
-    intro: 'For growing teams that need a wider operating rollout.',
+    intro: 'For growing teams ready to connect more workflows with no usage restriction.',
     highlights: [
-      'Choose more core tools beyond your Starter setup',
-      'Up to 3 team members included',
-      'Best fit for retail shops, service teams, and growing local brands',
-      'Easy upgrade path as the business grows',
+      'Add the next 3 selected dashboard tools',
+      'Unlimited usability inside selected tools',
+      '100 AI credits included every month',
+      'Good fit for growing shops, service teams, and local brands',
     ],
-    why: 'The best fit for teams ready to connect more of the business.',
+    why: 'A balanced plan for teams that need daily usage without jumping into every module.',
     icon: Boxes,
   },
   {
-    name: 'Biz Premium',
-    badge: 'Scale confidently',
-    monthly: '%%%%',
-    annual: '%%%%',
-    cadence: 'per account / month',
+    name: 'Business Pro',
+    badge: 'Full workspace',
+    price: '₹7,999',
+    cadence: '/ month',
+    tools: 'All tools',
+    credits: '500 AI credits / month',
     accent: 'premium',
-    intro: 'For established businesses rolling out the full operating workspace.',
+    intro: 'For businesses that want the complete PULA Biz dashboard with full operating visibility.',
     highlights: [
-      'Everything across the dashboard included',
-      'Advanced team workflows and access control',
-      'Priority support through Raise an Issue',
-      'Ideal for multi-staff stores and process-heavy operations',
-      'Move up anytime with your existing business data intact',
+      'All available dashboard tools included',
+      'Unlimited usability across the workspace',
+      '500 AI credits included every month',
+      'Best for multi-staff teams and process-heavy operations',
+      'Priority support through the grievance portal',
     ],
-    why: 'Built for businesses that want scale, control, and smoother coordination.',
+    why: 'Built for businesses that want the full operating layer and higher AI capacity.',
     icon: Crown,
+  },
+  {
+    name: 'Enterprise / Franchise',
+    badge: 'Custom plan',
+    price: 'Custom',
+    cadence: '',
+    tools: 'Configured rollout',
+    credits: 'Custom AI credits',
+    accent: 'enterprise',
+    intro: 'For franchises, multi-location businesses, and teams that need custom rollout support.',
+    highlights: [
+      'Custom dashboard/tool configuration',
+      'Franchise or branch-wise operating setup',
+      'Migration and training plan for larger teams',
+      'Custom AI credit limits and support terms',
+      'Commercials based on scope, users, and rollout depth',
+    ],
+    why: 'Designed for businesses that need Pula Labs to shape the product around their operating model.',
+    icon: Handshake,
   },
 ];
 
@@ -96,22 +121,22 @@ export const PricingPage = () => {
             Pricing for PULA Biz
           </motion.div>
           <motion.h1 className={styles.title} {...fadeUp}>
-            Simple plans for running the business from one operating system.
+            Pricing that starts simple and scales with your business.
           </motion.h1>
           <motion.p className={styles.lead} {...fadeUp}>
-            Start with a 1 month free trial and free training support. After that, keep CRM, billing, inventory,
-            finance, teams, operations, and AI tools connected through <ProductWordmark />.
+            Start with a free first month, choose the dashboard tools your business needs, and keep AI usage flexible
+            with monthly credits inside <ProductWordmark />.
           </motion.p>
         </div>
       </section>
 
       <section className={styles.offerSection}>
         <motion.div className={styles.offerCard} {...fadeUp}>
-          <div className={styles.offerBadge}>Start with zero risk</div>
-          <h2 className={styles.offerTitle}>Get 1 month free trial plus Biz onboarding support.</h2>
+          <div className={styles.offerBadge}>Included with every plan</div>
+          <h2 className={styles.offerTitle}>Start with support, not confusion.</h2>
           <p className={styles.offerLead}>
-            Start using the operating system first. If your team needs onboarding help, training support is included
-            during the trial.
+            Every business gets a first month trial, onboarding help, migration support, and access to the complaints
+            and grievance portal from day one.
           </p>
           <div className={styles.offerPoints}>
             {trialHighlights.map((item) => (
@@ -129,7 +154,8 @@ export const PricingPage = () => {
           <div className={styles.planIntroEyebrow}>After the trial</div>
           <h2 className={styles.planIntroTitle}>Choose the Biz plan that fits your team.</h2>
           <p className={styles.planIntroText}>
-            Monthly pricing is charged per account. The values below are masked for now.
+            Plans are monthly. AI credits are included up to the plan limit and billed separately on a pay-as-you-go
+            basis if exceeded.
           </p>
         </motion.div>
         <div className={styles.planGrid}>
@@ -152,12 +178,12 @@ export const PricingPage = () => {
                 <h2 className={styles.planName}>{plan.name}</h2>
                 <div className={styles.priceBlock}>
                   <div className={styles.priceRow}>
-                    <span className={styles.price}>{plan.monthly}</span>
+                    <span className={styles.price}>{plan.price}</span>
                     <span className={styles.cadence}>{plan.cadence}</span>
                   </div>
-                  <div className={styles.annualRow}>
-                    Monthly account pricing: {plan.monthly}
-                    {' '}• annual reference: {plan.annual}
+                  <div className={styles.planMetaGrid}>
+                    <span>{plan.tools}</span>
+                    <span>{plan.credits}</span>
                   </div>
                 </div>
 
@@ -183,21 +209,21 @@ export const PricingPage = () => {
         <motion.div className={styles.aiCard} {...fadeUp}>
           <div className={styles.aiTop}>
             <div className={styles.aiIcon}>
-              <LayoutDashboard size={20} />
+              <ShieldCheck size={20} />
             </div>
             <div>
-              <div className={styles.aiEyebrow}>AI tools and credits</div>
-              <h2 className={styles.aiTitle}>AI usage can stay flexible inside Biz</h2>
+              <div className={styles.aiEyebrow}>AI credits and overage</div>
+              <h2 className={styles.aiTitle}>Use included credits first. Pay separately only if you exceed them.</h2>
             </div>
           </div>
           <p className={styles.aiLead}>
-            Use AI credits only when you need them. This keeps the main Biz subscription simple, while giving
-            your team freedom to use AI workflows, assistants, and generation tools on a pay-as-you-go basis.
+            Starter includes 50 credits, Growth includes 100 credits, and Business Pro includes 500 credits every month.
+            If a team crosses its monthly limit, additional AI credits are billed separately as pay-as-you-go usage.
           </p>
           <div className={styles.aiPoints}>
-            <div className={styles.aiPoint}><Check size={16} /> Separate from monthly subscription</div>
-            <div className={styles.aiPoint}><Check size={16} /> Buy credits as your team needs them</div>
-            <div className={styles.aiPoint}><Check size={16} /> Better cost control for business owners</div>
+            <div className={styles.aiPoint}><LayoutDashboard size={16} /> Credits reset monthly</div>
+            <div className={styles.aiPoint}><Check size={16} /> Overage billed separately</div>
+            <div className={styles.aiPoint}><Check size={16} /> Better cost control for owners</div>
           </div>
         </motion.div>
       </section>
