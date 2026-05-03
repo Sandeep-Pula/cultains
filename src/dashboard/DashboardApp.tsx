@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Building2 } from 'lucide-react';
 import { auth } from '../lib/firebase';
 import { authService } from '../lib/authService';
 import { createId } from '../lib/id';
@@ -201,6 +201,7 @@ export const DashboardApp = () => {
   const isSuperAdminIdentity = isSuperAdminEmail(user?.email);
   const isSuperAdmin = data?.profile.accountType === 'super_admin' || isSuperAdminIdentity;
   const isOwner = isOwnerAccount(data?.profile.accountType);
+  const requiresProfileSetup = Boolean(data && isOwner && !isSuperAdmin && !data.profile.profileSetupCompleted);
   const allowedViews = filterDashboardViews(data?.profile.sidebarViews);
   const navigableViews: DashboardView[] = useMemo(
     () => (
@@ -1211,6 +1212,14 @@ export const DashboardApp = () => {
               </div>
             </div>
           ) : null}
+          {requiresProfileSetup && activeView === 'profile' ? (
+            <div className="mb-4 rounded-[24px] border border-brand-30 bg-white px-4 py-3 text-sm text-brand-dark shadow-sm">
+              <div className="font-semibold">Complete your business profile to unlock the workspace</div>
+              <div className="mt-1 text-brand-dark/70">
+                Add your business type, contact number, city, address, and team size, then save the profile.
+              </div>
+            </div>
+          ) : null}
           {activeView === 'sales-overview' ? (
             <SalesOverviewPage
               companyName={data.profile.companyName}
@@ -1369,6 +1378,34 @@ export const DashboardApp = () => {
           )}
         </main>
       </div>
+      {requiresProfileSetup && activeView !== 'profile' ? (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-brand-dark/45 px-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="profile-setup-title"
+        >
+          <div className="w-full max-w-xl rounded-[32px] border border-brand-30 bg-white p-6 shadow-2xl sm:p-8">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-60 text-brand-10">
+              <Building2 size={26} aria-hidden="true" />
+            </div>
+            <h2 id="profile-setup-title" className="mt-5 text-3xl font-semibold tracking-tight text-brand-dark">
+              Set up your business profile
+            </h2>
+            <p className="mt-3 text-base leading-7 text-brand-dark/70">
+              Before using the dashboard, complete your business profile so PULA Biz can personalize the workspace, sidebar, billing details, and reports for your business.
+            </p>
+            <button
+              type="button"
+              onClick={() => handleNavigate(dashboardHash('profile'))}
+              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-10 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-10/20 transition hover:bg-brand-dark focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-10/25 sm:w-auto"
+            >
+              Visit profile setup
+              <ArrowRight size={18} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      ) : null}
       <ToastStack toasts={toasts} />
       <CustomerDrawer
         customer={selectedCustomer}

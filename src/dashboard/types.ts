@@ -201,6 +201,7 @@ export interface WorkspaceProfile {
   gstNumber: string;
   teamSize: string;
   website: string;
+  profileSetupCompleted: boolean;
   subscriptionPlan: 'freemium';
   subscriptionStatus: 'active';
   renewalDate: string;

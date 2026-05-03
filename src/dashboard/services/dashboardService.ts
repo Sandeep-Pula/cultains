@@ -63,6 +63,7 @@ type UserProfileDoc = {
   gstNumber: string;
   teamSize: string;
   website: string;
+  profileSetupCompleted?: boolean;
   subscriptionPlan: 'freemium';
   subscriptionStatus: 'active';
   renewalDate: string;
@@ -168,6 +169,7 @@ const buildWorkspaceProfile = (user: User, profile?: Partial<UserProfileDoc>): W
   gstNumber: profile?.gstNumber?.trim() || '',
   teamSize: profile?.teamSize?.trim() || '',
   website: profile?.website?.trim() || '',
+  profileSetupCompleted: Boolean(profile?.profileSetupCompleted),
   subscriptionPlan: 'freemium',
   subscriptionStatus: 'active',
   renewalDate: profile?.renewalDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -181,6 +183,23 @@ const buildWorkspaceProfile = (user: User, profile?: Partial<UserProfileDoc>): W
   workspaceOwnerId: profile?.workspaceOwnerId,
   linkedTeamMemberId: profile?.linkedTeamMemberId,
 });
+
+const isWorkspaceProfileSetupComplete = (
+  profile: Pick<UserProfileDoc, 'companyName' | 'userName' | 'businessType' | 'phone' | 'city' | 'studioAddress' | 'teamSize'>,
+) => {
+  const phone = profile.phone.replace(/\D/g, '');
+  const teamSize = profile.teamSize.replace(/\D/g, '');
+
+  return Boolean(
+    profile.companyName.trim() &&
+      profile.userName.trim() &&
+      String(profile.businessType).trim() &&
+      phone.length === 10 &&
+      profile.city.trim() &&
+      profile.studioAddress.trim() &&
+      teamSize,
+  );
+};
 
 const emptyDashboardData = (user: User, profile?: Partial<UserProfileDoc>): DashboardData => ({
   companyName: profile?.companyName?.trim() || getCompanyName(user),
@@ -588,6 +607,7 @@ export const dashboardService = {
       gstNumber: '',
       teamSize: '',
       website: 'https://pulalabs.com',
+      profileSetupCompleted: true,
       subscriptionPlan: 'freemium',
       subscriptionStatus: 'active',
       renewalDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
@@ -621,6 +641,7 @@ export const dashboardService = {
       gstNumber: '',
       teamSize: '',
       website: '',
+      profileSetupCompleted: false,
       subscriptionPlan: 'freemium',
       subscriptionStatus: 'active',
       renewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -655,6 +676,17 @@ export const dashboardService = {
       gstNumber: data.gstNumber?.trim() || fallbackProfile.gstNumber,
       teamSize: data.teamSize?.trim() || fallbackProfile.teamSize,
       website: data.website?.trim() || fallbackProfile.website,
+      profileSetupCompleted:
+        data.profileSetupCompleted ??
+        isWorkspaceProfileSetupComplete({
+          companyName: data.companyName?.trim() || fallbackProfile.companyName,
+          userName: data.userName?.trim() || fallbackProfile.userName,
+          businessType: data.businessType || fallbackProfile.businessType,
+          phone: data.phone?.trim() || fallbackProfile.phone,
+          city: data.city?.trim() || fallbackProfile.city,
+          studioAddress: data.studioAddress?.trim() || fallbackProfile.studioAddress,
+          teamSize: data.teamSize?.trim() || fallbackProfile.teamSize,
+        }),
       subscriptionPlan: 'freemium',
       subscriptionStatus: 'active',
       renewalDate: data.renewalDate || fallbackProfile.renewalDate,
@@ -950,11 +982,14 @@ export const dashboardService = {
       | 'billingDefaults'
     >,
   ) {
+    const profileSetupCompleted = isWorkspaceProfileSetupComplete(profile);
+
     await setDoc(
       userDoc(userId),
       {
         userId,
         ...profile,
+        profileSetupCompleted,
         subscriptionPlan: 'freemium',
         subscriptionStatus: 'active',
         updatedAt: nowIso(),
