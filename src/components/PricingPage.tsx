@@ -107,7 +107,7 @@ const plans = [
 export const PricingPage = () => {
   return (
     <div className={styles.page}>
-      <section className={styles.hero}>
+      <section className={styles.hero} aria-labelledby="pricing-title">
         <div className={styles.pricingAnimation} aria-hidden="true">
           <span className={styles.redShape} />
           <span className={styles.blueShape} />
@@ -123,7 +123,7 @@ export const PricingPage = () => {
           <motion.div className={styles.eyebrow} {...fadeUp}>
             Pricing for PULA Biz
           </motion.div>
-          <motion.h1 className={styles.title} {...fadeUp}>
+          <motion.h1 id="pricing-title" className={styles.title} {...fadeUp}>
             Pricing that starts simple and scales with your business.
           </motion.h1>
           <motion.p className={styles.lead} {...fadeUp}>
@@ -137,10 +137,10 @@ export const PricingPage = () => {
         </div>
       </section>
 
-      <section className={styles.offerSection}>
+      <section className={styles.offerSection} aria-labelledby="pricing-included-title">
         <motion.div className={styles.offerCard} {...fadeUp}>
           <div className={styles.offerBadge}>Included with every plan</div>
-          <h2 className={styles.offerTitle}>Start with support, not confusion.</h2>
+          <h2 id="pricing-included-title" className={styles.offerTitle}>Start with support, not confusion.</h2>
           <p className={styles.offerLead}>
             Every business gets a first month trial, onboarding help, migration support, and access to the complaints
             and grievance portal from day one.
@@ -156,10 +156,10 @@ export const PricingPage = () => {
         </motion.div>
       </section>
 
-      <section className={styles.planSection}>
+      <section className={styles.planSection} aria-labelledby="pricing-plans-title">
         <motion.div className={styles.planIntroBlock} {...fadeUp}>
           <div className={styles.planIntroEyebrow}>After the trial</div>
-          <h2 className={styles.planIntroTitle}>Choose the Biz plan that fits your team.</h2>
+          <h2 id="pricing-plans-title" className={styles.planIntroTitle}>Choose the Biz plan that fits your team.</h2>
           <p className={styles.planIntroText}>
             Plans are monthly and billed per business owner. Staff accounts are charged separately at ₹299 per user
             per month. AI credits are included up to the plan limit and billed separately on a pay-as-you-go basis if
@@ -213,7 +213,7 @@ export const PricingPage = () => {
         </div>
       </section>
 
-      <section className={styles.aiSection}>
+      <section className={styles.aiSection} aria-labelledby="pricing-ai-title">
         <motion.div className={styles.aiCard} {...fadeUp}>
           <div className={styles.aiTop}>
             <div className={styles.aiIcon}>
@@ -221,7 +221,7 @@ export const PricingPage = () => {
             </div>
             <div>
               <div className={styles.aiEyebrow}>AI credits and overage</div>
-              <h2 className={styles.aiTitle}>Use included credits first. Pay separately only if you exceed them.</h2>
+              <h2 id="pricing-ai-title" className={styles.aiTitle}>Use included credits first. Pay separately only if you exceed them.</h2>
             </div>
           </div>
           <p className={styles.aiLead}>

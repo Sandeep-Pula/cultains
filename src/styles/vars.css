@@ -40,7 +40,7 @@
 
   /* Typography */
   --font-serif: 'Fraunces', serif;
-  --font-sans: 'Sora', sans-serif;
+  --font-sans: Verdana, Arial, Helvetica, sans-serif;
 
   /* Glassmorphism */
   --glass-bg: rgba(255, 255, 255, 0.78);

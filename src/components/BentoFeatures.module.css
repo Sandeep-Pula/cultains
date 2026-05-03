@@ -30,7 +30,7 @@
   color: var(--color-brand-dark);
   font-size: clamp(2rem, 4.3vw, 3.8rem);
   line-height: 1.04;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 .stepsGrid {

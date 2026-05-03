@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, MotionConfig } from 'framer-motion';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { auth, firebaseStatus } from './lib/firebase';
@@ -154,7 +154,12 @@ function App() {
   }, [authReady, hash, user]);
 
   return (
-    <div className={styles.appContainer}>
+    <MotionConfig reducedMotion="user">
+      <div className={styles.appContainer}>
+      <a className={styles.skipLink} href="#main-content">
+        Skip to main content
+      </a>
+
       {!isDashboardPage && !adminHost ? <Navbar /> : null}
 
       {!isDashboardPage && !adminHost ? (
@@ -166,7 +171,7 @@ function App() {
         />
       ) : null}
 
-      <main>
+      <main id="main-content" tabIndex={-1}>
         {isDashboardPage && !authReady ? (
           <DashboardSkeleton />
         ) : showSetupGuide ? (
@@ -189,7 +194,8 @@ function App() {
           <PublicHome authMode={isSignupPage ? 'signup' : 'login'} showAuth={isAuthPage} />
         )}
       </main>
-    </div>
+      </div>
+    </MotionConfig>
   );
 }
 

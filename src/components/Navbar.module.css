@@ -29,7 +29,7 @@
   font-weight: 400;
   font-size: 1.5rem;
   color: var(--color-brand-dark);
-  letter-spacing: -0.05em;
+  letter-spacing: 0;
   text-decoration: none;
 }
 
@@ -50,7 +50,7 @@
 }
 
 .logoText {
-  font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
   line-height: 1;
 }
 
@@ -75,10 +75,16 @@
   color: var(--color-brand-30-strong);
 }
 
+.link[aria-current='page'] {
+  opacity: 1;
+  color: var(--color-brand-10);
+}
+
 .ctaLink {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.45rem;
   min-height: 2.8rem;
   padding: 0.65rem 1rem;
   border-radius: 999px;
@@ -88,6 +94,41 @@
   font-size: 0.95rem;
   font-weight: 600;
   box-shadow: 0 16px 28px rgba(15, 14, 71, 0.2);
+}
+
+.navActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.navLoginButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.8rem;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  background: rgba(18, 53, 91, 0.09);
+  border: 1px solid rgba(18, 53, 91, 0.14);
+  color: var(--color-brand-10);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.ctaLink span,
+.ctaLink svg,
+.navLoginButton span {
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.ctaLink:hover span,
+.navLoginButton:hover span {
+  transform: translateY(-1px);
+}
+
+.ctaLink:hover svg {
+  transform: translateX(3px);
 }
 
 @media (max-width: 720px) {
@@ -100,6 +141,11 @@
   .links {
     flex-wrap: wrap;
     gap: 0.75rem;
+  }
+
+  .navActions {
+    width: 100%;
+    flex-wrap: wrap;
   }
 
   .logoText {

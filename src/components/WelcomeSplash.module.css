@@ -48,7 +48,7 @@
   color: var(--color-brand-dark);
   font-size: clamp(2.7rem, 6vw, 5.8rem);
   line-height: 0.96;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 .subtitle {

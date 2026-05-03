@@ -43,7 +43,7 @@
   margin-top: 1rem;
   font-size: clamp(2.1rem, 5vw, 3.7rem);
   line-height: 1.04;
-  letter-spacing: -0.05em;
+  letter-spacing: 0;
   color: var(--color-brand-dark);
 }
 

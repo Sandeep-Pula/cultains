@@ -46,6 +46,7 @@
   left: -3rem;
   top: 2rem;
   rotate: 18deg;
+  animation: pricingShapeRed 8s ease-in-out infinite;
 }
 
 .blueShape {
@@ -56,6 +57,7 @@
   right: -2rem;
   top: 0;
   rotate: -16deg;
+  animation: pricingShapeBlue 9s ease-in-out infinite;
 }
 
 .redRing {
@@ -66,6 +68,7 @@
   right: 22%;
   top: 3rem;
   background: transparent;
+  animation: pricingRing 10s ease-in-out infinite;
 }
 
 .heroCopy {
@@ -166,7 +169,7 @@
   font-family: var(--font-serif);
   font-size: clamp(2rem, 4vw, 3.5rem);
   line-height: 1;
-  letter-spacing: -0.05em;
+  letter-spacing: 0;
 }
 
 .offerLead {
@@ -247,6 +250,20 @@
   border: 1px solid var(--os-line);
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 20px 60px rgba(31, 34, 94, 0.08);
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+}
+
+.planCard:hover {
+  transform: translateY(-6px);
+  border-color: rgba(18, 53, 91, 0.46);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(238, 246, 251, 0.96));
+  box-shadow: 0 28px 88px rgba(18, 53, 91, 0.18);
+}
+
+.planCard:focus-within {
+  border-color: rgba(18, 53, 91, 0.46);
+  box-shadow: 0 28px 88px rgba(18, 53, 91, 0.18);
 }
 
 .starter {
@@ -260,8 +277,9 @@
 }
 
 .premium {
-  background: linear-gradient(180deg, #12355b, #252456);
-  color: white;
+  background: linear-gradient(180deg, #ffffff, rgba(18, 53, 91, 0.045));
+  color: var(--os-ink);
+  border-color: rgba(18, 53, 91, 0.22);
 }
 
 .enterprise {
@@ -296,7 +314,8 @@
 
 .premium .planBadge,
 .enterprise .planBadge {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(18, 53, 91, 0.08);
+  color: var(--os-blue);
 }
 
 .enterprise .planBadge {
@@ -314,7 +333,8 @@
 }
 
 .premium .planIcon {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(18, 53, 91, 0.1);
+  color: var(--os-blue);
 }
 
 .enterprise .planIcon {
@@ -369,11 +389,11 @@
 
 .premium .planMetaGrid span,
 .premium .cadence {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--os-blue);
 }
 
 .premium .planMetaGrid span {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(18, 53, 91, 0.08);
 }
 
 .planIntro {
@@ -383,7 +403,7 @@
 }
 
 .premium .planIntro {
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--os-body);
 }
 
 .featureList {
@@ -417,8 +437,8 @@
 }
 
 .premium .planNote {
-  border-top-color: rgba(255, 255, 255, 0.18);
-  color: rgba(255, 255, 255, 0.82);
+  border-top-color: var(--os-line);
+  color: var(--os-body);
 }
 
 .aiSection {
@@ -526,5 +546,52 @@
 
   .aiTop {
     align-items: flex-start;
+  }
+}
+
+@keyframes pricingShapeRed {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(18deg);
+  }
+  50% {
+    transform: translate3d(2.8rem, 1.6rem, 0) rotate(42deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(18deg);
+  }
+}
+
+@keyframes pricingShapeBlue {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-16deg);
+  }
+  50% {
+    transform: translate3d(-2.2rem, 2rem, 0) rotate(-34deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-16deg);
+  }
+}
+
+@keyframes pricingRing {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-1.8rem, 1.1rem, 0) scale(1.06);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pricingAnimation span {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .planCard:hover {
+    transform: none;
   }
 }

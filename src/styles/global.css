@@ -56,6 +56,11 @@ button {
   cursor: pointer;
 }
 
+button:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
 ul {
   list-style: none;
   padding: 0;
@@ -89,4 +94,35 @@ ul {
 .ui-scrollable {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-logo-red) !important;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(214, 40, 40, 0.16);
+}
+
+main:focus {
+  outline: none;
+}
+
+::selection {
+  background: rgba(214, 40, 40, 0.22);
+  color: var(--color-brand-dark);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
 }

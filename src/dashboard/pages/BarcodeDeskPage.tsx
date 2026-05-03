@@ -43,7 +43,7 @@ const printHtml = (title: string, body: string) => {
       <head>
         <title>${title}</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 24px; color: #1f2937; }
+          body { font-family: Verdana, Arial, Helvetica, sans-serif; margin: 24px; color: #1f2937; }
           h1, h2, h3, p { margin: 0; }
           .sheet { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
           .label { border: 1px solid #d7d5e6; border-radius: 18px; padding: 14px; page-break-inside: avoid; }

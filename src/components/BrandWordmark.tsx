@@ -13,7 +13,7 @@ export const BrandWordmark = ({
   labsClassName,
   showDotCom = false,
 }: BrandWordmarkProps) => (
-  <span className={clsx('inline-flex items-baseline', className)} style={{ fontFamily: 'Verdana, Arial, Helvetica, sans-serif' }}>
+  <span className={clsx('inline-flex items-baseline', className)} style={{ fontFamily: 'var(--font-sans)' }}>
     <span className={clsx(pulaClassName)} style={{ color: 'var(--color-logo-red)', marginRight: '0.25em' }}>
       PULA
     </span>

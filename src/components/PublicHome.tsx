@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import {
-  ArrowRight,
   BadgeIndianRupee,
   Bot,
   Boxes,
@@ -62,17 +61,6 @@ const dashboardServices = [
   'AI tools',
 ];
 
-const openHomepageAuth = (mode: 'login' | 'signup') => {
-  const nextHash = `#${mode}`;
-
-  if (window.location.hash !== nextHash) {
-    window.location.hash = nextHash;
-    return;
-  }
-
-  window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-};
-
 const fadeUp = {
   initial: { opacity: 0, y: 24 },
   whileInView: { opacity: 1, y: 0 },
@@ -83,7 +71,7 @@ const fadeUp = {
 export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeProps) => {
   return (
     <>
-      <section id="top" className={styles.hero}>
+      <section id="top" className={styles.hero} aria-labelledby="home-title">
         <div className={styles.heroAnimation} aria-hidden="true">
           <span className={styles.redBlock} />
           <span className={styles.blueBlock} />
@@ -101,20 +89,11 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
           >
-            <h1>Run the business from one operating system.</h1>
+            <h1 id="home-title">Run the business from one operating system.</h1>
             <p>
               <ProductWordmark /> brings customers, billing, inventory, team work, finance, operations, and AI tools
               into one clean workspace for business owners and teams.
             </p>
-            <div className={styles.heroActions}>
-              <button type="button" className={styles.primaryButton} onClick={() => openHomepageAuth('signup')}>
-                Try PULA Biz
-                <ArrowRight size={18} />
-              </button>
-              <button type="button" className={styles.secondaryButton} onClick={() => openHomepageAuth('login')}>
-                Login
-              </button>
-            </div>
           </motion.div>
 
           <motion.div
@@ -136,19 +115,24 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
                 <p>
                   A command center for daily business work: customers, invoices, stock, teams, operations, and AI tools.
                 </p>
+                <div className={styles.productMetrics} aria-label="PULA Biz operating coverage">
+                  <span>8 dashboard modules</span>
+                  <span>AI-assisted workflows</span>
+                  <span>Owner visibility</span>
+                </div>
               </div>
             )}
           </motion.div>
         </div>
       </section>
 
-      <section id="product" className={styles.productSection}>
+      <section id="product" className={styles.productSection} aria-labelledby="product-title">
         <div className={styles.container}>
           <motion.div className={styles.sectionHeader} {...fadeUp}>
             <span className={styles.eyebrow}>
               <ProductWordmark className={styles.inlineProductWordmark} />
             </span>
-            <h2>One operating layer for the services your dashboard already supports.</h2>
+            <h2 id="product-title">One operating layer for the services your dashboard already supports.</h2>
             <p>
               Biz starts with the work companies do every day. It gives owners a cleaner way to see what is
               happening across customers, sales, billing, stock, team activity, and AI assistance.
@@ -172,12 +156,12 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
         </div>
       </section>
 
-      <section id="tools" className={styles.labSection}>
+      <section id="tools" className={styles.labSection} aria-labelledby="tools-title">
         <div className={styles.container}>
           <div className={styles.labGrid}>
             <motion.div className={styles.labCopy} {...fadeUp}>
               <span className={styles.eyebrow}>Why Biz</span>
-              <h2>Business software should connect the work, not scatter it into separate tools.</h2>
+              <h2 id="tools-title">Business software should connect the work, not scatter it into separate tools.</h2>
               <p>
                 PULA Biz keeps the daily operating layer together so owners can see customers, stock, invoices,
                 finance, teams, and AI assistance in the same environment.
@@ -196,11 +180,11 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
         </div>
       </section>
 
-      <section id="business-os" className={styles.servicesSection}>
+      <section id="business-os" className={styles.servicesSection} aria-labelledby="coverage-title">
         <div className={styles.container}>
           <motion.div className={styles.sectionHeader} {...fadeUp}>
             <span className={styles.eyebrow}>What it covers</span>
-            <h2>Built around the real dashboard services businesses need.</h2>
+            <h2 id="coverage-title">Built around the real dashboard services businesses need.</h2>
           </motion.div>
 
           <div className={styles.serviceGrid}>
@@ -214,7 +198,7 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
         </div>
       </section>
 
-      <footer className={styles.footer}>
+      <footer id="contact" className={styles.footer}>
         <div className={styles.container}>
           <div className={styles.footerTop}>
             <div className={styles.footerBrand}>
@@ -284,7 +268,6 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
 
           <div className={styles.footerBottom}>
             <span>© {new Date().getFullYear()} Pula Labs Private Limited. All rights reserved.</span>
-            <span>PULA Biz is live. PULA Coach is an upcoming product from Pula Labs Private Limited.</span>
             <div className={styles.legalLinks}>
               <a href="https://pulalabs.com/privacy" target="_blank" rel="noreferrer">Privacy</a>
               <a href="https://pulalabs.com/terms" target="_blank" rel="noreferrer">Terms</a>

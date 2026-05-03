@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { authService } from '../lib/authService';
 import { isSuperAdminEmail, redirectToAdminDashboard } from '../lib/adminRouting';
 import { BrandWordmark } from './BrandWordmark';
@@ -15,6 +15,7 @@ export const AuthCard = ({ mode, adminOnly = false }: AuthCardProps) => {
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -115,14 +116,14 @@ export const AuthCard = ({ mode, adminOnly = false }: AuthCardProps) => {
       </p>
 
       {error ? (
-        <div className={styles.messageError}>
+        <div className={styles.messageError} id="auth-error" role="alert">
           <AlertCircle size={16} />
           <span>{error}</span>
         </div>
       ) : null}
 
       {successMsg ? (
-        <div className={styles.messageSuccess}>
+        <div className={styles.messageSuccess} id="auth-success" role="status" aria-live="polite">
           <CheckCircle2 size={16} />
           <span>{successMsg}</span>
         </div>
@@ -146,6 +147,8 @@ export const AuthCard = ({ mode, adminOnly = false }: AuthCardProps) => {
           <span>Email address</span>
           <input
             type="email"
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? 'auth-error' : successMsg ? 'auth-success' : undefined}
             placeholder="you@company.com"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -157,19 +160,32 @@ export const AuthCard = ({ mode, adminOnly = false }: AuthCardProps) => {
         {!isForgotPassword ? (
           <label className={styles.field}>
             <span>Password</span>
-            <input
-              type="password"
-              placeholder="Enter password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete={isSignup ? 'new-password' : 'current-password'}
-              minLength={8}
-              required
-            />
+            <span className={styles.passwordControl}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? 'auth-error password-help' : 'password-help'}
+                placeholder="Enter password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete={isSignup ? 'new-password' : 'current-password'}
+                minLength={8}
+                required
+              />
+              <button
+                type="button"
+                className={styles.passwordToggle}
+                onClick={() => setShowPassword((current) => !current)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </span>
           </label>
         ) : null}
 
-        {!isForgotPassword ? <p className={styles.helperText}>Use at least 8 characters for your password.</p> : null}
+        {!isForgotPassword ? <p className={styles.helperText} id="password-help">Use at least 8 characters for your password.</p> : null}
 
         <button type="submit" className={styles.submitButton} disabled={isSubmitDisabled}>
           {loading ? 'Processing...' : isForgotPassword ? 'Send Reset Link' : isSignup ? 'Create account' : 'Login'}

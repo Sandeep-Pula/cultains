@@ -41,7 +41,7 @@ const buildPrintDocument = (title: string, body: string) => `
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <title>${escapeHtml(title)}</title>
       <style>
-        body { font-family: Arial, sans-serif; margin: 0; color: #000; background: #eef1ff; }
+        body { font-family: Verdana, Arial, Helvetica, sans-serif; margin: 0; color: #000; background: #eef1ff; }
         .preview-shell { min-height: 100vh; padding: 24px; }
         .preview-actions { position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; padding: 14px 18px; border-bottom: 1px solid #d7dcff; background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); }
         .preview-title { font-size: 15px; font-weight: 700; color: #1f2559; letter-spacing: 0.04em; text-transform: uppercase; }
