@@ -296,6 +296,8 @@ export const DashboardApp = () => {
 
   const handleNavigate = (nextHash: string) => {
     window.location.hash = nextHash;
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    window.setTimeout(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }), 80);
   };
 
   const handleOpenCustomer = async (customerId: string) => {
@@ -1200,7 +1202,7 @@ export const DashboardApp = () => {
           desktopSidebarCollapsed={desktopSidebarCollapsed}
           onLogout={handleLogout}
         />
-        <main className="flex-1 p-4 sm:p-6">
+        <main className="flex-1 p-4 sm:p-6" tabIndex={-1}>
           {syncIssue ? (
             <div className="mb-4 rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm">
               <div className="font-semibold">Cloud sync needs attention</div>

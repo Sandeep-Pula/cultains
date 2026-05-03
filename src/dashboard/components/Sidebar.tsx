@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
 import {
-  ArrowDown,
-  ArrowUp,
   Barcode,
   BookOpen,
   CalendarDays,
@@ -10,6 +8,7 @@ import {
   ChevronRight,
   Contact,
   CreditCard,
+  GripVertical,
   History,
   Home,
   LifeBuoy,
@@ -77,6 +76,8 @@ const ManageSidebarModal = ({
   const [draftViews, setDraftViews] = useState<DashboardView[]>(views);
   const [query, setQuery] = useState('');
   const [saving, setSaving] = useState(false);
+  const [draggedView, setDraggedView] = useState<DashboardView | null>(null);
+  const [dropTarget, setDropTarget] = useState<'visible' | 'hidden' | null>(null);
 
   useEffect(() => {
     setDraftViews(views);
@@ -88,24 +89,56 @@ const ManageSidebarModal = ({
   const filteredVisible = draftViews.filter((view) => viewTitles[view].toLowerCase().includes(loweredQuery));
   const filteredHidden = hiddenViews.filter((view) => viewTitles[view].toLowerCase().includes(loweredQuery));
 
-  const moveView = (view: DashboardView, direction: -1 | 1) => {
+  const reorderVisibleView = (view: DashboardView, targetView: DashboardView) => {
+    if (view === targetView) return;
+
     setDraftViews((current) => {
-      const index = current.indexOf(view);
-      if (index === -1) return current;
-      const nextIndex = index + direction;
-      if (nextIndex < 0 || nextIndex >= current.length) return current;
-      const next = [...current];
-      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+      if (!current.includes(view) || !current.includes(targetView)) return current;
+
+      const next = current.filter((item) => item !== view);
+      const targetIndex = next.indexOf(targetView);
+      next.splice(targetIndex, 0, view);
       return next;
     });
   };
 
-  const addView = (view: DashboardView) => {
-    setDraftViews((current) => (current.includes(view) ? current : [...current, view]));
+  const moveToVisible = (view: DashboardView, targetView?: DashboardView) => {
+    setDraftViews((current) => {
+      if (current.includes(view)) {
+        if (!targetView) return current;
+        const next = current.filter((item) => item !== view);
+        const targetIndex = next.indexOf(targetView);
+        next.splice(targetIndex >= 0 ? targetIndex : next.length, 0, view);
+        return next;
+      }
+
+      if (!targetView) return [...current, view];
+
+      const targetIndex = current.indexOf(targetView);
+      const next = [...current];
+      next.splice(targetIndex >= 0 ? targetIndex : next.length, 0, view);
+      return next;
+    });
   };
 
-  const removeView = (view: DashboardView) => {
+  const moveToHidden = (view: DashboardView) => {
     setDraftViews((current) => current.filter((item) => item !== view));
+  };
+
+  const handleDragStart = (event: React.DragEvent, view: DashboardView) => {
+    setDraggedView(view);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', view);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedView(null);
+    setDropTarget(null);
+  };
+
+  const readDraggedView = (event: React.DragEvent): DashboardView | null => {
+    const view = (draggedView || event.dataTransfer.getData('text/plain')) as DashboardView;
+    return customizableViews.includes(view) ? view : null;
   };
 
   const saveChanges = async () => {
@@ -147,40 +180,65 @@ const ManageSidebarModal = ({
           <div className="mt-5 grid gap-5 xl:grid-cols-2">
             <div className="rounded-[28px] border border-brand-30 bg-brand-60/20 p-4">
               <div className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-dark/60">Visible in sidebar</div>
-              <div className="mt-4 max-h-[52vh] space-y-3 overflow-y-auto pr-1">
+              <div
+                className={clsx(
+                  'mt-4 max-h-[52vh] min-h-52 space-y-3 overflow-y-auto rounded-[24px] border border-dashed p-3 pr-1 transition',
+                  dropTarget === 'visible' ? 'border-brand-10 bg-white' : 'border-brand-30/70 bg-white/45',
+                )}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setDropTarget('visible');
+                  event.dataTransfer.dropEffect = 'move';
+                }}
+                onDragLeave={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                    setDropTarget(null);
+                  }
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const view = readDraggedView(event);
+                  if (view) moveToVisible(view);
+                  handleDragEnd();
+                }}
+              >
                 {filteredVisible.length ? (
                   filteredVisible.map((view) => {
                     const Icon = itemMap[view];
-                    const position = draftViews.indexOf(view);
                     return (
-                      <div key={view} className="flex items-center gap-3 rounded-2xl border border-brand-30 bg-white px-4 py-3">
+                      <div
+                        key={view}
+                        draggable
+                        onDragStart={(event) => handleDragStart(event, view)}
+                        onDragEnd={handleDragEnd}
+                        onDragOver={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          const dragged = readDraggedView(event);
+                          if (dragged) {
+                            event.dataTransfer.dropEffect = 'move';
+                            setDropTarget('visible');
+                            if (draftViews.includes(dragged)) reorderVisibleView(dragged, view);
+                          }
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          const dragged = readDraggedView(event);
+                          if (dragged) moveToVisible(dragged, view);
+                          handleDragEnd();
+                        }}
+                        className={clsx(
+                          'flex cursor-grab items-center gap-3 rounded-2xl border border-brand-30 bg-white px-4 py-3 transition active:cursor-grabbing',
+                          draggedView === view && 'opacity-45',
+                        )}
+                      >
+                        <GripVertical size={18} className="shrink-0 text-brand-dark/35" aria-hidden="true" />
                         <Icon size={17} className="text-brand-dark/75" />
                         <span className="min-w-0 flex-1 truncate text-sm font-medium text-brand-dark">{viewTitles[view]}</span>
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => moveView(view, -1)}
-                            disabled={position === 0}
-                            className="rounded-xl border border-brand-30 bg-brand-60/30 p-2 text-brand-dark disabled:opacity-40"
-                          >
-                            <ArrowUp size={14} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => moveView(view, 1)}
-                            disabled={position === draftViews.length - 1}
-                            className="rounded-xl border border-brand-30 bg-brand-60/30 p-2 text-brand-dark disabled:opacity-40"
-                          >
-                            <ArrowDown size={14} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => removeView(view)}
-                            className="rounded-xl border border-brand-30 bg-white px-3 py-2 text-xs font-semibold text-brand-dark"
-                          >
-                            Remove
-                          </button>
-                        </div>
+                        <span className="rounded-full border border-brand-30 bg-brand-60/35 px-3 py-1 text-xs font-semibold text-brand-dark/60">
+                          Drag
+                        </span>
                       </div>
                     );
                   })
@@ -194,21 +252,48 @@ const ManageSidebarModal = ({
 
             <div className="rounded-[28px] border border-brand-30 bg-brand-60/20 p-4">
               <div className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-dark/60">Hidden tools</div>
-              <div className="mt-4 max-h-[52vh] space-y-3 overflow-y-auto pr-1">
+              <div
+                className={clsx(
+                  'mt-4 max-h-[52vh] min-h-52 space-y-3 overflow-y-auto rounded-[24px] border border-dashed p-3 pr-1 transition',
+                  dropTarget === 'hidden' ? 'border-brand-10 bg-white' : 'border-brand-30/70 bg-white/45',
+                )}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setDropTarget('hidden');
+                  event.dataTransfer.dropEffect = 'move';
+                }}
+                onDragLeave={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                    setDropTarget(null);
+                  }
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const view = readDraggedView(event);
+                  if (view) moveToHidden(view);
+                  handleDragEnd();
+                }}
+              >
                 {filteredHidden.length ? (
                   filteredHidden.map((view) => {
                     const Icon = itemMap[view];
                     return (
-                      <div key={view} className="flex items-center gap-3 rounded-2xl border border-brand-30 bg-white px-4 py-3">
+                      <div
+                        key={view}
+                        draggable
+                        onDragStart={(event) => handleDragStart(event, view)}
+                        onDragEnd={handleDragEnd}
+                        className={clsx(
+                          'flex cursor-grab items-center gap-3 rounded-2xl border border-brand-30 bg-white px-4 py-3 transition active:cursor-grabbing',
+                          draggedView === view && 'opacity-45',
+                        )}
+                      >
+                        <GripVertical size={18} className="shrink-0 text-brand-dark/35" aria-hidden="true" />
                         <Icon size={17} className="text-brand-dark/75" />
                         <span className="min-w-0 flex-1 truncate text-sm font-medium text-brand-dark">{viewTitles[view]}</span>
-                        <button
-                          type="button"
-                          onClick={() => addView(view)}
-                          className="rounded-xl border border-brand-30 bg-brand-10 px-3 py-2 text-xs font-semibold text-brand-60"
-                        >
-                          Add to sidebar
-                        </button>
+                        <span className="rounded-full border border-brand-30 bg-brand-60/35 px-3 py-1 text-xs font-semibold text-brand-dark/60">
+                          Drag
+                        </span>
                       </div>
                     );
                   })
@@ -285,9 +370,9 @@ export const Sidebar = ({
         <div className="flex h-full min-h-0 flex-col">
           <div className={clsx('flex items-center', collapsed ? 'justify-center lg:justify-between' : 'justify-between')}>
             <a href="#dashboard" className="flex min-w-0 items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-brand-60 bg-brand-60 shadow-sm">
+              <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-brand-60 bg-brand-60 shadow-sm">
                 {workspaceLogoUrl ? (
-                  <img src={workspaceLogoUrl} alt={companyName} className="h-full w-full rounded-2xl object-cover" />
+                  <img src={workspaceLogoUrl} alt={companyName} className="h-full w-full object-cover" />
                 ) : (
                   <span className="text-xs font-bold uppercase text-brand-10">{getInitials(companyName)}</span>
                 )}

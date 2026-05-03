@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   UsersRound,
 } from 'lucide-react';
-import type { WorkspaceProfile } from '../types';
+import type { BusinessType, WorkspaceProfile } from '../types';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
 import { formatDate } from '../utils';
 
@@ -26,6 +26,29 @@ type ProfilePageProps = {
     'companyName' | 'userName' | 'businessType' | 'workspaceLogoUrl' | 'email' | 'phone' | 'city' | 'studioAddress' | 'gstNumber' | 'teamSize' | 'website' | 'sidebarViews' | 'billingDefaults'
   >) => Promise<void>;
 };
+
+const businessTypeOptions: { value: BusinessType; label: string }[] = [
+  { value: 'general_business', label: 'General business' },
+  { value: 'interior_decorator', label: 'Interior decorator' },
+  { value: 'shoe_shop', label: 'Shoe shop' },
+  { value: 'sports_shop', label: 'Sports shop' },
+  { value: 'retail_store', label: 'Retail store' },
+  { value: 'service_business', label: 'Service business' },
+];
+
+const getBusinessTypeLabel = (value: string) =>
+  businessTypeOptions.find((option) => option.value === value)?.label || value.replace(/_/g, ' ');
+
+const resolveBusinessType = (value: string, fallback: BusinessType): BusinessType => {
+  const normalized = value.trim().toLowerCase();
+  return (
+    businessTypeOptions.find(
+      (option) => option.label.toLowerCase() === normalized || option.value.toLowerCase() === normalized,
+    )?.value || fallback
+  );
+};
+
+const digitsOnly = (value: string, maxLength: number) => value.replace(/\D/g, '').slice(0, maxLength);
 
 export const ProfilePage = ({
   profile,
@@ -52,6 +75,7 @@ export const ProfilePage = ({
   });
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [businessTypeText, setBusinessTypeText] = useState(getBusinessTypeLabel(profile.businessType));
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -70,6 +94,7 @@ export const ProfilePage = ({
       sidebarViews: profile.sidebarViews,
       billingDefaults: profile.billingDefaults,
     });
+    setBusinessTypeText(getBusinessTypeLabel(profile.businessType));
   }, [profile]);
 
   const updateField = (field: keyof typeof form, value: string) => {
@@ -100,7 +125,12 @@ export const ProfilePage = ({
     event.preventDefault();
     setSaving(true);
     try {
-      await onSaveProfile(form);
+      await onSaveProfile({
+        ...form,
+        businessType: resolveBusinessType(businessTypeText, form.businessType),
+        phone: digitsOnly(form.phone, 10),
+        teamSize: digitsOnly(form.teamSize, 4),
+      });
     } finally {
       setSaving(false);
     }
@@ -189,7 +219,7 @@ export const ProfilePage = ({
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-2 rounded-2xl bg-brand-10 px-4 py-3 text-sm font-medium text-brand-60 transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-70"
+              className="inline-flex items-center gap-2 rounded-2xl border border-brand-10 bg-brand-10 px-4 py-3 text-sm font-medium text-brand-60 transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-70"
             >
               <Save size={16} />
               {saving ? 'Saving...' : 'Save profile'}
@@ -207,20 +237,28 @@ export const ProfilePage = ({
             </label>
             <label className="grid gap-2 text-sm text-brand-dark/75">
               <span>Business type</span>
-              <select value={form.businessType} onChange={(event) => updateField('businessType', event.target.value)} className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none transition focus:border-brand-10 focus:bg-white">
-                <option value="general_business">General business</option>
-                <option value="interior_decorator">Interior decorator</option>
-                <option value="shoe_shop">Shoe shop</option>
-                <option value="sports_shop">Sports shop</option>
-                <option value="retail_store">Retail store</option>
-                <option value="service_business">Service business</option>
-              </select>
+              <input
+                list="business-type-options"
+                value={businessTypeText}
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  setBusinessTypeText(nextValue);
+                  updateField('businessType', resolveBusinessType(nextValue, form.businessType));
+                }}
+                placeholder="Start typing a business type"
+                className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none transition focus:border-brand-10 focus:bg-white"
+              />
+              <datalist id="business-type-options">
+                {businessTypeOptions.map((option) => (
+                  <option key={option.value} value={option.label} />
+                ))}
+              </datalist>
             </label>
             <div className="grid gap-2 text-sm text-brand-dark/75">
               <span>Workspace logo</span>
               <div className="rounded-[24px] border border-brand-30 bg-brand-60/35 p-4">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-brand-30 bg-white shadow-sm">
+                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border border-brand-30 bg-white shadow-sm">
                     {form.workspaceLogoUrl ? (
                       <img src={form.workspaceLogoUrl} alt="Workspace logo preview" className="h-full w-full object-cover" />
                     ) : (
@@ -256,7 +294,17 @@ export const ProfilePage = ({
             </label>
             <label className="grid gap-2 text-sm text-brand-dark/75">
               <span>Phone</span>
-              <input value={form.phone} onChange={(event) => updateField('phone', event.target.value)} className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none transition focus:border-brand-10 focus:bg-white" />
+              <input
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]{10}"
+                maxLength={10}
+                value={form.phone}
+                onChange={(event) => updateField('phone', digitsOnly(event.target.value, 10))}
+                aria-describedby="phone-help"
+                className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none transition focus:border-brand-10 focus:bg-white"
+              />
+              <span id="phone-help" className="text-xs text-brand-dark/55">Use exactly 10 digits. Numbers only.</span>
             </label>
             <label className="grid gap-2 text-sm text-brand-dark/75">
               <span>City</span>
@@ -264,7 +312,15 @@ export const ProfilePage = ({
             </label>
             <label className="grid gap-2 text-sm text-brand-dark/75">
               <span>Team size</span>
-              <input value={form.teamSize} onChange={(event) => updateField('teamSize', event.target.value)} placeholder="e.g. 12 people" className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none transition focus:border-brand-10 focus:bg-white" />
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={form.teamSize}
+                onChange={(event) => updateField('teamSize', digitsOnly(event.target.value, 4))}
+                placeholder="10"
+                className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none transition focus:border-brand-10 focus:bg-white"
+              />
             </label>
             <label className="grid gap-2 text-sm text-brand-dark/75 md:col-span-2">
               <span>Business address</span>

@@ -16,6 +16,8 @@ export const Navbar = () => {
 
     if (window.location.hash !== nextHash) {
       window.location.hash = nextHash;
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      window.setTimeout(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }), 80);
       return;
     }
 
@@ -23,13 +25,19 @@ export const Navbar = () => {
   };
 
   const goToHash = (event: React.MouseEvent<HTMLAnchorElement>, targetHash: string) => {
+    event.preventDefault();
+    const shouldForceTop = new Set(['#top', '#login', '#signup', '#pricing', '#try-once']).has(targetHash);
+
     if (window.location.hash !== targetHash) {
+      window.location.hash = targetHash;
+      if (shouldForceTop) {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        window.setTimeout(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }), 80);
+      }
       return;
     }
 
-    event.preventDefault();
-
-    if (targetHash === '#pricing' || targetHash === '#top') {
+    if (shouldForceTop) {
       window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
       return;
     }

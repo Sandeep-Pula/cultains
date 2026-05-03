@@ -93,6 +93,29 @@ function App() {
     });
   }, [hash]);
 
+  useEffect(() => {
+    const handleHashLinkClick = (event: MouseEvent) => {
+      const target = event.target instanceof Element ? event.target.closest('a[href^="#"]') : null;
+      if (!(target instanceof HTMLAnchorElement)) return;
+
+      const targetHash = target.getAttribute('href') || '';
+      if (!targetHash || targetHash === '#') return;
+
+      const topHashes = new Set(['#top', '#login', '#signup', '#pricing', '#try-once']);
+      if (!topHashes.has(targetHash) && !targetHash.startsWith('#dashboard')) return;
+
+      window.setTimeout(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      }, 0);
+      window.setTimeout(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      }, 90);
+    };
+
+    document.addEventListener('click', handleHashLinkClick, true);
+    return () => document.removeEventListener('click', handleHashLinkClick, true);
+  }, []);
+
   const isLoginPage = hash === '#login';
   const isSignupPage = hash === '#signup';
   const isTryOncePage = hash === '#try-once';
