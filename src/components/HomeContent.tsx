@@ -45,7 +45,8 @@ const fadeUp = {
 
 const openHomepageAuth = (mode: 'login' | 'signup') => {
   window.location.hash = `#${mode}`;
-  window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  setTimeout(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }), 50);
 };
 
 export const HomeContent = () => {

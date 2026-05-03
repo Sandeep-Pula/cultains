@@ -58,15 +58,17 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const scrollForHash = (nextHash: string, behavior: ScrollBehavior) => {
+    const scrollForHash = (nextHash: string) => {
       if (nextHash.startsWith('#dashboard')) {
-        window.scrollTo({ top: 0, left: 0, behavior });
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        setTimeout(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }), 50);
         return;
       }
 
       const normalizedHash = nextHash || '';
       if (pageLevelHashes.has(normalizedHash)) {
-        window.scrollTo({ top: 0, left: 0, behavior });
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        setTimeout(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }), 50);
         return;
       }
 
@@ -74,20 +76,18 @@ function App() {
       const target = document.getElementById(targetId);
 
       if (!target) {
-        window.scrollTo({ top: 0, left: 0, behavior });
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
         return;
       }
 
       const navbarOffset = 96;
       const targetTop = target.getBoundingClientRect().top + window.scrollY - navbarOffset;
-      window.scrollTo({ top: Math.max(0, targetTop), left: 0, behavior });
+      window.scrollTo({ top: Math.max(0, targetTop), left: 0, behavior: 'smooth' });
     };
-
-    const behavior: ScrollBehavior = didInitialScrollSync.current ? 'smooth' : 'auto';
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        scrollForHash(hash, behavior);
+        scrollForHash(hash);
         didInitialScrollSync.current = true;
       });
     });
