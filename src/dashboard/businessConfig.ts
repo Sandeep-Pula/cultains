@@ -1,4 +1,4 @@
-import type { BusinessType, ProjectStage, ProjectType, SiteStatus } from './types';
+import type { BusinessType, KnownBusinessType, ProjectStage, ProjectType, SiteStatus } from './types';
 
 export type WorkspaceBusinessConfig = {
   type: BusinessType;
@@ -42,7 +42,7 @@ const generalStageLabels: Record<ProjectStage, string> = {
   on_hold: 'On hold',
 };
 
-const configs: Record<BusinessType, WorkspaceBusinessConfig> = {
+const configs: Record<KnownBusinessType, WorkspaceBusinessConfig> = {
   general_business: {
     type: 'general_business',
     label: 'General business',
@@ -367,4 +367,8 @@ const configs: Record<BusinessType, WorkspaceBusinessConfig> = {
 };
 
 export const getBusinessConfig = (type: BusinessType): WorkspaceBusinessConfig =>
-  configs[type] ?? configs.general_business;
+  configs[type as KnownBusinessType] ?? {
+    ...configs.general_business,
+    type,
+    label: type.replace(/_/g, ' '),
+  };

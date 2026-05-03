@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   BadgeIndianRupee,
@@ -105,6 +106,10 @@ const plans = [
 ];
 
 export const PricingPage = () => {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className={styles.page}>
       <section className={styles.hero} aria-labelledby="pricing-title">

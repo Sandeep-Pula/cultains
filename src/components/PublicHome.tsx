@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   BadgeIndianRupee,
@@ -69,6 +70,10 @@ const fadeUp = {
 };
 
 export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeProps) => {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <>
       <section id="top" className={styles.hero} aria-labelledby="home-title">

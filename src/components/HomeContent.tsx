@@ -44,13 +44,7 @@ const fadeUp = {
 };
 
 const openHomepageAuth = (mode: 'login' | 'signup') => {
-  const nextHash = `#${mode}`;
-
-  if (window.location.hash !== nextHash) {
-    window.location.hash = nextHash;
-    return;
-  }
-
+  window.location.hash = `#${mode}`;
   window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
 };
 

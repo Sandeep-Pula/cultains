@@ -15,13 +15,15 @@ export type DashboardView =
   | 'settings'
   | 'profile';
 
-export type BusinessType =
+export type KnownBusinessType =
   | 'general_business'
   | 'interior_decorator'
   | 'shoe_shop'
   | 'sports_shop'
   | 'retail_store'
   | 'service_business';
+
+export type BusinessType = KnownBusinessType | (string & {});
 
 export type ProjectStage =
   | 'inquiry'

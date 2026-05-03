@@ -41,11 +41,11 @@ const getBusinessTypeLabel = (value: string) =>
 
 const resolveBusinessType = (value: string, fallback: BusinessType): BusinessType => {
   const normalized = value.trim().toLowerCase();
-  return (
-    businessTypeOptions.find(
-      (option) => option.label.toLowerCase() === normalized || option.value.toLowerCase() === normalized,
-    )?.value || fallback
+  const matchedOption = businessTypeOptions.find(
+    (option) => option.label.toLowerCase() === normalized || option.value.toLowerCase() === normalized,
   );
+
+  return matchedOption?.value || value.trim() || fallback;
 };
 
 const digitsOnly = (value: string, maxLength: number) => value.replace(/\D/g, '').slice(0, maxLength);
@@ -76,6 +76,7 @@ export const ProfilePage = ({
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [businessTypeText, setBusinessTypeText] = useState(getBusinessTypeLabel(profile.businessType));
+  const [businessTypeFocused, setBusinessTypeFocused] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -100,6 +101,20 @@ export const ProfilePage = ({
   const updateField = (field: keyof typeof form, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
+
+  const businessTypeSuggestions = businessTypeOptions.filter((option) => {
+    const query = businessTypeText.trim().toLowerCase();
+    if (!query) return true;
+    return option.label.toLowerCase().includes(query) || option.value.toLowerCase().includes(query);
+  });
+
+  const hasExactBusinessTypeMatch = businessTypeOptions.some(
+    (option) =>
+      option.label.toLowerCase() === businessTypeText.trim().toLowerCase() ||
+      option.value.toLowerCase() === businessTypeText.trim().toLowerCase(),
+  );
+
+  const customBusinessType = businessTypeText.trim();
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -237,22 +252,64 @@ export const ProfilePage = ({
             </label>
             <label className="grid gap-2 text-sm text-brand-dark/75">
               <span>Business type</span>
-              <input
-                list="business-type-options"
-                value={businessTypeText}
-                onChange={(event) => {
-                  const nextValue = event.target.value;
-                  setBusinessTypeText(nextValue);
-                  updateField('businessType', resolveBusinessType(nextValue, form.businessType));
-                }}
-                placeholder="Start typing a business type"
-                className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none transition focus:border-brand-10 focus:bg-white"
-              />
-              <datalist id="business-type-options">
-                {businessTypeOptions.map((option) => (
-                  <option key={option.value} value={option.label} />
-                ))}
-              </datalist>
+              <div className="relative">
+                <input
+                  value={businessTypeText}
+                  onFocus={() => setBusinessTypeFocused(true)}
+                  onBlur={() => window.setTimeout(() => setBusinessTypeFocused(false), 120)}
+                  onChange={(event) => {
+                    const nextValue = event.target.value;
+                    setBusinessTypeText(nextValue);
+                    updateField('businessType', resolveBusinessType(nextValue, form.businessType));
+                  }}
+                  placeholder="Start typing a business type"
+                  role="combobox"
+                  aria-expanded={businessTypeFocused}
+                  aria-controls="business-type-suggestions"
+                  aria-autocomplete="list"
+                  className="w-full rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none transition focus:border-brand-10 focus:bg-white"
+                />
+                {businessTypeFocused ? (
+                  <div
+                    id="business-type-suggestions"
+                    role="listbox"
+                    className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-20 overflow-hidden rounded-2xl border border-brand-30 bg-white p-2 shadow-xl"
+                  >
+                    {businessTypeSuggestions.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        role="option"
+                        aria-selected={resolveBusinessType(businessTypeText, form.businessType) === option.value}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => {
+                          setBusinessTypeText(option.label);
+                          updateField('businessType', option.value);
+                          setBusinessTypeFocused(false);
+                        }}
+                        className="flex w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-brand-dark transition hover:bg-brand-60 focus:bg-brand-60"
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                    {customBusinessType && !hasExactBusinessTypeMatch ? (
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => {
+                          updateField('businessType', customBusinessType);
+                          setBusinessTypeFocused(false);
+                        }}
+                        className="mt-1 flex w-full rounded-xl border border-dashed border-brand-30 bg-brand-60/45 px-3 py-2 text-left text-sm font-semibold text-brand-10 transition hover:bg-brand-60"
+                      >
+                        Use “{customBusinessType}”
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
             </label>
             <div className="grid gap-2 text-sm text-brand-dark/75">
               <span>Workspace logo</span>
@@ -260,7 +317,7 @@ export const ProfilePage = ({
                 <div className="flex items-center gap-4">
                   <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border border-brand-30 bg-white shadow-sm">
                     {form.workspaceLogoUrl ? (
-                      <img src={form.workspaceLogoUrl} alt="Workspace logo preview" className="h-full w-full object-cover" />
+                      <img src={form.workspaceLogoUrl} alt="Workspace logo preview" className="h-full w-full object-contain p-1" />
                     ) : (
                       <span className="text-xs font-bold uppercase text-brand-dark/45">No logo</span>
                     )}

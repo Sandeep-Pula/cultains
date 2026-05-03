@@ -372,7 +372,7 @@ export const Sidebar = ({
             <a href="#dashboard" className="flex min-w-0 items-center gap-3">
               <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-brand-60 bg-brand-60 shadow-sm">
                 {workspaceLogoUrl ? (
-                  <img src={workspaceLogoUrl} alt={companyName} className="h-full w-full object-cover" />
+                  <img src={workspaceLogoUrl} alt={companyName} className="h-full w-full object-contain p-1" />
                 ) : (
                   <span className="text-xs font-bold uppercase text-brand-10">{getInitials(companyName)}</span>
                 )}
