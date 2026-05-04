@@ -1,5 +1,5 @@
 .container {
-  width: min(1180px, calc(100vw - 1.5rem));
+  width: min(1180px, calc(100vw - clamp(1.5rem, 5vw, 4rem)));
   margin: 0 auto;
 }
 
@@ -20,7 +20,7 @@
   min-height: 100vh;
   display: flex;
   align-items: center;
-  padding: 7rem 0 4rem;
+  padding: 7.5rem 0 4rem;
   overflow: hidden;
   background: linear-gradient(180deg, #ffffff 0%, var(--os-soft) 100%);
 }
@@ -131,7 +131,7 @@
 .heroInner {
   position: relative;
   z-index: 1;
-  width: min(1180px, calc(100vw - 1.5rem));
+  width: min(1180px, calc(100vw - clamp(1.5rem, 5vw, 4rem)));
   margin: 0 auto;
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(360px, 0.9fr);
@@ -169,7 +169,7 @@
 
 .hero h1 {
   margin-top: 1.6rem;
-  font-size: clamp(2.8rem, 6.2vw, 6rem);
+  font-size: clamp(2.65rem, 5.9vw, 6rem);
   line-height: 0.96;
 }
 
@@ -272,12 +272,13 @@
 
 .sectionHeader {
   max-width: 850px;
+  min-width: 0;
 }
 
 .sectionHeader h2,
 .labCopy h2 {
   margin-top: 1rem;
-  font-size: clamp(2rem, 4.4vw, 4rem);
+  font-size: clamp(2rem, 4vw, 4rem);
   line-height: 1.04;
 }
 
@@ -289,7 +290,7 @@
 
 .moduleGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
   gap: 1rem;
   margin-top: 2rem;
 }
@@ -299,6 +300,7 @@
   border-radius: 8px;
   background: #ffffff;
   border: 1px solid var(--os-line);
+  min-width: 0;
 }
 
 .iconBox {
@@ -326,7 +328,7 @@
 
 .labGrid {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 0.75fr);
+  grid-template-columns: minmax(0, 0.9fr) minmax(min(100%, 320px), 0.75fr);
   gap: 1.4rem;
   align-items: center;
 }
@@ -358,7 +360,7 @@
 
 .serviceGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 0.8rem;
   margin-top: 2rem;
 }
@@ -568,11 +570,6 @@
 }
 
 @media (max-width: 1080px) {
-  .moduleGrid,
-  .serviceGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .footerTop {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -584,6 +581,11 @@
 }
 
 @media (max-width: 900px) {
+  .hero {
+    min-height: auto;
+    padding-top: 12.5rem;
+  }
+
   .heroInner,
   .labGrid {
     grid-template-columns: 1fr;
@@ -601,12 +603,7 @@
 @media (max-width: 640px) {
   .container,
   .heroInner {
-    width: min(1180px, calc(100vw - 1rem));
-  }
-
-  .moduleGrid,
-  .serviceGrid {
-    grid-template-columns: 1fr;
+    width: min(1180px, calc(100vw - 1.25rem));
   }
 
   .footerTop {
@@ -633,6 +630,21 @@
   .footerBottom {
     align-items: flex-start;
     flex-direction: column;
+  }
+}
+
+@media (max-width: 520px) {
+  .hero {
+    padding-top: 13.5rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.15rem, 10vw, 2.75rem);
+  }
+
+  .sectionHeader h2,
+  .labCopy h2 {
+    font-size: clamp(1.85rem, 9vw, 2.5rem);
   }
 }
 
