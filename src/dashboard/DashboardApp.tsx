@@ -13,6 +13,7 @@ import { dashboardHash, filterDashboardViews, getStageProgress, isOwnerAccount, 
 import type {
   BillingDefaults,
   BusinessType,
+  CashRegisterMenuItem,
   CustomerFilters,
   CustomerProject,
   DashboardData,
@@ -36,6 +37,7 @@ import { CustomersPage } from './pages/CustomersPage';
 import { TeamPage } from './pages/TeamPage';
 import { InventoryPage } from './pages/InventoryPage';
 import { BarcodeDeskPage } from './pages/BarcodeDeskPage';
+import { CashRegisterPage } from './pages/CashRegisterPage';
 import { BillingPage } from './pages/BillingPage';
 import { CrmPage } from './pages/CrmPage';
 import { AIToolsPage } from './pages/AIToolsPage';
@@ -86,6 +88,7 @@ export const DashboardApp = () => {
   const [addTeamMemberOpen, setAddTeamMemberOpen] = useState(false);
   const [selectedTeamMemberId, setSelectedTeamMemberId] = useState<string | null>(null);
   const [deleteTeamCandidateId, setDeleteTeamCandidateId] = useState<string | null>(null);
+  const [aivaOpen, setAivaOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const pushToast = useCallback((title: string, description?: string) => {
@@ -865,6 +868,78 @@ export const DashboardApp = () => {
     }
   };
 
+  const handleFinalizeCashRegisterSale = async (payload: {
+    existingInvoiceId?: string;
+    customerName: string;
+    paymentStatus: InvoicePaymentStatus;
+    paymentMethod: InvoicePaymentMethod;
+    taxRate: number;
+    notes: string;
+    billedBy: string;
+    lineItems: SalesInvoiceLineItem[];
+  }) => {
+    if (!user) {
+      throw new Error('Please log in again before finalizing the sale.');
+    }
+
+    try {
+      const result = await dashboardService.completeCashRegisterSale(workspaceUserId, payload);
+      pushToast('Cash register invoice created', `${result.invoiceNumber} is ready to print.`);
+      return result;
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to finalize this cash register sale.');
+      throw nextError;
+    }
+  };
+
+  const handleSaveCashRegisterMenuItems = async (
+    items: Array<Omit<CashRegisterMenuItem, 'id' | 'createdAt' | 'updatedAt'> & { id?: string; createdAt?: string }>,
+  ) => {
+    if (!user) return;
+
+    try {
+      await dashboardService.saveCashRegisterMenuItems(workspaceUserId, items);
+      pushToast('Cash register updated', 'Menu buttons were saved.');
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to save cash register menu items.');
+      throw nextError;
+    }
+  };
+
+  const handleUpdateCashRegisterMenuItem = async (itemId: string, patch: Partial<CashRegisterMenuItem>) => {
+    if (!user) return;
+
+    try {
+      await dashboardService.updateCashRegisterMenuItem(workspaceUserId, itemId, patch);
+      pushToast('Cash register item saved');
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to update this cash register item.');
+      throw nextError;
+    }
+  };
+
+  const handleDeleteCashRegisterMenuItem = async (itemId: string) => {
+    if (!user) return;
+
+    try {
+      await dashboardService.deleteCashRegisterMenuItem(workspaceUserId, itemId);
+      pushToast('Cash register item deleted');
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to delete this cash register item.');
+      throw nextError;
+    }
+  };
+
+  const handleSaveCashRegisterCategorySuggestion = async (category: string) => {
+    if (!category.trim()) return;
+
+    try {
+      await dashboardService.saveCashRegisterCategorySuggestion(category);
+    } catch {
+      // Shared category learning is best-effort. Local register edits should never fail because of it.
+    }
+  };
+
   const handleSaveInvoiceDraft = async (payload: {
     draftId?: string;
     customerName: string;
@@ -1199,6 +1274,7 @@ export const DashboardApp = () => {
           searchResults={topbarSearchResults}
           onSearchResultSelect={handleSearchResultSelect}
           onOpenSidebar={() => setSidebarOpen(true)}
+          onOpenAiva={() => setAivaOpen(true)}
           onToggleDesktopSidebar={() => setDesktopSidebarCollapsed((current) => !current)}
           desktopSidebarCollapsed={desktopSidebarCollapsed}
           onLogout={handleLogout}
@@ -1291,6 +1367,22 @@ export const DashboardApp = () => {
               businessProfile={data.profile}
               inventory={data.inventory}
               salesInvoices={data.salesInvoices}
+            />
+          ) : activeView === 'cash-register' ? (
+            <CashRegisterPage
+              companyName={data.profile.companyName}
+              businessProfile={data.profile}
+              billedBy={data.userName}
+              menuItems={data.cashRegisterMenuItems}
+              categorySuggestions={data.cashRegisterCategorySuggestions}
+              salesInvoices={data.salesInvoices}
+              onSaveMenuItems={handleSaveCashRegisterMenuItems}
+              onUpdateMenuItem={handleUpdateCashRegisterMenuItem}
+              onDeleteMenuItem={handleDeleteCashRegisterMenuItem}
+              onFinalizeSale={handleFinalizeCashRegisterSale}
+              onSaveDraft={handleSaveInvoiceDraft}
+              onDeleteDraft={handleDeleteInvoiceDraft}
+              onSaveCategorySuggestion={handleSaveCashRegisterCategorySuggestion}
             />
           ) : activeView === 'billing' ? (
             <BillingPage
@@ -1492,6 +1584,8 @@ export const DashboardApp = () => {
         data={data}
         businessConfig={businessConfig}
         canWrite={isOwner}
+        open={aivaOpen}
+        onClose={() => setAivaOpen(false)}
         onAddInventoryItem={handleAddInventoryItem}
         onUpdateInventoryItem={handleUpdateInventoryItem}
         onDeleteInventoryItem={handleDeleteInventoryItem}

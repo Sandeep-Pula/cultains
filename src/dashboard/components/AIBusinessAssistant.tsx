@@ -134,7 +134,7 @@ const buildAccountingContext = (data: DashboardData, month: number, year: number
   };
 };
 
-const AivaAvatar = ({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) => {
+export const AivaAvatar = ({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) => {
   const dimensions = size === 'lg' ? 'h-14 w-14' : size === 'sm' ? 'h-9 w-9' : 'h-12 w-12';
   const textSize = size === 'lg' ? 'text-[15px]' : size === 'sm' ? 'text-[10px]' : 'text-xs';
 
@@ -405,11 +405,12 @@ export const AIBusinessAssistant = ({
   data,
   businessConfig,
   canWrite,
+  open,
+  onClose,
   onAddInventoryItem,
   onUpdateInventoryItem,
   onDeleteInventoryItem,
-}: AIBusinessAssistantProps) => {
-  const [open, setOpen] = useState(false);
+}: AIBusinessAssistantProps & { open: boolean; onClose: () => void }) => {
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
@@ -716,15 +717,6 @@ export const AIBusinessAssistant = ({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-[150] inline-flex h-16 w-16 items-center justify-center rounded-[24px] bg-white p-1 shadow-2xl shadow-brand-10/25 ring-1 ring-brand-30 transition hover:-translate-y-0.5"
-        aria-label="Open AIVA assistant"
-      >
-        <AivaAvatar size="lg" />
-      </button>
-
       {open ? (
         <div className="fixed bottom-5 right-5 z-[160] flex h-[min(720px,calc(100vh-2.5rem))] w-[min(420px,calc(100vw-2rem))] flex-col overflow-hidden rounded-[28px] border border-brand-30 bg-white shadow-2xl">
           <div className="flex items-start justify-between gap-3 border-b border-brand-30 bg-brand-60 px-4 py-4">
@@ -740,7 +732,7 @@ export const AIBusinessAssistant = ({
                 </p>
               </div>
             </div>
-            <button type="button" onClick={() => setOpen(false)} className="rounded-2xl border border-brand-30 bg-white p-2 text-brand-dark">
+            <button type="button" onClick={onClose} className="rounded-2xl border border-brand-30 bg-white p-2 text-brand-dark">
               <X size={18} />
             </button>
           </div>

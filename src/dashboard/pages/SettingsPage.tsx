@@ -121,6 +121,19 @@ export const SettingsPage = ({
               <option value="mixed">Mixed</option>
             </select>
           </label>
+          <label className="grid gap-2 text-sm text-brand-dark/75">
+            <span>Default UPI ID</span>
+            <input
+              type="text"
+              value={billingDefaults.defaultUpiId || ''}
+              onChange={(event) => setBillingDefaults((current) => ({
+                ...current,
+                defaultUpiId: event.target.value,
+              }))}
+              className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none"
+              placeholder="store@upi"
+            />
+          </label>
           <label className="grid gap-2 text-sm text-brand-dark/75 md:col-span-2">
             <span>Default invoice note / policy</span>
             <textarea

@@ -94,7 +94,7 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
           >
-            <h1 id="home-title">Run the business from one operating system.</h1>
+            <h1 id="home-title">Run the business from one operating platform.</h1>
             <p>
               <ProductWordmark /> brings customers, billing, inventory, team work, finance, operations, and AI tools
               into one clean workspace for business owners and teams.
@@ -121,9 +121,9 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
                   A command center for daily business work: customers, invoices, stock, teams, operations, and AI tools.
                 </p>
                 <div className={styles.productMetrics} aria-label="PULA Biz operating coverage">
-                  <span>8 dashboard modules</span>
-                  <span>AI-assisted workflows</span>
-                  <span>Owner visibility</span>
+                  <span>Indian market friendly</span>
+                  <span>Owner driven dashboards</span>
+                  <span>24x7 support</span>
                 </div>
               </div>
             )}

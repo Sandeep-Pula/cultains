@@ -18,6 +18,9 @@ import type {
   ActivityItem,
   BillingDefaults,
   BusinessType,
+  CashRegisterCategorySuggestion,
+  CashRegisterMenuItem,
+  CashRegisterMenuSize,
   CommunicationLog,
   CustomerProject,
   DashboardView,
@@ -107,10 +110,13 @@ const usersCollection = (userId: string, collectionName: string) =>
 
 const userDoc = (userId: string) => doc(requireDb(), 'users', userId);
 const rootUsersCollection = () => collection(requireDb(), 'users');
+const cashRegisterCategoriesCollection = () => collection(requireDb(), 'cashRegisterCategorySuggestions');
+const cashRegisterCategoryDoc = (categoryId: string) => doc(requireDb(), 'cashRegisterCategorySuggestions', categoryId);
 const customerDoc = (userId: string, customerId: string) => doc(requireDb(), 'users', userId, 'customers', customerId);
 const teamMemberDoc = (userId: string, memberId: string) => doc(requireDb(), 'users', userId, 'teamMembers', memberId);
 const taskDoc = (userId: string, taskId: string) => doc(requireDb(), 'users', userId, 'tasks', taskId);
 const inventoryItemDoc = (userId: string, itemId: string) => doc(requireDb(), 'users', userId, 'inventoryItems', itemId);
+const cashRegisterMenuItemDoc = (userId: string, itemId: string) => doc(requireDb(), 'users', userId, 'cashRegisterMenuItems', itemId);
 const financeEntryDoc = (userId: string, entryId: string) => doc(requireDb(), 'users', userId, 'financeEntries', entryId);
 const weeklyMiscRecordDoc = (userId: string, recordId: string) => doc(requireDb(), 'users', userId, 'weeklyMiscRecords', recordId);
 const salesInvoiceDoc = (userId: string, invoiceId: string) => doc(requireDb(), 'users', userId, 'salesInvoices', invoiceId);
@@ -179,6 +185,7 @@ const buildWorkspaceProfile = (user: User, profile?: Partial<UserProfileDoc>): W
     defaultPaymentStatus: profile?.billingDefaults?.defaultPaymentStatus || defaultBillingDefaults.defaultPaymentStatus,
     defaultPaymentMethod: profile?.billingDefaults?.defaultPaymentMethod || defaultBillingDefaults.defaultPaymentMethod,
     defaultInvoiceNotes: profile?.billingDefaults?.defaultInvoiceNotes || defaultBillingDefaults.defaultInvoiceNotes,
+    defaultUpiId: profile?.billingDefaults?.defaultUpiId || '',
   },
   workspaceOwnerId: profile?.workspaceOwnerId,
   linkedTeamMemberId: profile?.linkedTeamMemberId,
@@ -207,10 +214,12 @@ const emptyDashboardData = (user: User, profile?: Partial<UserProfileDoc>): Dash
   profile: buildWorkspaceProfile(user, profile),
   team: [],
   inventory: [],
+  cashRegisterMenuItems: [],
   financeEntries: [],
   weeklyMiscRecords: [],
   salesInvoices: [],
   supportThreads: [],
+  cashRegisterCategorySuggestions: [],
   customers: [],
   deletedCustomers: [],
   tasks: [],
@@ -379,6 +388,67 @@ const normalizeInventoryItem = (itemId: string, value: Partial<InventoryItem> | 
   clearanceReason: value?.clearanceReason || '',
   notes: value?.notes || '',
 });
+
+const normalizeCashRegisterSize = (value: Partial<CashRegisterMenuSize> | undefined): CashRegisterMenuSize => ({
+  id: value?.id || createId(),
+  label: value?.label || 'Regular',
+  price: Number(value?.price ?? 0),
+});
+
+const normalizeCashRegisterMenuItem = (
+  itemId: string,
+  value: Partial<CashRegisterMenuItem> | undefined,
+): CashRegisterMenuItem => ({
+  id: itemId,
+  name: value?.name || 'Menu item',
+  category: value?.category || 'Other',
+  description: value?.description || '',
+  price: Number(value?.price ?? 0),
+  taxRate: Number(value?.taxRate ?? defaultBillingDefaults.defaultTaxRate),
+  barcodeValue: value?.barcodeValue || '',
+  iconKey: value?.iconKey || 'cup',
+  active: value?.active ?? true,
+  sortHint: Number(value?.sortHint ?? 0),
+  sizes: (value?.sizes ?? []).map(normalizeCashRegisterSize).filter((size) => size.label.trim()),
+  createdAt: value?.createdAt || nowIso(),
+  updatedAt: value?.updatedAt || value?.createdAt || nowIso(),
+});
+
+const normalizeCashRegisterCategorySuggestion = (
+  categoryId: string,
+  value: Partial<CashRegisterCategorySuggestion> | undefined,
+): CashRegisterCategorySuggestion => ({
+  id: categoryId,
+  name: value?.name || categoryId,
+  usageCount: Number(value?.usageCount ?? 0),
+  createdAt: value?.createdAt || nowIso(),
+  updatedAt: value?.updatedAt || value?.createdAt || nowIso(),
+});
+
+const categorySuggestionId = (name: string) =>
+  name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+
+const upsertCategorySuggestions = (batch: ReturnType<typeof writeBatch>, categories: string[], timestamp: string) => {
+  Array.from(new Set(categories.map((category) => category.trim()).filter(Boolean))).forEach((category) => {
+    const id = categorySuggestionId(category);
+    if (!id) return;
+    batch.set(
+      cashRegisterCategoryDoc(id),
+      {
+        name: category,
+        usageCount: 1,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+      { merge: true },
+    );
+  });
+};
 
 const normalizeDeletedCustomer = (
   recordId: string,
@@ -697,6 +767,7 @@ export const dashboardService = {
         defaultPaymentStatus: data.billingDefaults?.defaultPaymentStatus || defaultBillingDefaults.defaultPaymentStatus,
         defaultPaymentMethod: data.billingDefaults?.defaultPaymentMethod || defaultBillingDefaults.defaultPaymentMethod,
         defaultInvoiceNotes: data.billingDefaults?.defaultInvoiceNotes || defaultBillingDefaults.defaultInvoiceNotes,
+        defaultUpiId: data.billingDefaults?.defaultUpiId || fallbackProfile.billingDefaults?.defaultUpiId || '',
       },
       workspaceOwnerId: data.workspaceOwnerId || fallbackProfile.workspaceOwnerId,
       linkedTeamMemberId: data.linkedTeamMemberId || fallbackProfile.linkedTeamMemberId,
@@ -717,6 +788,8 @@ export const dashboardService = {
     let tasks: TaskItem[] = [];
     let deletedCustomers: DeletedCustomerRecord[] = [];
     let inventory: InventoryItem[] = [];
+    let cashRegisterMenuItems: CashRegisterMenuItem[] = [];
+    let cashRegisterCategorySuggestions: CashRegisterCategorySuggestion[] = [];
     let financeEntries: FinanceEntry[] = [];
     let weeklyMiscRecords: WeeklyMiscRecord[] = [];
     let salesInvoices: SalesInvoice[] = [];
@@ -768,6 +841,8 @@ export const dashboardService = {
         customers,
         team: recalculateTeamMetrics(team, customers, tasks),
         inventory,
+        cashRegisterMenuItems,
+        cashRegisterCategorySuggestions,
         financeEntries,
         weeklyMiscRecords,
         salesInvoices,
@@ -786,6 +861,8 @@ export const dashboardService = {
       tasks = [];
       deletedCustomers = [];
       inventory = [];
+      cashRegisterMenuItems = [];
+      cashRegisterCategorySuggestions = [];
       financeEntries = [];
       weeklyMiscRecords = [];
       salesInvoices = [];
@@ -864,6 +941,32 @@ export const dashboardService = {
             emit();
           },
           (error) => onError(error),
+        ),
+        onSnapshot(
+          usersCollection(ownerUserId, 'cashRegisterMenuItems'),
+          (snapshot) => {
+            cashRegisterMenuItems = snapshot.docs
+              .map((item) => normalizeCashRegisterMenuItem(item.id, item.data() as Partial<CashRegisterMenuItem>))
+              .sort((left, right) => {
+                if (left.category !== right.category) return left.category.localeCompare(right.category);
+                return left.name.localeCompare(right.name);
+              });
+            emit();
+          },
+          (error) => onError(error),
+        ),
+        onSnapshot(
+          cashRegisterCategoriesCollection(),
+          (snapshot) => {
+            cashRegisterCategorySuggestions = snapshot.docs
+              .map((item) => normalizeCashRegisterCategorySuggestion(item.id, item.data() as Partial<CashRegisterCategorySuggestion>))
+              .sort((left, right) => right.usageCount - left.usageCount || left.name.localeCompare(right.name));
+            emit();
+          },
+          () => {
+            cashRegisterCategorySuggestions = [];
+            emit();
+          },
         ),
         onSnapshot(
           usersCollection(ownerUserId, 'financeEntries'),
@@ -1407,6 +1510,85 @@ export const dashboardService = {
     await batch.commit();
   },
 
+  async saveCashRegisterMenuItems(
+    userId: string,
+    items: Array<Omit<CashRegisterMenuItem, 'id' | 'createdAt' | 'updatedAt'> & { id?: string; createdAt?: string }>,
+  ) {
+    const timestamp = nowIso();
+    const batch = writeBatch(requireDb());
+
+    const categories = items.map((item) => item.category);
+    items.forEach((item) => {
+      const ref = item.id ? cashRegisterMenuItemDoc(userId, item.id) : doc(usersCollection(userId, 'cashRegisterMenuItems'));
+      batch.set(
+        ref,
+        {
+          name: item.name.trim(),
+          category: item.category.trim() || 'Other',
+          description: item.description?.trim() || '',
+          price: Number(item.price || 0),
+          taxRate: Number(item.taxRate ?? defaultBillingDefaults.defaultTaxRate),
+          barcodeValue: item.barcodeValue.trim(),
+          iconKey: item.iconKey || 'cup',
+          active: item.active,
+          sortHint: Number(item.sortHint ?? 0),
+          sizes: item.sizes.map((size) => ({
+            id: size.id || createId(),
+            label: size.label.trim(),
+            price: Number(size.price || 0),
+          })),
+          createdAt: item.createdAt || timestamp,
+          updatedAt: timestamp,
+        },
+        { merge: true },
+      );
+    });
+    await batch.commit();
+    try {
+      const categoryBatch = writeBatch(requireDb());
+      upsertCategorySuggestions(categoryBatch, categories, timestamp);
+      await categoryBatch.commit();
+    } catch {
+      // Global category suggestions are best-effort and should never block register item creation.
+    }
+  },
+
+  async updateCashRegisterMenuItem(userId: string, itemId: string, patch: Partial<CashRegisterMenuItem>) {
+    const timestamp = nowIso();
+    const batch = writeBatch(requireDb());
+    batch.set(
+      cashRegisterMenuItemDoc(userId, itemId),
+      {
+        ...patch,
+        updatedAt: timestamp,
+      },
+      { merge: true },
+    );
+    await batch.commit();
+    if (patch.category) {
+      try {
+        const categoryBatch = writeBatch(requireDb());
+        upsertCategorySuggestions(categoryBatch, [patch.category], timestamp);
+        await categoryBatch.commit();
+      } catch {
+        // Global category suggestions are best-effort.
+      }
+    }
+  },
+
+  async saveCashRegisterCategorySuggestion(category: string) {
+    const timestamp = nowIso();
+    const batch = writeBatch(requireDb());
+    upsertCategorySuggestions(batch, [category], timestamp);
+    await batch.commit();
+  },
+
+  async deleteCashRegisterMenuItem(userId: string, itemId: string) {
+    const batch = writeBatch(requireDb());
+    batch.delete(cashRegisterMenuItemDoc(userId, itemId));
+    await batch.commit();
+  },
+
   async addFinanceEntry(
     userId: string,
     payload: Pick<FinanceEntry, 'title' | 'kind' | 'category' | 'amount' | 'status' | 'dueAt' | 'customerId' | 'linkedCustomerName' | 'projectTitle' | 'notes' | 'employeeMemberId' | 'employeeName' | 'paycheckNumber' | 'payPeriodLabel' | 'paymentMethod' | 'issuedBy' | 'referenceDate' | 'transactionFlow' | 'autoGenerated' | 'autoGroupKey'> & { accountingSource?: AccountingSource },
@@ -1632,6 +1814,92 @@ export const dashboardService = {
       accountingSource: 'invoice',
       referenceDate: timestamp,
       notes: payload.notes.trim() || `Generated from barcode billing for ${payload.customerName.trim() || 'Walk-in customer'}.`,
+    });
+
+    await batch.commit();
+
+    return {
+      invoiceId: invoiceRef.id,
+      invoiceNumber,
+      subtotal,
+      taxAmount,
+      totalAmount,
+      lineItems,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+  },
+
+  async completeCashRegisterSale(
+    userId: string,
+    payload: {
+      existingInvoiceId?: string;
+      customerName: string;
+      paymentStatus: InvoicePaymentStatus;
+      paymentMethod: InvoicePaymentMethod;
+      taxRate: number;
+      notes: string;
+      billedBy: string;
+      lineItems: SalesInvoiceLineItem[];
+    },
+  ) {
+    if (!payload.lineItems.length) {
+      throw new Error('Add at least one item before finalizing the cash register bill.');
+    }
+
+    const timestamp = nowIso();
+    const invoiceRef = payload.existingInvoiceId ? salesInvoiceDoc(userId, payload.existingInvoiceId) : doc(usersCollection(userId, 'salesInvoices'));
+    const financeRef = doc(usersCollection(userId, 'financeEntries'));
+    const businessBarcodeKey = buildBusinessBarcodeKey(userId);
+    const lineItems = payload.lineItems.map((line) => ({
+      inventoryItemId: line.inventoryItemId,
+      barcodeValue: line.barcodeValue,
+      itemName: line.itemName,
+      sku: line.sku,
+      quantity: Number(line.quantity || 1),
+      unitPrice: Number(line.unitPrice || 0),
+      lineSubtotal: Number(line.lineSubtotal || line.unitPrice * line.quantity || 0),
+    }));
+    const subtotal = lineItems.reduce((sum, line) => sum + line.lineSubtotal, 0);
+    const taxAmount = Number(((subtotal * payload.taxRate) / 100).toFixed(2));
+    const totalAmount = subtotal + taxAmount;
+    const invoiceNumber = buildInvoiceNumber(userId, invoiceRef.id, timestamp);
+    const batch = writeBatch(requireDb());
+
+    batch.set(salesInvoiceDoc(userId, invoiceRef.id), {
+      invoiceNumber,
+      status: 'finalized',
+      businessBarcodeKey,
+      customerName: payload.customerName.trim() || 'Walk-in customer',
+      paymentStatus: payload.paymentStatus,
+      paymentMethod: payload.paymentMethod,
+      lineItems,
+      subtotal,
+      taxRate: payload.taxRate,
+      taxAmount,
+      totalAmount,
+      notes: payload.notes.trim(),
+      billedBy: payload.billedBy,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+
+    batch.set(financeEntryDoc(userId, financeRef.id), {
+      title: invoiceNumber,
+      kind: 'income',
+      category: 'client_payment',
+      amount: totalAmount,
+      status: payload.paymentStatus,
+      dueAt: timestamp,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      projectTitle: 'Cash register sale',
+      sourceInvoiceId: invoiceRef.id,
+      accountingSource: 'invoice',
+      referenceDate: timestamp,
+      paymentMethod: payload.paymentMethod,
+      issuedBy: payload.billedBy,
+      notes: payload.notes.trim() || `Generated from cash register for ${payload.customerName.trim() || 'Walk-in customer'}.`,
     });
 
     await batch.commit();

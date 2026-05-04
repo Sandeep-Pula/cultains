@@ -6,6 +6,7 @@ export type DashboardView =
   | 'team'
   | 'inventory'
   | 'barcode-desk'
+  | 'cash-register'
   | 'billing'
   | 'account-ledger'
   | 'ai-tools'
@@ -216,6 +217,7 @@ export interface BillingDefaults {
   defaultPaymentStatus: InvoicePaymentStatus;
   defaultPaymentMethod: InvoicePaymentMethod;
   defaultInvoiceNotes: string;
+  defaultUpiId?: string;
 }
 
 export type SupportThreadStatus = 'new' | 'open' | 'in_progress' | 'waiting_on_admin' | 'waiting_on_business' | 'resolved' | 'closed';
@@ -276,6 +278,8 @@ export interface DashboardData {
   financeEntries: FinanceEntry[];
   weeklyMiscRecords: WeeklyMiscRecord[];
   salesInvoices: SalesInvoice[];
+  cashRegisterMenuItems: CashRegisterMenuItem[];
+  cashRegisterCategorySuggestions: CashRegisterCategorySuggestion[];
   supportThreads: SupportThread[];
   recentlyViewedIds: string[];
 }
@@ -411,6 +415,36 @@ export interface SalesInvoice {
   totalAmount: number;
   notes: string;
   billedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CashRegisterMenuSize {
+  id: string;
+  label: string;
+  price: number;
+}
+
+export interface CashRegisterMenuItem {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  price: number;
+  taxRate: number;
+  barcodeValue: string;
+  iconKey: string;
+  active: boolean;
+  sortHint: number;
+  sizes: CashRegisterMenuSize[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CashRegisterCategorySuggestion {
+  id: string;
+  name: string;
+  usageCount: number;
   createdAt: string;
   updatedAt: string;
 }

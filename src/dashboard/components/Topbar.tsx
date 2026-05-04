@@ -3,6 +3,7 @@ import type { WorkspaceBusinessConfig } from '../businessConfig';
 import type { DashboardView } from '../types';
 import { viewTitles } from '../utils';
 import { ProductWordmark } from '../../components/BrandWordmark';
+import { AivaAvatar } from './AIBusinessAssistant';
 
 export type TopbarSearchResult = {
   id: string;
@@ -22,6 +23,7 @@ type TopbarProps = {
   onOpenSidebar: () => void;
   onToggleDesktopSidebar: () => void;
   desktopSidebarCollapsed: boolean;
+  onOpenAiva: () => void;
   onLogout: () => void;
 };
 
@@ -33,6 +35,7 @@ export const Topbar = ({
   searchResults,
   onSearchResultSelect,
   onOpenSidebar,
+  onOpenAiva,
   onLogout,
 }: TopbarProps) => {
   const hasSearch = search.trim().length > 0;
@@ -100,6 +103,15 @@ export const Topbar = ({
             </div>
           ) : null}
         </div>
+
+        <button
+          type="button"
+          onClick={onOpenAiva}
+          className="shrink-0 flex items-center justify-center transition hover:-translate-y-0.5"
+          aria-label="Open AIVA assistant"
+        >
+          <AivaAvatar size="sm" />
+        </button>
 
         <a
           href="#top"
