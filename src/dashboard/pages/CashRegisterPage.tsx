@@ -49,7 +49,6 @@ import type {
 import { EmptyStatePanel } from '../components/EmptyStatePanel';
 import { SalesInvoiceDetailModal } from '../components/SalesInvoiceDetailModal';
 import { formatCurrency, formatDateTime } from '../utils';
-import { printSalesInvoice } from '../invoicePrint';
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY?.trim();
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
@@ -120,41 +119,6 @@ type CashRegisterPageProps = {
 };
 
 type MenuItemInput = Omit<CashRegisterMenuItem, 'id' | 'createdAt' | 'updatedAt'>;
-
-const iconMap: Record<string, any> = {
-  cup: CupSoda,
-  coffee: Coffee,
-  receipt: ReceiptText,
-  utensils: UtensilsCrossed,
-  shopping: ShoppingBag,
-  package: Package,
-  pizza: Pizza,
-};
-
-const paymentMethodLabels: Record<InvoicePaymentMethod, string> = {
-  cash: 'Cash',
-  upi: 'UPI',
-  credit_card: 'Credit card',
-  debit_card: 'Debit card',
-  bank_transfer: 'Bank transfer',
-  mixed: 'Mixed',
-};
-
-const baseCategorySuggestions = [
-  'Beverages',
-  'Food',
-  'Snacks',
-  'Grocery',
-  'Dairy',
-  'Bakery',
-  'Personal Care',
-  'Household',
-  'Electronics',
-  'Services',
-  'Add-ons',
-  'Combos',
-  'Other',
-];
 
 const categoryKeywords: Array<{ category: string; iconKey: string; words: string[] }> = [
   { category: 'Beverages', iconKey: 'cup', words: ['juice', 'drink', 'shake', 'smoothie', 'lassi', 'soda', 'water', 'tea', 'coffee', 'mosombi'] },
@@ -883,7 +847,7 @@ export const CashRegisterPage = ({
     setFinalizing(true);
     setInvoiceError(null);
     try {
-      const result = await onFinalizeSale({
+      await onFinalizeSale({
         existingInvoiceId: activeDraftId || undefined,
         customerName,
         paymentStatus,
@@ -894,24 +858,6 @@ export const CashRegisterPage = ({
         lineItems: buildLineItems(),
       });
 
-      const nextInvoice: SalesInvoice = {
-        id: result.invoiceId,
-        invoiceNumber: result.invoiceNumber,
-        status: 'finalized',
-        businessBarcodeKey: '',
-        customerName,
-        paymentStatus,
-        paymentMethod,
-        lineItems: result.lineItems,
-        subtotal: result.subtotal,
-        taxRate: defaultTaxRate,
-        taxAmount: result.taxAmount,
-        totalAmount: result.totalAmount,
-        notes,
-        billedBy,
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt,
-      };
       resetBill();
     } catch (error) {
       setInvoiceError(error instanceof Error ? error.message : 'Unable to finalize this cash register sale.');
@@ -1013,7 +959,7 @@ export const CashRegisterPage = ({
           </div>
 
           <div className="mt-4 grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 2xl:grid-cols-4 min-[1800px]:grid-cols-5">
-            {filteredItems.map(({ item, soldCount }) => {
+            {filteredItems.map(({ item }) => {
               const Icon = inferIcon(item.category, item.name);
               const sizeOptions = item.sizes.length ? item.sizes : [{ id: 'regular', label: '', price: item.price }];
               return (
@@ -1381,7 +1327,17 @@ const CategoryPicker = ({
   );
 };
 
-const ExistingCategoryPicker = ({ item, suggestions, onUpdate, onSaveCategorySuggestion }: any) => {
+const ExistingCategoryPicker = ({
+  item,
+  suggestions,
+  onUpdate,
+  onSaveCategorySuggestion,
+}: {
+  item: CashRegisterMenuItem;
+  suggestions: string[];
+  onUpdate: (id: string, patch: Partial<CashRegisterMenuItem>) => void;
+  onSaveCategorySuggestion: (category: string) => void;
+}) => {
   const [val, setVal] = useState(item.category);
   return (
     <CategoryPicker
@@ -1422,7 +1378,6 @@ const CustomizeMenuModal = ({
   const [newItemPrice, setNewItemPrice] = useState('');
   const [newItemCategory, setNewItemCategory] = useState('');
   const [saving, setSaving] = useState(false);
-  const categoryListId = 'cash-register-category-suggestions';
 
   const addItem = async () => {
     const price = Number(newItemPrice);
