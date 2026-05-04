@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Clock, Calendar, Check, X, LogIn, LogOut, ChevronDown, UserSquare2 } from 'lucide-react';
+import { Clock, Calendar, Check, X, LogIn, LogOut, UserSquare2 } from 'lucide-react';
 import type { TimesheetEntry, LeaveRequest, LeaveStatus, TeamMember } from '../types';
 import { formatDateTime, formatDate } from '../utils';
 
@@ -309,7 +309,7 @@ export const TimesheetPage = ({
                 <label className="mb-2 block text-sm font-medium text-brand-dark">Leave Type</label>
                 <select
                   value={leaveType}
-                  onChange={(e: any) => setLeaveType(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setLeaveType(e.target.value as 'sick' | 'casual' | 'unpaid' | 'other')}
                   className="w-full rounded-2xl border border-brand-30 bg-brand-60/20 px-4 py-2.5 text-sm text-brand-dark outline-none"
                 >
                   <option value="casual">Casual Leave</option>
