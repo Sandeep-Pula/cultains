@@ -42,8 +42,9 @@ import type {
   TaskItem,
   TeamMember,
   WeeklyMiscRecord,
-  InventoryItem,
   WorkspaceProfile,
+  TimesheetEntry,
+  LeaveRequest,
 } from '../types';
 import { defaultSidebarViews, filterDashboardViews, getInitials, getInventoryStatus, getStageProgress, recalculateTeamMetrics, stageProgressMap } from '../utils';
 import { buildBusinessBarcodeKey, buildInventoryBarcodeValue, buildInvoiceNumber } from '../barcodeUtils';
@@ -165,6 +166,12 @@ const normalizeSidebarViews = (views?: DashboardView[]) => {
     next.splice(insertAt, 0, 'account-ledger');
   }
 
+  if (!next.includes('tally-export')) {
+    const ledgerIndex = next.indexOf('account-ledger');
+    const insertAt = ledgerIndex >= 0 ? ledgerIndex + 1 : next.length;
+    next.splice(insertAt, 0, 'tally-export');
+  }
+
   return Array.from(new Set(next));
 };
 
@@ -235,6 +242,8 @@ const emptyDashboardData = (user: User, profile?: Partial<UserProfileDoc>): Dash
   deletedCustomers: [],
   tasks: [],
   recentlyViewedIds: profile?.recentlyViewedIds ?? [],
+  timesheets: [],
+  leaveRequests: [],
 });
 
 const normalizeNote = (value: Partial<NoteItem> | undefined): NoteItem => ({
@@ -243,6 +252,26 @@ const normalizeNote = (value: Partial<NoteItem> | undefined): NoteItem => ({
   authorName: value?.authorName || 'Unknown',
   createdAt: value?.createdAt || nowIso(),
   content: value?.content || '',
+});
+
+const normalizeTimesheet = (id: string, value: Partial<TimesheetEntry> | undefined): TimesheetEntry => ({
+  id,
+  userId: value?.userId || '',
+  date: value?.date || new Date().toISOString().split('T')[0],
+  clockInTime: value?.clockInTime || nowIso(),
+  clockOutTime: value?.clockOutTime,
+  totalMinutes: value?.totalMinutes,
+});
+
+const normalizeLeaveRequest = (id: string, value: Partial<LeaveRequest> | undefined): LeaveRequest => ({
+  id,
+  userId: value?.userId || '',
+  startDate: value?.startDate || '',
+  endDate: value?.endDate || '',
+  type: value?.type || 'casual',
+  reason: value?.reason || '',
+  status: value?.status || 'pending',
+  createdAt: value?.createdAt || nowIso(),
 });
 
 const normalizeActivity = (value: Partial<ActivityItem> | undefined): ActivityItem => ({
@@ -810,6 +839,8 @@ export const dashboardService = {
     let weeklyMiscRecords: WeeklyMiscRecord[] = [];
     let salesInvoices: SalesInvoice[] = [];
     let supportThreads: SupportThread[] = [];
+    let timesheets: TimesheetEntry[] = [];
+    let leaveRequests: LeaveRequest[] = [];
     let workspaceKey = '';
     let teamAccessKey = '';
     let workspaceUnsubscribers: Array<() => void> = [];
@@ -865,6 +896,8 @@ export const dashboardService = {
         supportThreads,
         tasks,
         deletedCustomers,
+        timesheets,
+        leaveRequests,
         recentlyViewedIds: viewerProfile?.recentlyViewedIds ?? [],
       });
     };
@@ -883,6 +916,8 @@ export const dashboardService = {
       weeklyMiscRecords = [];
       salesInvoices = [];
       supportThreads = [];
+      timesheets = [];
+      leaveRequests = [];
     };
 
     const subscribeToWorkspace = (ownerUserId: string, linkedTeamMemberId?: string) => {
@@ -1020,6 +1055,26 @@ export const dashboardService = {
             supportThreads = snapshot.docs
               .map((item) => normalizeSupportThread(item.id, item.data() as Partial<SupportThread>))
               .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
+            emit();
+          },
+          (error) => onError(error),
+        ),
+        onSnapshot(
+          usersCollection(ownerUserId, 'timesheets'),
+          (snapshot) => {
+            timesheets = snapshot.docs
+              .map((item) => normalizeTimesheet(item.id, item.data() as Partial<TimesheetEntry>))
+              .sort((left, right) => new Date(right.clockInTime).getTime() - new Date(left.clockInTime).getTime());
+            emit();
+          },
+          (error) => onError(error),
+        ),
+        onSnapshot(
+          usersCollection(ownerUserId, 'leaveRequests'),
+          (snapshot) => {
+            leaveRequests = snapshot.docs
+              .map((item) => normalizeLeaveRequest(item.id, item.data() as Partial<LeaveRequest>))
+              .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
             emit();
           },
           (error) => onError(error),
@@ -2006,5 +2061,37 @@ export const dashboardService = {
   },
   async deleteCustomerRecord(userId: string, customer: CustomerProject, deletedBy: string) {
     await this.archiveCustomer(userId, customer, deletedBy);
+  },
+  async clockIn(userId: string, teamMemberId: string) {
+    const timestamp = nowIso();
+    const entryId = createId();
+    const ref = doc(usersCollection(userId, 'timesheets'), entryId);
+    const entry: Partial<TimesheetEntry> = {
+      userId: teamMemberId,
+      date: timestamp.split('T')[0],
+      clockInTime: timestamp,
+    };
+    await setDoc(ref, entry);
+  },
+  async clockOut(userId: string, entryId: string, totalMinutes: number) {
+    const ref = doc(usersCollection(userId, 'timesheets'), entryId);
+    await updateDoc(ref, {
+      clockOutTime: nowIso(),
+      totalMinutes,
+    });
+  },
+  async requestLeave(userId: string, payload: Partial<LeaveRequest>) {
+    const leaveId = createId();
+    const ref = doc(usersCollection(userId, 'leaveRequests'), leaveId);
+    const entry: Partial<LeaveRequest> = {
+      ...payload,
+      status: 'pending',
+      createdAt: nowIso(),
+    };
+    await setDoc(ref, entry);
+  },
+  async updateLeaveStatus(userId: string, leaveId: string, status: 'pending' | 'approved' | 'rejected') {
+    const ref = doc(usersCollection(userId, 'leaveRequests'), leaveId);
+    await updateDoc(ref, { status });
   },
 };

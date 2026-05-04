@@ -35,6 +35,8 @@ export const viewTitles: Record<DashboardView, string> = {
   inventory: 'Inventory',
   'barcode-desk': 'Barcode Desk',
   'cash-register': 'Cash Register',
+  email: 'Email',
+  'tally-export': 'Tally Data Export',
   billing: 'Billing',
   'account-ledger': 'Account Ledger',
   'ai-tools': 'AI tools',
@@ -43,6 +45,7 @@ export const viewTitles: Record<DashboardView, string> = {
   'raise-issue': 'Raise an Issue',
   settings: 'Settings',
   profile: 'Profile',
+  timesheet: 'Timesheets & Leave',
 };
 
 export const genericTeamRoleSuggestions = [
@@ -66,12 +69,15 @@ export const accessControlledViews: DashboardView[] = [
   'inventory',
   'barcode-desk',
   'cash-register',
+  'email',
+  'tally-export',
   'billing',
   'account-ledger',
   'ai-tools',
   'render-history',
   'crm',
   'raise-issue',
+  'timesheet',
 ];
 
 export const filterDashboardViews = (views?: DashboardView[]) =>
@@ -85,12 +91,15 @@ export const defaultSidebarViews: DashboardView[] = [
   'inventory',
   'barcode-desk',
   'cash-register',
+  'email',
+  'tally-export',
   'billing',
   'account-ledger',
   'render-history',
   'ai-tools',
   'crm',
   'raise-issue',
+  'timesheet',
 ];
 
 export const isOwnerAccount = (accountType?: AccountType) => (accountType || 'owner') === 'owner';
@@ -129,7 +138,7 @@ export const parseDashboardView = (hash: string): DashboardView => {
   const value = hash.replace(/^#dashboard\/?/, '').replace('/', '');
   if (!value) return 'sales-overview';
   if (value === 'overview' || value === 'business-calendar') return 'overview';
-  if (['super-admin', 'sales-overview', 'customers', 'team', 'inventory', 'barcode-desk', 'cash-register', 'billing', 'account-ledger', 'ai-tools', 'render-history', 'crm', 'raise-issue', 'settings', 'profile'].includes(value)) {
+  if (['super-admin', 'sales-overview', 'customers', 'team', 'inventory', 'barcode-desk', 'cash-register', 'email', 'tally-export', 'billing', 'account-ledger', 'ai-tools', 'render-history', 'crm', 'raise-issue', 'settings', 'profile', 'timesheet'].includes(value)) {
     return value as DashboardView;
   }
   return 'sales-overview';

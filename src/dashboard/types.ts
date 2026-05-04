@@ -7,6 +7,8 @@ export type DashboardView =
   | 'inventory'
   | 'barcode-desk'
   | 'cash-register'
+  | 'email'
+  | 'tally-export'
   | 'billing'
   | 'account-ledger'
   | 'ai-tools'
@@ -14,7 +16,8 @@ export type DashboardView =
   | 'crm'
   | 'raise-issue'
   | 'settings'
-  | 'profile';
+  | 'profile'
+  | 'timesheet';
 
 export type KnownBusinessType =
   | 'general_business'
@@ -72,6 +75,29 @@ export interface NoteItem {
   authorName: string;
   createdAt: string;
   content: string;
+}
+
+export interface TimesheetEntry {
+  id: string;
+  userId: string;
+  date: string;
+  clockInTime: string;
+  clockOutTime?: string;
+  totalMinutes?: number;
+}
+
+export type LeaveStatus = 'pending' | 'approved' | 'rejected';
+export type LeaveType = 'sick' | 'casual' | 'unpaid' | 'other';
+
+export interface LeaveRequest {
+  id: string;
+  userId: string;
+  startDate: string;
+  endDate: string;
+  type: LeaveType;
+  reason: string;
+  status: LeaveStatus;
+  createdAt: string;
 }
 
 export interface ActivityItem {
@@ -287,6 +313,8 @@ export interface DashboardData {
   cashRegisterCategorySuggestions: CashRegisterCategorySuggestion[];
   supportThreads: SupportThread[];
   recentlyViewedIds: string[];
+  timesheets: TimesheetEntry[];
+  leaveRequests: LeaveRequest[];
 }
 
 export interface CustomerFilters {

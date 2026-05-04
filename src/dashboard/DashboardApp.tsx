@@ -38,6 +38,8 @@ import { TeamPage } from './pages/TeamPage';
 import { InventoryPage } from './pages/InventoryPage';
 import { BarcodeDeskPage } from './pages/BarcodeDeskPage';
 import { CashRegisterPage } from './pages/CashRegisterPage';
+import { EmailPage } from './pages/EmailPage';
+import { TallyExportPage } from './pages/TallyExportPage';
 import { BillingPage } from './pages/BillingPage';
 import { CrmPage } from './pages/CrmPage';
 import { AIToolsPage } from './pages/AIToolsPage';
@@ -56,6 +58,7 @@ import { TeamMemberDrawer } from './components/TeamMemberDrawer';
 import { AIBusinessAssistant } from './components/AIBusinessAssistant';
 import { OperationsPage } from './pages/OperationsPage';
 import { AccountLedgerPage } from './pages/AccountLedgerPage';
+import { TimesheetPage } from './pages/TimesheetPage';
 
 const defaultFilters: CustomerFilters = {
   search: '',
@@ -1255,9 +1258,11 @@ export const DashboardApp = () => {
               sidebarViews,
               billingDefaults: data.profile.billingDefaults,
             });
+            setData((prev) => (prev ? { ...prev, profile: { ...prev.profile, sidebarViews } } : null));
             pushToast('Sidebar updated', 'Your sidebar shortcuts were saved.');
           } catch (nextError) {
             handleMutationError(nextError, 'Unable to save sidebar changes.');
+            throw nextError;
           }
         }}
         open={sidebarOpen}
@@ -1384,6 +1389,20 @@ export const DashboardApp = () => {
               onDeleteDraft={handleDeleteInvoiceDraft}
               onSaveCategorySuggestion={handleSaveCashRegisterCategorySuggestion}
             />
+          ) : activeView === 'email' ? (
+            <EmailPage
+              companyName={data.profile.companyName}
+              businessProfile={data.profile}
+            />
+          ) : activeView === 'tally-export' ? (
+            <TallyExportPage
+              companyName={data.profile.companyName}
+              businessProfile={data.profile}
+              financeEntries={data.financeEntries}
+              salesInvoices={data.salesInvoices}
+              inventory={data.inventory}
+              customers={data.customers}
+            />
           ) : activeView === 'billing' ? (
             <BillingPage
               companyName={data.profile.companyName}
@@ -1431,6 +1450,30 @@ export const DashboardApp = () => {
             />
           ) : activeView === 'ai-tools' ? (
             <AIToolsPage businessConfig={businessConfig} />
+          ) : activeView === 'timesheet' ? (
+            <TimesheetPage
+              timesheets={data.timesheets}
+              leaveRequests={data.leaveRequests}
+              team={data.team}
+              isOwner={isOwnerAccount(data.profile.accountType)}
+              viewerId={data.profile.linkedTeamMemberId || user.uid}
+              onClockIn={async (userId) => {
+                await dashboardService.clockIn(user.uid, userId);
+                pushToast('Clocked In', 'Your attendance has been recorded.');
+              }}
+              onClockOut={async (entryId, totalMinutes) => {
+                await dashboardService.clockOut(user.uid, entryId, totalMinutes);
+                pushToast('Clocked Out', 'Your attendance has been updated.');
+              }}
+              onRequestLeave={async (payload) => {
+                await dashboardService.requestLeave(user.uid, payload);
+                pushToast('Leave Requested', 'Your request has been submitted for approval.');
+              }}
+              onUpdateLeaveStatus={async (leaveId, status) => {
+                await dashboardService.updateLeaveStatus(user.uid, leaveId, status);
+                pushToast('Leave Updated', `Leave request has been ${status}.`);
+              }}
+            />
           ) : activeView === 'settings' ? (
             <SettingsPage
               companyName={data.profile.companyName}

@@ -35,15 +35,15 @@
 .heroAnimation span {
   position: absolute;
   display: block;
-  opacity: 0.2;
+  opacity: 0.16;
   will-change: transform;
 }
 
 .redBlock,
 .blueBlock {
-  width: 10rem;
-  height: 10rem;
-  border-radius: 28px;
+  width: 8.5rem;
+  height: 8.5rem;
+  border-radius: 24px;
 }
 
 .redBlock {
@@ -62,8 +62,8 @@
 
 .redBar,
 .blueBar {
-  width: 12rem;
-  height: 2.5rem;
+  width: 10rem;
+  height: 2.1rem;
   border-radius: 999px;
 }
 
@@ -83,8 +83,8 @@
 
 .redRing,
 .blueRing {
-  width: 9rem;
-  height: 9rem;
+  width: 7.5rem;
+  height: 7.5rem;
   border-radius: 50%;
   background: transparent;
 }
@@ -92,14 +92,14 @@
 .redRing {
   top: 21%;
   right: 34%;
-  border: 1.15rem solid #d62828;
+  border: 0.95rem solid #d62828;
   animation: orbitRedRing 11s ease-in-out infinite;
 }
 
 .blueRing {
   left: 37%;
   bottom: 8%;
-  border: 1rem solid #12355b;
+  border: 0.85rem solid #12355b;
   animation: orbitBlueRing 12s ease-in-out infinite;
 }
 
@@ -113,18 +113,18 @@
 .redTriangle {
   left: 42%;
   top: 16%;
-  border-left: 4.7rem solid transparent;
-  border-right: 4.7rem solid transparent;
-  border-bottom: 8rem solid #d62828;
+  border-left: 3.8rem solid transparent;
+  border-right: 3.8rem solid transparent;
+  border-bottom: 6.6rem solid #d62828;
   animation: triangleRedMove 10s ease-in-out infinite;
 }
 
 .blueTriangle {
   right: 6%;
   bottom: 12%;
-  border-left: 5.3rem solid transparent;
-  border-right: 5.3rem solid transparent;
-  border-bottom: 9rem solid #12355b;
+  border-left: 4.2rem solid transparent;
+  border-right: 4.2rem solid transparent;
+  border-bottom: 7.2rem solid #12355b;
   animation: triangleBlueMove 11s ease-in-out infinite;
 }
 
@@ -586,6 +586,89 @@
     padding-top: 12.5rem;
   }
 
+  .heroAnimation span {
+    opacity: 0.11;
+  }
+
+  .redBlock,
+  .blueBlock {
+    width: 5rem;
+    height: 5rem;
+    border-radius: 18px;
+  }
+
+  .redBlock {
+    top: 22%;
+    left: -2rem;
+    animation-name: floatRedTablet;
+  }
+
+  .blueBlock {
+    top: 18%;
+    right: -2.2rem;
+    animation-name: floatBlueTablet;
+  }
+
+  .redBar,
+  .blueBar {
+    width: 6.2rem;
+    height: 1.25rem;
+  }
+
+  .redBar {
+    left: 6%;
+    bottom: 8%;
+    animation-name: driftRedBarTablet;
+  }
+
+  .blueBar {
+    right: 8%;
+    bottom: 14%;
+    animation-name: driftBlueBarTablet;
+  }
+
+  .redRing,
+  .blueRing {
+    width: 4.8rem;
+    height: 4.8rem;
+  }
+
+  .redRing {
+    top: 55%;
+    right: auto;
+    left: 4%;
+    border-width: 0.55rem;
+    animation-name: orbitRedRingTablet;
+  }
+
+  .blueRing {
+    left: auto;
+    right: 5%;
+    bottom: 29%;
+    border-width: 0.5rem;
+    animation-name: orbitBlueRingTablet;
+  }
+
+  .redTriangle {
+    left: auto;
+    right: 16%;
+    top: 30%;
+    border-left-width: 2rem;
+    border-right-width: 2rem;
+    border-bottom-width: 3.5rem;
+    animation-name: triangleRedTablet;
+  }
+
+  .blueTriangle {
+    right: auto;
+    left: 16%;
+    bottom: 18%;
+    border-left-width: 2.2rem;
+    border-right-width: 2.2rem;
+    border-bottom-width: 3.8rem;
+    animation-name: triangleBlueTablet;
+  }
+
   .heroInner,
   .labGrid {
     grid-template-columns: 1fr;
@@ -630,6 +713,67 @@
   .footerBottom {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .heroAnimation span {
+    opacity: 0.085;
+  }
+
+  .redBlock,
+  .blueBlock {
+    width: 3.6rem;
+    height: 3.6rem;
+    border-radius: 14px;
+  }
+
+  .redBlock {
+    top: 18%;
+    left: -1.6rem;
+  }
+
+  .blueBlock {
+    top: 20%;
+    right: -1.7rem;
+  }
+
+  .redRing,
+  .blueRing {
+    width: 3.4rem;
+    height: 3.4rem;
+  }
+
+  .redRing {
+    top: 58%;
+    left: -0.4rem;
+    border-width: 0.42rem;
+  }
+
+  .blueRing {
+    right: -0.6rem;
+    bottom: 22%;
+    border-width: 0.38rem;
+  }
+
+  .redBar,
+  .blueBar {
+    width: 4.8rem;
+    height: 1rem;
+  }
+
+  .redTriangle {
+    right: 8%;
+    top: 22%;
+    border-left-width: 1.35rem;
+    border-right-width: 1.35rem;
+    border-bottom-width: 2.35rem;
+  }
+
+  .blueTriangle {
+    left: 8%;
+    bottom: 12%;
+    border-left-width: 1.5rem;
+    border-right-width: 1.5rem;
+    border-bottom-width: 2.6rem;
   }
 }
 
@@ -759,6 +903,102 @@
   }
   100% {
     transform: translate3d(0, 0, 0) rotate(-28deg) scale(1);
+  }
+}
+
+@keyframes floatRedTablet {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(14deg) scale(1);
+  }
+  50% {
+    transform: translate3d(2rem, 2.4rem, 0) rotate(32deg) scale(1.04);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(14deg) scale(1);
+  }
+}
+
+@keyframes floatBlueTablet {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-12deg) scale(1);
+  }
+  50% {
+    transform: translate3d(-2rem, 2rem, 0) rotate(-30deg) scale(1.04);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-12deg) scale(1);
+  }
+}
+
+@keyframes driftRedBarTablet {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-14deg);
+  }
+  50% {
+    transform: translate3d(1.6rem, -1.4rem, 0) rotate(4deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-14deg);
+  }
+}
+
+@keyframes driftBlueBarTablet {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(12deg);
+  }
+  50% {
+    transform: translate3d(-1.8rem, 1.2rem, 0) rotate(-4deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(12deg);
+  }
+}
+
+@keyframes orbitRedRingTablet {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(1.4rem, 1.8rem, 0) rotate(120deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(360deg);
+  }
+}
+
+@keyframes orbitBlueRingTablet {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(-1.6rem, -1.6rem, 0) rotate(-120deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-360deg);
+  }
+}
+
+@keyframes triangleRedTablet {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(18deg) scale(1);
+  }
+  50% {
+    transform: translate3d(-1.5rem, 1rem, 0) rotate(48deg) scale(1.04);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(18deg) scale(1);
+  }
+}
+
+@keyframes triangleBlueTablet {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-22deg) scale(1);
+  }
+  50% {
+    transform: translate3d(1.5rem, -1rem, 0) rotate(-52deg) scale(1.04);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-22deg) scale(1);
   }
 }
 
