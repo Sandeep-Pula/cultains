@@ -43,6 +43,7 @@ import type {
   TeamMember,
   WeeklyMiscRecord,
   WorkspaceProfile,
+  InventoryItem,
   TimesheetEntry,
   LeaveRequest,
 } from '../types';
