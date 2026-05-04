@@ -218,6 +218,11 @@ export interface BillingDefaults {
   defaultPaymentMethod: InvoicePaymentMethod;
   defaultInvoiceNotes: string;
   defaultUpiId?: string;
+  physicalInvoicePrintingEnabled?: boolean;
+  printerConnectionType?: 'system' | 'bluetooth' | 'usb' | 'serial' | 'wifi';
+  printerDeviceName?: string;
+  printerPaperWidth?: '58mm' | '80mm';
+  networkPrinterAddress?: string;
 }
 
 export type SupportThreadStatus = 'new' | 'open' | 'in_progress' | 'waiting_on_admin' | 'waiting_on_business' | 'resolved' | 'closed';

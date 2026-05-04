@@ -34,7 +34,13 @@ const financePaymentMethodLabels: Record<NonNullable<FinanceEntry['paymentMethod
   mixed: 'Mixed',
 };
 
-const buildPrintDocument = (title: string, body: string) => `
+type PrintRenderOptions = {
+  autoPrint?: boolean;
+  compactReceipt?: boolean;
+  paperWidth?: '58mm' | '80mm';
+};
+
+const buildPrintDocument = (title: string, body: string, options: PrintRenderOptions = {}) => `
   <html>
     <head>
       <meta charset="utf-8" />
@@ -77,7 +83,22 @@ const buildPrintDocument = (title: string, body: string) => `
         .print-error h1 { margin: 0 0 12px; font-size: 28px; }
         .print-error p { margin: 8px 0; font-size: 16px; line-height: 1.6; }
         .print-error code { display: block; margin-top: 12px; padding: 12px; background: #f6f7ff; border-radius: 16px; white-space: pre-wrap; word-break: break-word; }
-        @page { size: A4; margin: 14mm 12mm 18mm 12mm; }
+        ${options.compactReceipt ? `
+          body { background: #fff; }
+          .preview-shell { padding: 0; }
+          .preview-actions { display: none; }
+          .preview-card { max-width: ${options.paperWidth === '58mm' ? '58mm' : '80mm'}; border: none; border-radius: 0; box-shadow: none; padding: 8px; }
+          .india-invoice { max-width: ${options.paperWidth === '58mm' ? '58mm' : '80mm'}; }
+          .invoice-company { font-size: 18px; }
+          .invoice-address, .invoice-footer { font-size: 11px; }
+          .invoice-meta-grid { grid-template-columns: 1fr; gap: 4px; font-size: 11px; }
+          .invoice-meta-cell.right { text-align: left; }
+          .invoice-table thead th, .invoice-table tbody td, .invoice-summary-row { font-size: 10px; padding: 5px 2px; }
+          .invoice-summary-row.total { font-size: 13px; }
+          .invoice-item-sub { display: none; }
+          .invoice-logo { max-width: 48px; max-height: 48px; }
+          @page { size: ${options.paperWidth === '58mm' ? '58mm' : '80mm'} auto; margin: 3mm; }
+        ` : '@page { size: A4; margin: 14mm 12mm 18mm 12mm; }'}
         @media print {
           body { margin: 0; background: #fff; }
           .preview-actions { display: none; }
@@ -106,18 +127,28 @@ const buildPrintDocument = (title: string, body: string) => `
         </div>
         <div class="preview-card">${body}</div>
       </div>
+      ${options.autoPrint ? `
+        <script>
+          window.addEventListener('load', () => {
+            window.setTimeout(() => {
+              window.print();
+              window.setTimeout(() => window.close(), 600);
+            }, 250);
+          });
+        </script>
+      ` : ''}
     </body>
   </html>
 `;
 
-const printHtml = (title: string, body: string) => {
+const printHtml = (title: string, body: string, options: PrintRenderOptions = {}) => {
   const printWindow = window.open('', '_blank', 'width=1080,height=900');
   if (!printWindow) {
     throw new Error('Popup blocked. Allow popups to preview and print documents.');
   }
 
   try {
-    const html = buildPrintDocument(title, body);
+    const html = buildPrintDocument(title, body, options);
     printWindow.document.open();
     printWindow.document.write(html);
     printWindow.document.close();
@@ -134,6 +165,7 @@ const printHtml = (title: string, body: string) => {
           <code>${escapeHtml(message)}</code>
         </div>
       `,
+      options,
     ));
     printWindow.document.close();
   }
@@ -388,6 +420,7 @@ export const printSalesInvoice = (
   invoice: SalesInvoice,
   companyName: string,
   businessProfile: WorkspaceProfile,
+  options: PrintRenderOptions = {},
 ) => {
   const refundPolicy = invoice.notes.trim() || 'Goods once sold will be exchanged or refunded only as per store policy with valid invoice.';
   const totalQuantity = invoice.lineItems.reduce((sum, line) => sum + line.quantity, 0);
@@ -469,7 +502,7 @@ export const printSalesInvoice = (
     </div>
   `;
 
-  printHtml(invoice.invoiceNumber, body);
+  printHtml(invoice.invoiceNumber, body, options);
 };
 
 export const printSalaryPaycheck = (

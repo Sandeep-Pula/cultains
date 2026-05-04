@@ -49,6 +49,7 @@ import type {
 import { EmptyStatePanel } from '../components/EmptyStatePanel';
 import { SalesInvoiceDetailModal } from '../components/SalesInvoiceDetailModal';
 import { formatCurrency, formatDateTime } from '../utils';
+import { printSalesInvoice } from '../invoicePrint';
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY?.trim();
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
@@ -847,7 +848,7 @@ export const CashRegisterPage = ({
     setFinalizing(true);
     setInvoiceError(null);
     try {
-      await onFinalizeSale({
+      const result = await onFinalizeSale({
         existingInvoiceId: activeDraftId || undefined,
         customerName,
         paymentStatus,
@@ -857,6 +858,36 @@ export const CashRegisterPage = ({
         billedBy,
         lineItems: buildLineItems(),
       });
+
+      if (businessProfile.billingDefaults.physicalInvoicePrintingEnabled) {
+        printSalesInvoice(
+          {
+            id: result.invoiceId,
+            invoiceNumber: result.invoiceNumber,
+            status: 'finalized',
+            businessBarcodeKey: '',
+            customerName,
+            paymentStatus,
+            paymentMethod,
+            lineItems: result.lineItems,
+            subtotal: result.subtotal,
+            taxRate: defaultTaxRate,
+            taxAmount: result.taxAmount,
+            totalAmount: result.totalAmount,
+            notes,
+            billedBy,
+            createdAt: result.createdAt,
+            updatedAt: result.updatedAt,
+          },
+          companyName,
+          businessProfile,
+          {
+            autoPrint: true,
+            compactReceipt: true,
+            paperWidth: businessProfile.billingDefaults.printerPaperWidth || '80mm',
+          },
+        );
+      }
 
       resetBill();
     } catch (error) {
