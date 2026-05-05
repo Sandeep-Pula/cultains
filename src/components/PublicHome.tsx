@@ -206,32 +206,13 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
       <footer id="contact" className={styles.footer}>
         <div className={styles.container}>
           <div className={styles.footerTop}>
-            <div className={styles.footerBrand}>
-              <span className={styles.footerLabsLogo} aria-label="PULA labs">
-                <span>PULA</span>
-                <strong>labs</strong>
-              </span>
-              <p>
-                Pula Labs Private Limited is building practical AI products for growing businesses in India. Our
-                products focus on daily operations, owner decisions, team visibility, and useful business intelligence.
-              </p>
-            </div>
+
 
             <div className={styles.footerProducts}>
-              <div className={styles.footerSectionTitle}>
-                <Bot size={18} />
-                <span>Product roadmap</span>
-              </div>
+
               <div className={styles.footerProductItem}>
                 <ProductWordmark className={styles.footerProductLogo} productClassName={styles.footerBizText} />
                 <p>Live product for CRM, billing, inventory, finance, teams, operations, and AI-assisted workflows.</p>
-              </div>
-              <div className={styles.footerToolPreview}>
-                <span className={styles.footerCoachLogo}>
-                  <span>PULA</span>
-                  <strong>Coach</strong>
-                </span>
-                <span>Upcoming business coach to help owners manage their business better.</span>
               </div>
             </div>
 
@@ -250,10 +231,10 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
                   <Mail size={18} />
                   <span>Contact</span>
                 </div>
-                <a href="mailto:contact@pulalabs.com">contact@pulalabs.com</a>
-                <a href="https://pulalabs.com" target="_blank" rel="noreferrer">
+                <a href="mailto:contact@pulabiz.com">contact@pulabiz.com</a>
+                <a href="https://pulabiz.com" target="_blank" rel="noreferrer">
                   <Globe size={16} />
-                  pulalabs.com
+                  pulabiz.com
                 </a>
                 <span>
                   <MapPin size={16} />
@@ -263,11 +244,32 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
 
               <div className={styles.footerLinks}>
                 <span className={styles.footerHeading}>Pula Labs Private Limited</span>
-                <a href="https://pulalabs.com/careers" target="_blank" rel="noreferrer">Careers</a>
-                <a href="https://pulalabs.com/collaborate" target="_blank" rel="noreferrer">Collaborate with Pula Labs Private Limited</a>
-                <a href="mailto:contact@pulalabs.com?subject=Partnership%20with%20Pula%20Labs">Partner with Pula Labs</a>
+                <a href="https://pulabiz.com/careers" target="_blank" rel="noreferrer">Careers</a>
+                <a href="https://pulabiz.com/collaborate" target="_blank" rel="noreferrer">Collaborate with Pula Labs Private Limited</a>
+                <a href="mailto:contact@pulabiz.com?subject=Partnership%20with%20Pula%20Biz">Partner with Pula Biz</a>
                 <a href="#contact">Try PULA Biz</a>
               </div>
+            </div>
+            <div className={styles.footerProducts}>
+              <div className={styles.footerSectionTitle}>
+                <Bot size={18} />
+                <span>Product roadmap</span>
+              </div>
+              <div className={styles.footerToolPreview}>
+                <span className={styles.footerCoachLogo}>
+                  <span>PULA</span>
+                  <strong>UtsavKalp</strong>
+                </span>
+                <span>A handy tool for wedding and event planners of India.<br></br>Visit <a href="https://utsavkalp.com" target="_blank" rel="noreferrer"><strong>utsavkalp.com</strong></a></span>
+              </div>
+              <div className={styles.footerToolPreview}>
+                <span className={styles.footerCoachLogo}>
+                  <span>PULA</span>
+                  <strong>Coach</strong>
+                </span>
+                <span>Upcoming business coach to help owners manage their business better.</span>
+              </div>
+
             </div>
           </div>
 

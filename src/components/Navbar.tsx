@@ -88,9 +88,9 @@ export const Navbar = () => {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
     >
-      <a href="#top" className={styles.logo} aria-label="PULA labs home" onClick={(event) => goToHash(event, '#top')}>
+      <a href="#top" className={styles.logo} aria-label="PULA biz home" onClick={(event) => goToHash(event, '#top')}>
         <span className={styles.logoBadge}>
-          <img src={`${import.meta.env.BASE_URL}pula-labs-logo.png`} alt="PULA labs logo" className={styles.logoMark} />
+          <img src={`${import.meta.env.BASE_URL}pula-biz-logo-transparent.png`} alt="PULA biz logo" className={styles.logoMark} />
         </span>
       </a>
 
