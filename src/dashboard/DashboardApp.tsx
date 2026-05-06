@@ -1452,7 +1452,6 @@ export const DashboardApp = () => {
           ) : activeView === 'copilot' ? (
             isOwner ? (
               <CopilotPage
-                user={user}
                 profile={data.profile}
               />
             ) : (
