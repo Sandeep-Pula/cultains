@@ -43,6 +43,7 @@ import { TallyExportPage } from './pages/TallyExportPage';
 import { BillingPage } from './pages/BillingPage';
 import { CrmPage } from './pages/CrmPage';
 import { AIToolsPage } from './pages/AIToolsPage';
+import { CopilotPage } from './pages/CopilotPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { TeamMemberProfilePage } from './pages/TeamMemberProfilePage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -215,7 +216,7 @@ export const DashboardApp = () => {
         ? ['super-admin']
         : isOwner
           ? allowedViews
-          : Array.from(new Set<DashboardView>([...allowedViews, 'profile']))
+          : Array.from(new Set<DashboardView>([...allowedViews.filter((view) => view !== 'copilot'), 'profile']))
     ),
     [allowedViews, isOwner, isSuperAdmin],
   );
@@ -1236,7 +1237,7 @@ export const DashboardApp = () => {
         viewerName={data.userName}
         viewerLabel={isOwner ? 'Business owner' : 'Team member'}
         businessConfig={businessConfig}
-        visibleViews={data.profile.sidebarViews}
+        visibleViews={isOwner ? data.profile.sidebarViews : data.profile.sidebarViews.filter((view) => view !== 'copilot')}
         canManageSidebar={isOwner}
         canViewProfile
         onNavigate={(view) => handleNavigate(dashboardHash(view))}
@@ -1448,6 +1449,17 @@ export const DashboardApp = () => {
               onUpdateCustomer={handleUpdateCustomer}
               actorName={data.userName}
             />
+          ) : activeView === 'copilot' ? (
+            isOwner ? (
+              <CopilotPage
+                user={user}
+                profile={data.profile}
+              />
+            ) : (
+              <div className="rounded-[28px] border border-brand-30 bg-white p-6 text-sm text-brand-dark shadow-sm">
+                Business Copilot is available only to the business owner.
+              </div>
+            )
           ) : activeView === 'ai-tools' ? (
             <AIToolsPage businessConfig={businessConfig} />
           ) : activeView === 'timesheet' ? (

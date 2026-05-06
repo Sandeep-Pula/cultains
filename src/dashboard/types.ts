@@ -11,6 +11,7 @@ export type DashboardView =
   | 'tally-export'
   | 'billing'
   | 'account-ledger'
+  | 'copilot'
   | 'ai-tools'
   | 'render-history'
   | 'crm'

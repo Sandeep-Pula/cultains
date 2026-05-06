@@ -39,6 +39,7 @@ export const viewTitles: Record<DashboardView, string> = {
   'tally-export': 'Tally Data Export',
   billing: 'Billing',
   'account-ledger': 'Account Ledger',
+  copilot: 'Business Copilot',
   'ai-tools': 'AI tools',
   'render-history': 'Operations',
   crm: 'CRM',
@@ -73,6 +74,7 @@ export const accessControlledViews: DashboardView[] = [
   'tally-export',
   'billing',
   'account-ledger',
+  'copilot',
   'ai-tools',
   'render-history',
   'crm',
@@ -95,6 +97,7 @@ export const defaultSidebarViews: DashboardView[] = [
   'tally-export',
   'billing',
   'account-ledger',
+  'copilot',
   'render-history',
   'ai-tools',
   'crm',
@@ -138,7 +141,7 @@ export const parseDashboardView = (hash: string): DashboardView => {
   const value = hash.replace(/^#dashboard\/?/, '').replace('/', '');
   if (!value) return 'sales-overview';
   if (value === 'overview' || value === 'business-calendar') return 'overview';
-  if (['super-admin', 'sales-overview', 'customers', 'team', 'inventory', 'barcode-desk', 'cash-register', 'email', 'tally-export', 'billing', 'account-ledger', 'ai-tools', 'render-history', 'crm', 'raise-issue', 'settings', 'profile', 'timesheet'].includes(value)) {
+  if (['super-admin', 'sales-overview', 'customers', 'team', 'inventory', 'barcode-desk', 'cash-register', 'email', 'tally-export', 'billing', 'account-ledger', 'copilot', 'ai-tools', 'render-history', 'crm', 'raise-issue', 'settings', 'profile', 'timesheet'].includes(value)) {
     return value as DashboardView;
   }
   return 'sales-overview';

@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import {
   Barcode,
   BookOpen,
+  Bot,
   CalendarDays,
   CalendarClock,
   ChevronLeft,
@@ -43,6 +44,7 @@ const itemMap: Record<DashboardView, typeof Home> = {
   'tally-export': FileSpreadsheet,
   billing: CreditCard,
   'account-ledger': BookOpen,
+  copilot: Bot,
   'raise-issue': LifeBuoy,
   'render-history': History,
   'ai-tools': Sparkles,

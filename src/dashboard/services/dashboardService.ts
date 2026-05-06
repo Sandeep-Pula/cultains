@@ -173,6 +173,12 @@ const normalizeSidebarViews = (views?: DashboardView[]) => {
     next.splice(insertAt, 0, 'tally-export');
   }
 
+  if (!next.includes('copilot')) {
+    const aiToolsIndex = next.indexOf('ai-tools');
+    const insertAt = aiToolsIndex >= 0 ? aiToolsIndex : next.length;
+    next.splice(insertAt, 0, 'copilot');
+  }
+
   return Array.from(new Set(next));
 };
 
