@@ -10,7 +10,6 @@ type CopilotPageProps = {
 };
 
 const apiBaseUrl = import.meta.env.VITE_COPILOT_API_BASE_URL?.replace(/\/$/, '') || '';
-const chatKitDomainKey = import.meta.env.VITE_OPENAI_CHATKIT_DOMAIN_KEY?.trim();
 
 const apiUrl = (path: string) => `${apiBaseUrl}${path}`;
 
@@ -64,7 +63,6 @@ export const CopilotPage = ({ user, profile }: CopilotPageProps) => {
 
   const { control } = useChatKit({
     api: {
-      ...(chatKitDomainKey ? { domainKey: chatKitDomainKey } : {}),
       async getClientSecret(existingClientSecret) {
         if (existingClientSecret) return existingClientSecret;
 
