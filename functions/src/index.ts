@@ -36,7 +36,36 @@ type AnalyticsScope =
 
 type FirestoreRow = Record<string, unknown> & { id: string };
 
+type CrmEntityType = 'contact' | 'company' | 'lead' | 'deal' | 'task' | 'pipeline' | 'tag';
+type CrmWorkflowTrigger = 'lead_created' | 'deal_stage_changed' | 'task_overdue' | 'deal_won' | 'deal_lost' | 'followup_due';
+type CrmWorkflowActionType = 'create_task' | 'add_tag' | 'assign_owner' | 'add_note' | 'update_status' | 'send_notification';
+type CrmWorkflowAction = {
+  type?: CrmWorkflowActionType;
+  payload?: Record<string, unknown>;
+};
+type CrmWorkflowRule = FirestoreRow & {
+  name?: string;
+  active?: boolean;
+  trigger?: CrmWorkflowTrigger;
+  actions?: CrmWorkflowAction[];
+};
+type CrmWorkflowRunBody = {
+  trigger?: CrmWorkflowTrigger;
+  entityType?: CrmEntityType;
+  entityId?: string;
+  actorName?: string;
+};
+
 const db = getFirestore();
+const crmCollectionByEntity: Partial<Record<CrmEntityType, string>> = {
+  contact: 'crmContacts',
+  company: 'crmCompanies',
+  lead: 'crmLeads',
+  deal: 'crmDeals',
+  task: 'crmTasks',
+  pipeline: 'crmPipelines',
+  tag: 'crmTags',
+};
 
 const json = (response: Parameters<Parameters<typeof onRequest>[0]>[1], status: number, body: unknown) => {
   response.status(status).json(body);
@@ -374,6 +403,171 @@ const buildAnalyticsPayload = async (ownerUid: string, body: { scope?: Analytics
   };
 };
 
+const crmDoc = (ownerUid: string, collectionName: string, id: string) =>
+  db.collection('users').doc(ownerUid).collection(collectionName).doc(id);
+
+const writeCrmActivity = async (
+  ownerUid: string,
+  createdBy: string,
+  actorName: string,
+  entityType: CrmEntityType,
+  entityId: string,
+  action: string,
+  title: string,
+  description: string,
+) => {
+  const activityRef = db.collection('users').doc(ownerUid).collection('crmActivities').doc();
+  const timestamp = new Date().toISOString();
+  await activityRef.set({
+    id: activityRef.id,
+    businessId: ownerUid,
+    createdBy,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    entityType,
+    entityId,
+    action,
+    title,
+    description,
+    actorName,
+  });
+};
+
+const runServerCrmWorkflows = async (ownerUid: string, actorId: string, body: CrmWorkflowRunBody) => {
+  if (!body.trigger || !body.entityType || !body.entityId) {
+    throw new Error('INVALID_CRM_WORKFLOW_REQUEST');
+  }
+
+  const collectionName = crmCollectionByEntity[body.entityType];
+  if (!collectionName) {
+    throw new Error('INVALID_CRM_ENTITY_TYPE');
+  }
+
+  const actorName = body.actorName || 'CRM automation';
+  const workflowSnapshot = await db
+    .collection('users')
+    .doc(ownerUid)
+    .collection('crmWorkflows')
+    .where('trigger', '==', body.trigger)
+    .where('active', '==', true)
+    .get();
+
+  const workflows = workflowSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as CrmWorkflowRule);
+  let executedActions = 0;
+
+  for (const workflow of workflows) {
+    for (const action of workflow.actions || []) {
+      const payload = action.payload || {};
+      const timestamp = new Date().toISOString();
+      executedActions += 1;
+
+      if (action.type === 'create_task') {
+        const taskRef = db.collection('users').doc(ownerUid).collection('crmTasks').doc();
+        const dueInHours = Math.max(1, Number(payload.dueInHours || 24));
+        await taskRef.set({
+          id: taskRef.id,
+          businessId: ownerUid,
+          createdBy: actorId,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          title: String(payload.title || `Follow up ${body.entityType}`),
+          description: String(payload.description || `Auto-created by workflow: ${workflow.name || 'Workflow'}`),
+          dueAt: new Date(Date.now() + dueInHours * 60 * 60 * 1000).toISOString(),
+          priority: String(payload.priority || 'medium'),
+          status: 'open',
+          assignedTo: String(payload.assignedTo || actorId),
+          relatedEntityType: body.entityType,
+          relatedEntityId: body.entityId,
+          reminder: true,
+          type: String(payload.taskType || 'call'),
+          customFields: {},
+        });
+      }
+
+      if (action.type === 'add_note') {
+        const noteRef = db.collection('users').doc(ownerUid).collection('crmNotes').doc();
+        await noteRef.set({
+          id: noteRef.id,
+          businessId: ownerUid,
+          createdBy: actorId,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          entityType: body.entityType,
+          entityId: body.entityId,
+          body: String(payload.body || `Workflow note from ${workflow.name || 'Workflow'}`),
+        });
+      }
+
+      if (action.type === 'assign_owner' || action.type === 'update_status' || action.type === 'add_tag') {
+        const targetRef = crmDoc(ownerUid, collectionName, body.entityId);
+        const patch: Record<string, unknown> = { updatedAt: timestamp };
+        if (action.type === 'assign_owner') patch.assignedTo = String(payload.assignedTo || actorId);
+        if (action.type === 'update_status') patch.status = String(payload.status || 'open');
+        if (action.type === 'add_tag') {
+          const tagId = String(payload.tagId || '');
+          if (tagId) {
+            const current = await targetRef.get();
+            const tagIds = Array.isArray(current.data()?.tagIds) ? current.data()?.tagIds as string[] : [];
+            patch.tagIds = Array.from(new Set([...tagIds, tagId]));
+          }
+        }
+        await targetRef.set(patch, { merge: true });
+      }
+
+      if (action.type === 'send_notification') {
+        const notificationRef = db.collection('users').doc(ownerUid).collection('crmNotifications').doc();
+        await notificationRef.set({
+          id: notificationRef.id,
+          businessId: ownerUid,
+          createdBy: actorId,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          channel: String(payload.channel || 'in_app'),
+          title: String(payload.title || workflow.name || 'CRM workflow'),
+          body: String(payload.body || `Workflow ${workflow.name || 'Workflow'} ran for ${body.entityType}.`),
+          recipientUserId: String(payload.recipientUserId || actorId),
+          relatedEntityType: body.entityType,
+          relatedEntityId: body.entityId,
+        });
+      }
+    }
+  }
+
+  if (!workflows.length) {
+    const notificationRef = db.collection('users').doc(ownerUid).collection('crmNotifications').doc();
+    const timestamp = new Date().toISOString();
+    await notificationRef.set({
+      id: notificationRef.id,
+      businessId: ownerUid,
+      createdBy: actorId,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      channel: 'in_app',
+      title: 'Workflow trigger ready',
+      body: `No active rules yet for ${body.trigger}.`,
+      recipientUserId: actorId,
+      relatedEntityType: body.entityType,
+      relatedEntityId: body.entityId,
+    });
+  }
+
+  await writeCrmActivity(
+    ownerUid,
+    actorId,
+    actorName,
+    body.entityType,
+    body.entityId,
+    'workflow_evaluated',
+    'Workflow automation',
+    workflows.length ? `${workflows.length} workflow rules ran with ${executedActions} actions.` : `Trigger ${body.trigger} evaluated with no active rules.`,
+  );
+
+  return {
+    workflowsEvaluated: workflows.length,
+    actionsExecuted: executedActions,
+  };
+};
+
 const createMcpServer = (authorizationHeader: string | string[] | undefined) => {
   const server = new McpServer({
     name: 'pulabiz-business-data',
@@ -589,6 +783,22 @@ export const api = onRequest(
         return;
       }
 
+      if (pathname === '/crm/workflows/run') {
+        if (request.method !== 'POST') {
+          json(response, 405, { error: 'Method not allowed.' });
+          return;
+        }
+
+        const owner = await requireOwnerProfile(request.headers.authorization);
+        const body = readJsonBody<CrmWorkflowRunBody>(request.body);
+        const payload = await runServerCrmWorkflows(owner.uid, owner.uid, {
+          ...body,
+          actorName: body.actorName || owner.profile.userName || owner.profile.companyName || owner.email || 'CRM automation',
+        });
+        json(response, 200, payload);
+        return;
+      }
+
       json(response, 404, { error: 'API route not found.' });
     } catch (error) {
       if (error instanceof Error) {
@@ -602,6 +812,10 @@ export const api = onRequest(
         }
         if (error.message === 'OWNER_ONLY') {
           json(response, 403, { error: 'Only the business owner can use the business copilot.' });
+          return;
+        }
+        if (error.message === 'INVALID_CRM_WORKFLOW_REQUEST' || error.message === 'INVALID_CRM_ENTITY_TYPE') {
+          json(response, 400, { error: 'Invalid CRM workflow request.' });
           return;
         }
       }

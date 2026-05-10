@@ -47,7 +47,6 @@ export type RenderApprovalStatus = 'draft' | 'pending_review' | 'approved' | 're
 export type CustomerPriority = 'low' | 'medium' | 'high';
 export type TaskPriority = 'low' | 'medium' | 'high';
 export type SortOption = 'latest' | 'activity' | 'pending';
-export type CommunicationChannel = 'call' | 'whatsapp' | 'meeting' | 'share_link' | 'comment';
 export type QuoteStatus = 'draft' | 'sent' | 'approved' | 'revised';
 export type PaymentStage = 'not_started' | 'advance_received' | 'partial_paid' | 'paid';
 export type RenderQueueStatus = 'queued' | 'in_progress' | 'done';
@@ -137,15 +136,6 @@ export interface RenderRequest {
   ownerId: string;
 }
 
-export interface CommunicationLog {
-  id: string;
-  type: CommunicationChannel;
-  createdAt: string;
-  actorName: string;
-  summary: string;
-  outcome: string;
-}
-
 export interface QuoteSummary {
   estimatedValue: number;
   quoteValue: number;
@@ -188,7 +178,6 @@ export interface CustomerProject {
   activityScore: number;
   wallpaperCode?: string;
   curtainCode?: string;
-  communicationLog: CommunicationLog[];
   quote: QuoteSummary;
   renders: RenderAsset[];
   renderQueue: RenderRequest[];

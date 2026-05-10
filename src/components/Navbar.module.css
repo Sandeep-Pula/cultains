@@ -65,6 +65,7 @@
   align-items: center;
   justify-content: flex-end;
   min-width: 0;
+  max-width: 100%;
 }
 
 .link {
@@ -109,6 +110,7 @@
   align-items: center;
   gap: 0.65rem;
   flex: 0 0 auto;
+  min-width: 0;
 }
 
 .navLoginButton {
@@ -178,6 +180,7 @@
   }
 
   .links {
+    width: 100%;
     justify-content: center;
     flex-wrap: wrap;
     gap: 0.7rem 1rem;
@@ -204,11 +207,24 @@
   }
 
   .links {
-    gap: 0.65rem 0.8rem;
+    display: grid;
+    grid-template-columns: repeat(5, max-content);
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+    gap: 0.65rem 0.42rem;
+    overflow: hidden;
+  }
+
+  .link {
+    font-size: 0.8rem;
   }
 
   .navActions {
-    width: 100%;
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: min(100%, 360px);
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.18fr);
     flex-wrap: nowrap;
@@ -218,6 +234,16 @@
   .ctaLink {
     width: 100%;
     min-width: 0;
-    padding-inline: 0.8rem;
+    max-width: 100%;
+    overflow: hidden;
+    padding-inline: 0.65rem;
+    font-size: 0.86rem;
+  }
+
+  .ctaLink span,
+  .navLoginButton span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }

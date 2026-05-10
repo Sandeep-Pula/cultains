@@ -21,7 +21,6 @@ import type {
   CashRegisterCategorySuggestion,
   CashRegisterMenuItem,
   CashRegisterMenuSize,
-  CommunicationLog,
   CustomerProject,
   DashboardView,
   DashboardData,
@@ -149,37 +148,8 @@ const getCompanyName = (user: User, preferredName?: string) => {
 };
 
 const normalizeSidebarViews = (views?: DashboardView[]) => {
-  const filtered = filterDashboardViews(views);
-  const next = filtered.length ? [...filtered] : [...defaultSidebarViews];
-
-  if (!next.includes('sales-overview')) {
-    next.unshift('sales-overview');
-  }
-
-  if (!next.includes('overview')) {
-    const overviewInsertIndex = next.includes('sales-overview') ? 1 : 0;
-    next.splice(overviewInsertIndex, 0, 'overview');
-  }
-
-  if (!next.includes('account-ledger')) {
-    const billingIndex = next.indexOf('billing');
-    const insertAt = billingIndex >= 0 ? billingIndex + 1 : next.length;
-    next.splice(insertAt, 0, 'account-ledger');
-  }
-
-  if (!next.includes('tally-export')) {
-    const ledgerIndex = next.indexOf('account-ledger');
-    const insertAt = ledgerIndex >= 0 ? ledgerIndex + 1 : next.length;
-    next.splice(insertAt, 0, 'tally-export');
-  }
-
-  if (!next.includes('copilot')) {
-    const aiToolsIndex = next.indexOf('ai-tools');
-    const insertAt = aiToolsIndex >= 0 ? aiToolsIndex : next.length;
-    next.splice(insertAt, 0, 'copilot');
-  }
-
-  return Array.from(new Set(next));
+  if (!views) return [...defaultSidebarViews];
+  return Array.from(new Set(filterDashboardViews(views)));
 };
 
 const buildWorkspaceProfile = (user: User, profile?: Partial<UserProfileDoc>): WorkspaceProfile => ({
@@ -290,15 +260,6 @@ const normalizeActivity = (value: Partial<ActivityItem> | undefined): ActivityIt
   actorName: value?.actorName || 'System',
 });
 
-const normalizeCommunication = (value: Partial<CommunicationLog> | undefined): CommunicationLog => ({
-  id: value?.id || createId(),
-  type: value?.type || 'comment',
-  createdAt: value?.createdAt || nowIso(),
-  actorName: value?.actorName || 'System',
-  summary: value?.summary || '',
-  outcome: value?.outcome || '',
-});
-
 const normalizeRender = (value: Partial<RenderAsset> | undefined): RenderAsset => ({
   id: value?.id || createId(),
   name: value?.name || 'Untitled render',
@@ -365,13 +326,13 @@ const normalizeCustomer = (
     activityScore: value?.activityScore ?? 0,
     wallpaperCode: value?.wallpaperCode,
     curtainCode: value?.curtainCode,
-    communicationLog: (value?.communicationLog ?? []).map(normalizeCommunication),
     quote: {
       estimatedValue: value?.quote?.estimatedValue ?? 0,
       quoteValue: value?.quote?.quoteValue ?? 0,
       quoteStatus: value?.quote?.quoteStatus || 'draft',
       paymentStage: value?.quote?.paymentStage || 'not_started',
       advanceReceived: value?.quote?.advanceReceived ?? 0,
+      partiallyPaidAmount: value?.quote?.partiallyPaidAmount ?? 0,
     },
     renders: (value?.renders ?? []).map(normalizeRender),
     renderQueue: (value?.renderQueue ?? []).map(normalizeRenderRequest),
@@ -658,22 +619,13 @@ const buildCustomerPayload = (
     needsFollowUp: true,
     renderPending: false,
     activityScore: 12,
-    communicationLog: [
-      {
-        id: createId(),
-        type: 'comment',
-        createdAt: now,
-        actorName,
-        summary: 'Customer created from dashboard',
-        outcome: 'Ready for first room upload and project intake.',
-      },
-    ],
     quote: {
       estimatedValue: 0,
       quoteValue: 0,
       quoteStatus: 'draft',
       paymentStage: 'not_started',
       advanceReceived: 0,
+      partiallyPaidAmount: 0,
     },
     renders: [],
     renderQueue: [],

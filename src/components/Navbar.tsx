@@ -10,9 +10,19 @@ export const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [currentHash, setCurrentHash] = useState(window.location.hash || '#top');
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
 
   const openHomepageAuth = (mode: 'login' | 'signup') => {
     const nextHash = `#${mode}`;
+    const nextUrl = `/${nextHash}`;
+
+    if (window.location.pathname !== '/') {
+      window.history.pushState(null, '', nextUrl);
+      window.dispatchEvent(new Event('pula:navigation'));
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      window.setTimeout(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }), 80);
+      return;
+    }
 
     if (window.location.hash !== nextHash) {
       window.location.hash = nextHash;
@@ -27,6 +37,17 @@ export const Navbar = () => {
   const goToHash = (event: React.MouseEvent<HTMLAnchorElement>, targetHash: string) => {
     event.preventDefault();
     const shouldForceTop = new Set(['#top', '#login', '#signup', '#pricing', '#try-once']).has(targetHash);
+    const nextUrl = `/${targetHash}`;
+
+    if (window.location.pathname !== '/') {
+      window.history.pushState(null, '', nextUrl);
+      window.dispatchEvent(new Event('pula:navigation'));
+      if (shouldForceTop) {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        window.setTimeout(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }), 80);
+      }
+      return;
+    }
 
     if (window.location.hash !== targetHash) {
       window.location.hash = targetHash;
@@ -50,6 +71,19 @@ export const Navbar = () => {
     }
   };
 
+  const goToSurvey = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+
+    if (window.location.pathname.replace(/\/+$/, '') !== '/survey') {
+      window.history.pushState(null, '', '/survey');
+      window.dispatchEvent(new Event('pula:navigation'));
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      return;
+    }
+
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
@@ -62,10 +96,22 @@ export const Navbar = () => {
   useEffect(() => {
     const handleHashChange = () => {
       setCurrentHash(window.location.hash || '#top');
+      setCurrentPath(window.location.pathname);
+    };
+
+    const handlePathChange = () => {
+      setCurrentHash(window.location.hash || '#top');
+      setCurrentPath(window.location.pathname);
     };
 
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handlePathChange);
+    window.addEventListener('pula:navigation', handlePathChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handlePathChange);
+      window.removeEventListener('pula:navigation', handlePathChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -88,7 +134,7 @@ export const Navbar = () => {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
     >
-      <a href="#top" className={styles.logo} aria-label="PULA biz home" onClick={(event) => goToHash(event, '#top')}>
+      <a href="/#top" className={styles.logo} aria-label="PULA biz home" onClick={(event) => goToHash(event, '#top')}>
         <span className={styles.logoBadge}>
           <img src={`${import.meta.env.BASE_URL}pula-biz-logo-transparent.png`} alt="PULA biz logo" className={styles.logoMark} />
         </span>
@@ -96,10 +142,11 @@ export const Navbar = () => {
 
       <div className={styles.links}>
 
-        <a href="#product" className={styles.link} aria-current={currentHash === '#product' ? 'page' : undefined} onClick={(event) => goToHash(event, '#product')}>Biz</a>
-        <a href="#tools" className={styles.link} aria-current={currentHash === '#tools' ? 'page' : undefined} onClick={(event) => goToHash(event, '#tools')}>AI tools</a>
-        <a href="#business-os" className={styles.link} aria-current={currentHash === '#business-os' ? 'page' : undefined} onClick={(event) => goToHash(event, '#business-os')}>Why Biz</a>
-        <a href="#pricing" className={styles.link} aria-current={currentHash === '#pricing' ? 'page' : undefined} onClick={(event) => goToHash(event, '#pricing')}>Pricing</a>
+        <a href="/#product" className={styles.link} aria-current={currentPath === '/' && currentHash === '#product' ? 'page' : undefined} onClick={(event) => goToHash(event, '#product')}>Biz</a>
+        <a href="/#tools" className={styles.link} aria-current={currentPath === '/' && currentHash === '#tools' ? 'page' : undefined} onClick={(event) => goToHash(event, '#tools')}>AI tools</a>
+        <a href="/#business-os" className={styles.link} aria-current={currentPath === '/' && currentHash === '#business-os' ? 'page' : undefined} onClick={(event) => goToHash(event, '#business-os')}>Why Biz</a>
+        <a href="/#pricing" className={styles.link} aria-current={currentPath === '/' && currentHash === '#pricing' ? 'page' : undefined} onClick={(event) => goToHash(event, '#pricing')}>Pricing</a>
+        <a href="/survey" className={styles.link} aria-current={currentPath.replace(/\/+$/, '') === '/survey' ? 'page' : undefined} onClick={goToSurvey}>Survey</a>
 
         {user ? (
           <>

@@ -1,0 +1,333 @@
+.page {
+  min-height: 100vh;
+  padding: 6.4rem clamp(1rem, 3vw, 2rem) 2rem;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(243, 249, 252, 0.96)),
+    var(--color-brand-60);
+}
+
+.header {
+  width: min(1480px, 100%);
+  margin: 0 auto 0.9rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.header > div {
+  min-width: 0;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 0.45rem;
+  color: var(--color-logo-red);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  max-width: 720px;
+  color: var(--color-brand-dark);
+  font-size: clamp(1.9rem, 3vw, 3.15rem);
+  line-height: 1.03;
+  letter-spacing: 0;
+}
+
+.header p {
+  max-width: 820px;
+  margin-top: 0.55rem;
+  color: rgba(15, 14, 71, 0.72);
+  font-size: clamp(0.98rem, 1.2vw, 1.12rem);
+}
+
+.mobileTabs {
+  display: none;
+}
+
+.workspace {
+  width: min(1480px, 100%);
+  min-height: calc(100vh - 12.2rem);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.82fr);
+  gap: 1rem;
+}
+
+.workspace,
+.mobileTabs,
+.panel,
+.embedShell,
+.embedFrame {
+  max-width: 100%;
+}
+
+.panel {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid rgba(18, 53, 91, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 20px 55px rgba(15, 14, 71, 0.09);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 4.6rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid rgba(18, 53, 91, 0.1);
+  background: rgba(250, 252, 255, 0.82);
+}
+
+.formPanel {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.panelTitle {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--color-brand-10);
+}
+
+.panelTitle svg {
+  flex: 0 0 auto;
+}
+
+.panelTitle h2 {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.utilityLink {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.45rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(18, 53, 91, 0.12);
+  border-radius: 999px;
+  color: var(--color-brand-10);
+  background: rgba(18, 53, 91, 0.06);
+  font-size: 0.86rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.trustNote {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.78rem 1.1rem;
+  border-bottom: 1px solid rgba(18, 53, 91, 0.08);
+  color: rgba(15, 14, 71, 0.72);
+  background: rgba(255, 255, 255, 0.74);
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.trustNote svg {
+  flex: 0 0 auto;
+  color: var(--color-logo-red);
+}
+
+.embedShell {
+  min-width: 0;
+  min-height: 0;
+  background: #f8fafc;
+}
+
+.deckShell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.deckIntro {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid rgba(18, 53, 91, 0.08);
+  background:
+    linear-gradient(135deg, rgba(214, 40, 40, 0.07), transparent 52%),
+    linear-gradient(135deg, rgba(18, 53, 91, 0.08), rgba(255, 255, 255, 0.92));
+}
+
+.deckPreviewMark {
+  display: inline-grid;
+  place-items: center;
+  width: 2.55rem;
+  height: 2.55rem;
+  border-radius: 8px;
+  color: #ffffff;
+  background: var(--color-brand-10);
+  box-shadow: 0 10px 24px rgba(18, 53, 91, 0.18);
+}
+
+.deckIntro h3 {
+  font-family: var(--font-sans);
+  color: var(--color-brand-dark);
+  font-size: 0.98rem;
+  font-weight: 850;
+}
+
+.deckIntro p {
+  margin-top: 0.12rem;
+  color: rgba(15, 14, 71, 0.68);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.embedFrame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 680px;
+  border: 0;
+  background: #ffffff;
+}
+
+.emptyState {
+  min-height: 680px;
+  display: grid;
+  place-content: center;
+  gap: 0.6rem;
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-brand-dark);
+}
+
+.emptyState h3 {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.emptyState p {
+  max-width: min(420px, 100%);
+  color: rgba(15, 14, 71, 0.68);
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 980px) {
+  .page {
+    padding-top: 9.2rem;
+  }
+
+  .workspace {
+    min-height: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .mobileTabs {
+    width: min(1480px, 100%);
+    margin: 0 auto 0.85rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem;
+    padding: 0.35rem;
+    border: 1px solid rgba(18, 53, 91, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.76);
+  }
+
+  .mobileTabs button {
+    min-height: 2.7rem;
+    min-width: 0;
+    border-radius: 6px;
+    color: rgba(15, 14, 71, 0.66);
+    font-weight: 850;
+  }
+
+  .mobileTabs .activeTab {
+    color: #ffffff;
+    background: var(--color-brand-10);
+    box-shadow: 0 10px 22px rgba(18, 53, 91, 0.16);
+  }
+
+  .panel {
+    min-height: 74vh;
+  }
+
+  .inactivePanel {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .page {
+    padding-inline: 0.75rem;
+  }
+
+  .header {
+    display: block;
+    overflow: hidden;
+  }
+
+  .header h1 {
+    font-size: 1.78rem;
+    max-width: 100%;
+    overflow-wrap: break-word;
+  }
+
+  .header p {
+    font-size: 0.94rem;
+    max-width: 100%;
+    overflow-wrap: break-word;
+  }
+
+  .mobileTabs button {
+    font-size: 0.95rem;
+  }
+
+  .panelHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .utilityLink {
+    width: 100%;
+  }
+
+  .trustNote {
+    align-items: flex-start;
+    font-size: 0.86rem;
+  }
+
+  .deckIntro {
+    align-items: flex-start;
+    padding: 0.82rem;
+  }
+
+  .embedFrame,
+  .emptyState {
+    min-height: 620px;
+  }
+
+  .emptyState p {
+    max-width: 300px;
+  }
+}

@@ -1442,12 +1442,14 @@ export const DashboardApp = () => {
             />
           ) : activeView === 'crm' ? (
             <CrmPage
-              customers={data.customers}
-              team={data.team}
-              businessConfig={businessConfig}
-              onOpenCustomer={handleOpenCustomer}
-              onUpdateCustomer={handleUpdateCustomer}
+              workspaceId={workspaceUserId}
+              currentUserId={user.uid}
               actorName={data.userName}
+              team={data.team}
+              viewerTeamMemberId={data.profile.linkedTeamMemberId || user.uid}
+              isOwner={isOwner}
+              onError={handleMutationError}
+              onSuccess={pushToast}
             />
           ) : activeView === 'copilot' ? (
             isOwner ? (

@@ -356,8 +356,8 @@ export const Sidebar = ({
 
   const orderedViews = useMemo(() => {
     const nextViews = visibleViews.filter((view): view is DashboardView => customizableViews.includes(view));
-    return nextViews.length ? nextViews : canManageSidebar ? defaultSidebarViews : (['sales-overview'] as DashboardView[]);
-  }, [canManageSidebar, visibleViews]);
+    return nextViews.length ? nextViews : (['sales-overview'] as DashboardView[]);
+  }, [visibleViews]);
 
   return (
     <>

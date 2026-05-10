@@ -6,6 +6,7 @@ import { isAdminHost, isSuperAdminEmail, redirectToAdminDashboard } from './lib/
 import { AdminHome } from './components/AdminHome';
 import { PublicHome } from './components/PublicHome';
 import { PricingPage } from './components/PricingPage';
+import { SurveyPage } from './components/SurveyPage';
 import { DashboardErrorBoundary } from './components/DashboardErrorBoundary';
 import { DashboardSkeleton } from './dashboard/components/DashboardSkeleton';
 import styles from './App.module.css';
@@ -31,6 +32,7 @@ const pageLevelHashes = new Set(['', '#top', '#login', '#signup', '#pricing', '#
 
 function App() {
   const [hash, setHash] = useState(window.location.hash);
+  const [pathname, setPathname] = useState(window.location.pathname);
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(!firebaseStatus.isConfigured);
   const didInitialScrollSync = useRef(false);
@@ -55,6 +57,20 @@ function App() {
 
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  useEffect(() => {
+    const handlePathChange = () => {
+      setPathname(window.location.pathname);
+      setHash(window.location.hash);
+    };
+
+    window.addEventListener('popstate', handlePathChange);
+    window.addEventListener('pula:navigation', handlePathChange);
+    return () => {
+      window.removeEventListener('popstate', handlePathChange);
+      window.removeEventListener('pula:navigation', handlePathChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -131,6 +147,7 @@ function App() {
   const isTryOncePage = hash === '#try-once';
   const isPricingPage = hash === '#pricing';
   const isDashboardPage = hash.startsWith('#dashboard');
+  const isSurveyPage = pathname.replace(/\/+$/, '') === '/survey';
   const isAuthPage = isLoginPage || isSignupPage;
   const adminHost = isAdminHost();
   const showSetupGuide = !firebaseStatus.isConfigured && (isAuthPage || isDashboardPage);
@@ -217,6 +234,8 @@ function App() {
           </DashboardErrorBoundary>
         ) : adminHost ? (
           <AdminHome />
+        ) : isSurveyPage ? (
+          <SurveyPage />
         ) : isTryOncePage ? (
           <Suspense fallback={surfaceLoader}>
             <AIInteriorDesigner />
