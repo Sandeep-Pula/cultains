@@ -88,20 +88,18 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
           <span className={styles.blueTriangle} />
         </div>
         <div className={`${styles.heroInner} ${showAuth ? styles.authHeroInner : ''}`}>
-          {!showAuth && (
-            <motion.div
-              className={styles.heroCopy}
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
-            >
-              <h1 id="home-title">Run the business from one operating platform.</h1>
-              <p>
-                <ProductWordmark /> brings customers, billing, inventory, team work, finance, operations, and AI tools
-                into one clean workspace for business owners and teams.
-              </p>
-            </motion.div>
-          )}
+          <motion.div
+            className={`${styles.heroCopy} ${showAuth ? styles.authHeroCopy : ''}`}
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+          >
+            <h1 id="home-title">Run the business from one operating platform.</h1>
+            <p>
+              <ProductWordmark /> brings customers, billing, inventory, team work, finance, operations, and AI tools
+              into one clean workspace for business owners and teams.
+            </p>
+          </motion.div>
 
           <motion.div
             className={styles.heroProduct}
