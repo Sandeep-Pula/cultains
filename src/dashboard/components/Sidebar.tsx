@@ -64,9 +64,12 @@ type SidebarProps = {
   viewerLabel?: string;
   businessConfig: WorkspaceBusinessConfig;
   visibleViews: DashboardView[];
+  availableViews?: DashboardView[];
+  unavailableViews?: DashboardView[];
   canManageSidebar?: boolean;
   canViewProfile?: boolean;
   onNavigate: (view: DashboardView) => void;
+  onRequestUpgrade?: (view: DashboardView) => void;
   onSaveViews: (views: DashboardView[]) => Promise<void>;
   open: boolean;
   collapsed?: boolean;
@@ -76,11 +79,17 @@ type SidebarProps = {
 
 const ManageSidebarModal = ({
   views,
+  availableViews,
+  unavailableViews,
   onClose,
+  onRequestUpgrade,
   onSave,
 }: {
   views: DashboardView[];
+  availableViews: DashboardView[];
+  unavailableViews: DashboardView[];
   onClose: () => void;
+  onRequestUpgrade?: (view: DashboardView) => void;
   onSave: (views: DashboardView[]) => Promise<void>;
 }) => {
   const [draftViews, setDraftViews] = useState<DashboardView[]>(views);
@@ -93,11 +102,13 @@ const ManageSidebarModal = ({
     setDraftViews(views);
   }, [views]);
 
-  const hiddenViews = customizableViews.filter((view) => !draftViews.includes(view));
+  const manageableViews = availableViews.filter((view): view is DashboardView => customizableViews.includes(view));
+  const hiddenViews = manageableViews.filter((view) => !draftViews.includes(view));
   const loweredQuery = query.trim().toLowerCase();
 
   const filteredVisible = draftViews.filter((view) => viewTitles[view].toLowerCase().includes(loweredQuery));
   const filteredHidden = hiddenViews.filter((view) => viewTitles[view].toLowerCase().includes(loweredQuery));
+  const filteredUnavailable = unavailableViews.filter((view) => viewTitles[view].toLowerCase().includes(loweredQuery));
 
   const reorderVisibleView = (view: DashboardView, targetView: DashboardView) => {
     if (view === targetView) return;
@@ -148,7 +159,7 @@ const ManageSidebarModal = ({
 
   const readDraggedView = (event: React.DragEvent): DashboardView | null => {
     const view = (draggedView || event.dataTransfer.getData('text/plain')) as DashboardView;
-    return customizableViews.includes(view) ? view : null;
+    return manageableViews.includes(view) ? view : null;
   };
 
   const saveChanges = async () => {
@@ -187,7 +198,7 @@ const ManageSidebarModal = ({
             className="w-full rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 text-sm text-brand-dark outline-none"
           />
 
-          <div className="mt-5 grid gap-5 xl:grid-cols-2">
+          <div className="mt-5 grid gap-5 xl:grid-cols-3">
             <div className="rounded-[28px] border border-brand-30 bg-brand-60/20 p-4">
               <div className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-dark/60">Visible in sidebar</div>
               <div
@@ -262,6 +273,7 @@ const ManageSidebarModal = ({
 
             <div className="rounded-[28px] border border-brand-30 bg-brand-60/20 p-4">
               <div className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-dark/60">Hidden tools</div>
+              <p className="mt-1 text-xs leading-5 text-brand-dark/55">Included in your plan. Drag them into the sidebar when needed.</p>
               <div
                 className={clsx(
                   'mt-4 max-h-[52vh] min-h-52 space-y-3 overflow-y-auto rounded-[24px] border border-dashed p-3 pr-1 transition',
@@ -314,6 +326,41 @@ const ManageSidebarModal = ({
                 )}
               </div>
             </div>
+
+            <div className="rounded-[28px] border border-brand-30 bg-brand-60/20 p-4">
+              <div className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-dark/60">Other tools</div>
+              <p className="mt-1 text-xs leading-5 text-brand-dark/55">Not included in your current plan. Upgrade to use these tools.</p>
+              <div className="mt-4 max-h-[52vh] min-h-52 space-y-3 overflow-y-auto rounded-[24px] border border-dashed border-brand-30/70 bg-white/45 p-3 pr-1">
+                {filteredUnavailable.length ? (
+                  filteredUnavailable.map((view) => {
+                    const Icon = itemMap[view];
+                    return (
+                      <div
+                        key={view}
+                        className="flex items-center gap-3 rounded-2xl border border-brand-30 bg-white px-4 py-3 opacity-80"
+                      >
+                        <Icon size={17} className="text-brand-dark/55" />
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-brand-dark">{viewTitles[view]}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onRequestUpgrade?.(view);
+                            onClose();
+                          }}
+                          className="rounded-full border border-brand-30 bg-brand-60/35 px-3 py-1 text-xs font-semibold text-brand-dark/60"
+                        >
+                          Upgrade
+                        </button>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-brand-30 bg-white px-4 py-6 text-sm text-brand-dark/60">
+                    Every dashboard tool is included in this plan.
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -343,9 +390,12 @@ export const Sidebar = ({
   viewerLabel,
   businessConfig,
   visibleViews,
+  availableViews,
+  unavailableViews,
   canManageSidebar = true,
   canViewProfile = true,
   onNavigate,
+  onRequestUpgrade,
   onSaveViews,
   open,
   collapsed = false,
@@ -358,6 +408,14 @@ export const Sidebar = ({
     const nextViews = visibleViews.filter((view): view is DashboardView => customizableViews.includes(view));
     return nextViews.length ? nextViews : (['sales-overview'] as DashboardView[]);
   }, [visibleViews]);
+  const planAvailableViews = useMemo(
+    () => (availableViews?.length ? availableViews : orderedViews).filter((view): view is DashboardView => customizableViews.includes(view)),
+    [availableViews, orderedViews],
+  );
+  const planUnavailableViews = useMemo(
+    () => (unavailableViews ?? customizableViews.filter((view) => !planAvailableViews.includes(view))).filter((view): view is DashboardView => customizableViews.includes(view)),
+    [planAvailableViews, unavailableViews],
+  );
 
   return (
     <>
@@ -515,7 +573,10 @@ export const Sidebar = ({
       {manageOpen && canManageSidebar ? (
         <ManageSidebarModal
           views={orderedViews}
+          availableViews={planAvailableViews}
+          unavailableViews={planUnavailableViews}
           onClose={() => setManageOpen(false)}
+          onRequestUpgrade={onRequestUpgrade}
           onSave={onSaveViews}
         />
       ) : null}

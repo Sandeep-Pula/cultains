@@ -14,6 +14,7 @@ import {
   dashboardHash,
   defaultSidebarViews,
   getStageProgress,
+  getViewsForSubscriptionPlan,
   isOwnerAccount,
   parseDashboardView,
   subscriptionPlanLabels,
@@ -228,6 +229,8 @@ export const DashboardApp = () => {
   const isOwner = isOwnerAccount(data?.profile.accountType);
   const requiresProfileSetup = Boolean(data && isOwner && !isSuperAdmin && !data.profile.profileSetupCompleted);
   const allowedViews = applySubscriptionAccess(data?.profile.sidebarViews, data?.profile.subscriptionPlan, subscriptionAccessRules);
+  const planAvailableViews = getViewsForSubscriptionPlan(data?.profile.subscriptionPlan, subscriptionAccessRules);
+  const planUnavailableViews = defaultSidebarViews.filter((view) => !planAvailableViews.includes(view));
   const navigableViews: DashboardView[] = useMemo(
     () => (
       isSuperAdmin
@@ -1258,9 +1261,12 @@ export const DashboardApp = () => {
         viewerLabel={isOwner ? 'Business owner' : 'Team member'}
         businessConfig={businessConfig}
         visibleViews={isOwner ? allowedViews : allowedViews.filter((view) => view !== 'copilot')}
+        availableViews={isOwner ? planAvailableViews : planAvailableViews.filter((view) => view !== 'copilot')}
+        unavailableViews={planUnavailableViews}
         canManageSidebar={isOwner}
         canViewProfile
         onNavigate={(view) => handleNavigate(dashboardHash(view))}
+        onRequestUpgrade={(view) => setUpgradePromptView(view)}
         onSaveViews={async (sidebarViews) => {
           if (!user || !isOwner) return;
           try {
