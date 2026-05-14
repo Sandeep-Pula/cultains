@@ -5,25 +5,23 @@ import {
   CalendarClock,
   CheckCircle2,
   Filter,
-  Package,
   Receipt,
   Search,
   UserPlus,
   Wallet,
+  X,
 } from 'lucide-react';
 import type { DashboardData, DashboardView, SalesInvoice } from '../types';
-import type { WorkspaceBusinessConfig } from '../businessConfig';
 import { EmptyStatePanel } from '../components/EmptyStatePanel';
 import { SalesInvoiceDetailModal } from '../components/SalesInvoiceDetailModal';
 import { formatCurrency, formatDateTime, relativeDate } from '../utils';
 
 type SalesOverviewPageProps = {
   data: DashboardData;
-  businessConfig: WorkspaceBusinessConfig;
   onNavigate: (view: DashboardView) => void;
-  onAddCustomer: () => void;
   onAddTeamMember: () => void;
 };
+type DetailPanel = 'today-sales' | 'pending-payments' | 'stock-alerts' | 'today-focus' | 'invoice-records' | null;
 
 const startOfDay = (value: Date) => new Date(value.getFullYear(), value.getMonth(), value.getDate());
 const endOfDay = (value: Date) => new Date(value.getFullYear(), value.getMonth(), value.getDate(), 23, 59, 59, 999);
@@ -103,44 +101,33 @@ const MetricTile = ({
   label,
   value,
   helper,
+  onClick,
 }: {
   label: string;
   value: string;
   helper: string;
-}) => (
-  <div className="rounded-[24px] border border-brand-30 bg-white p-5 shadow-sm">
-    <div className="text-xs font-bold uppercase tracking-[0.16em] text-brand-dark/55">{label}</div>
-    <div className="mt-3 text-3xl font-semibold tracking-tight text-brand-dark">{value}</div>
-    <div className="mt-2 text-sm leading-5 text-brand-dark/65">{helper}</div>
-  </div>
-);
+  onClick?: () => void;
+}) => {
+  const content = (
+    <>
+      <div className="text-xs font-bold uppercase tracking-[0.16em] text-brand-dark/55">{label}</div>
+      <div className="mt-3 text-3xl font-semibold tracking-tight text-brand-dark">{value}</div>
+      <div className="mt-2 text-sm leading-5 text-brand-dark/65">{helper}</div>
+    </>
+  );
 
-const QuickAction = ({
-  icon: Icon,
-  label,
-  helper,
-  onClick,
-}: {
-  icon: typeof Wallet;
-  label: string;
-  helper: string;
-  onClick: () => void;
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="group flex items-center gap-4 rounded-[22px] border border-brand-30 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-brand-10 hover:shadow-md"
-  >
-    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-60 text-brand-10">
-      <Icon size={19} />
-    </span>
-    <span className="min-w-0 flex-1">
-      <span className="block text-sm font-semibold text-brand-dark">{label}</span>
-      <span className="mt-1 block text-xs leading-5 text-brand-dark/60">{helper}</span>
-    </span>
-    <ArrowRight size={16} className="shrink-0 text-brand-dark/45 transition group-hover:translate-x-1 group-hover:text-brand-10" />
-  </button>
-);
+  return onClick ? (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-[24px] border border-brand-30 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-brand-10 hover:shadow-md"
+    >
+      {content}
+    </button>
+  ) : (
+    <div className="rounded-[24px] border border-brand-30 bg-white p-5 shadow-sm">{content}</div>
+  );
+};
 
 const FocusItem = ({
   title,
@@ -175,18 +162,18 @@ const FocusItem = ({
 
 export const SalesOverviewPage = ({
   data,
-  businessConfig,
   onNavigate,
-  onAddCustomer,
   onAddTeamMember,
 }: SalesOverviewPageProps) => {
   const [selectedInvoice, setSelectedInvoice] = useState<SalesInvoice | null>(null);
+  const [detailPanel, setDetailPanel] = useState<DetailPanel>(null);
   const [invoiceRange, setInvoiceRange] = useState<InvoiceRange>('all');
   const [invoicePaymentFilter, setInvoicePaymentFilter] = useState<InvoicePaymentFilter>('all');
   const [invoiceQuery, setInvoiceQuery] = useState('');
   const companyName = data.profile.companyName || 'your business';
 
-  const todaySummary = useMemo(() => summarizeInvoices(todayInvoices(data.salesInvoices)), [data.salesInvoices]);
+  const todayInvoiceRecords = useMemo(() => todayInvoices(data.salesInvoices), [data.salesInvoices]);
+  const todaySummary = useMemo(() => summarizeInvoices(todayInvoiceRecords), [todayInvoiceRecords]);
   const pendingInvoices = useMemo(
     () =>
       data.salesInvoices
@@ -270,73 +257,60 @@ export const SalesOverviewPage = ({
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <MetricTile label="Today sales" value={formatCurrency(todaySummary.total)} helper={`${todaySummary.count} invoice(s) today`} />
-            <MetricTile label="Pending payments" value={formatCurrency(pendingTotal)} helper={`${pendingInvoices.length} invoice(s) need collection`} />
-            <MetricTile label="Stock alerts" value={String(lowStockItems.length)} helper="Items at or below minimum stock" />
-            <MetricTile label="Today focus" value={String(urgentCount)} helper="Payments, stock, tasks, and follow-ups" />
+            <MetricTile label="Today sales" value={formatCurrency(todaySummary.total)} helper={`${todaySummary.count} invoice(s) today`} onClick={() => setDetailPanel('today-sales')} />
+            <MetricTile label="Pending payments" value={formatCurrency(pendingTotal)} helper={`${pendingInvoices.length} invoice(s) need collection`} onClick={() => setDetailPanel('pending-payments')} />
+            <MetricTile label="Stock alerts" value={String(lowStockItems.length)} helper="Items at or below minimum stock" onClick={() => setDetailPanel('stock-alerts')} />
+            <MetricTile label="Today focus" value={String(urgentCount)} helper="Payments, stock, tasks, and follow-ups" onClick={() => setDetailPanel('today-focus')} />
           </div>
         </section>
 
-        <section className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-[32px] border border-brand-30 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold text-brand-dark">Needs attention</h2>
-                <p className="mt-1 text-sm text-brand-dark/60">Handle these first. If this list is empty, the day is under control.</p>
-              </div>
-              <AlertTriangle size={20} className="shrink-0 text-amber-600" />
+        <section className="rounded-[32px] border border-brand-30 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-brand-dark">Needs attention</h2>
+              <p className="mt-1 text-sm text-brand-dark/60">Handle these first. If this list is empty, the day is under control.</p>
             </div>
-            <div className="mt-5 space-y-3">
-              {pendingInvoices.slice(0, 2).map((invoice) => (
-                <FocusItem
-                  key={invoice.id}
-                  title={`Collect ${formatCurrency(invoice.totalAmount)} from ${invoice.customerName || 'customer'}`}
-                  helper={`${invoice.invoiceNumber} • created ${relativeDate(invoice.createdAt)}`}
-                  actionLabel="Billing"
-                  onClick={() => onNavigate('billing')}
-                  tone="warning"
-                />
-              ))}
-              {lowStockItems.slice(0, 2).map((item) => (
-                <FocusItem
-                  key={item.id}
-                  title={`${item.name} is low in stock`}
-                  helper={`${item.currentStock} ${item.unit} left • minimum ${item.minimumStock} ${item.unit}`}
-                  actionLabel="Stock"
-                  onClick={() => onNavigate('inventory')}
-                  tone="warning"
-                />
-              ))}
-              {followUps.slice(0, 2).map((customer) => (
-                <FocusItem
-                  key={customer.id}
-                  title={`Follow up with ${customer.customerName}`}
-                  helper={customer.nextFollowUpAt ? `Due ${relativeDate(customer.nextFollowUpAt)}` : `Last contacted ${relativeDate(customer.lastContactedAt)}`}
-                  actionLabel="CRM"
-                  onClick={() => onNavigate('crm')}
-                />
-              ))}
-              {!pendingInvoices.length && !lowStockItems.length && !followUps.length ? (
-                <FocusItem
-                  title="No urgent action right now"
-                  helper="Payments, stock, and follow-ups look calm."
-                  actionLabel="Good"
-                  onClick={() => onNavigate('overview')}
-                  tone="good"
-                />
-              ) : null}
-            </div>
+            <AlertTriangle size={20} className="shrink-0 text-amber-600" />
           </div>
-
-          <div className="rounded-[32px] border border-brand-30 bg-white p-5 shadow-sm">
-            <h2 className="text-xl font-semibold text-brand-dark">Quick actions</h2>
-            <p className="mt-1 text-sm text-brand-dark/60">Common owner actions, one click away.</p>
-            <div className="mt-5 space-y-3">
-              <QuickAction icon={Receipt} label="New invoice" helper="Open billing and create a sale." onClick={() => onNavigate('billing')} />
-              <QuickAction icon={Wallet} label="Cash register" helper="Fast billing from saved items." onClick={() => onNavigate('cash-register')} />
-              <QuickAction icon={UserPlus} label={`Add ${businessConfig.customerLabel.toLowerCase()}`} helper="Create a new customer or lead." onClick={onAddCustomer} />
-              <QuickAction icon={Package} label="Add stock item" helper="Open inventory to update stock." onClick={() => onNavigate('inventory')} />
-            </div>
+          <div className="mt-5 space-y-3">
+            {pendingInvoices.slice(0, 2).map((invoice) => (
+              <FocusItem
+                key={invoice.id}
+                title={`Collect ${formatCurrency(invoice.totalAmount)} from ${invoice.customerName || 'customer'}`}
+                helper={`${invoice.invoiceNumber} • created ${relativeDate(invoice.createdAt)}`}
+                actionLabel="Billing"
+                onClick={() => onNavigate('billing')}
+                tone="warning"
+              />
+            ))}
+            {lowStockItems.slice(0, 2).map((item) => (
+              <FocusItem
+                key={item.id}
+                title={`${item.name} is low in stock`}
+                helper={`${item.currentStock} ${item.unit} left • minimum ${item.minimumStock} ${item.unit}`}
+                actionLabel="Stock"
+                onClick={() => onNavigate('inventory')}
+                tone="warning"
+              />
+            ))}
+            {followUps.slice(0, 2).map((customer) => (
+              <FocusItem
+                key={customer.id}
+                title={`Follow up with ${customer.customerName}`}
+                helper={customer.nextFollowUpAt ? `Due ${relativeDate(customer.nextFollowUpAt)}` : `Last contacted ${relativeDate(customer.lastContactedAt)}`}
+                actionLabel="CRM"
+                onClick={() => onNavigate('crm')}
+              />
+            ))}
+            {!pendingInvoices.length && !lowStockItems.length && !followUps.length ? (
+              <FocusItem
+                title="No urgent action right now"
+                helper="Payments, stock, and follow-ups look calm."
+                actionLabel="Good"
+                onClick={() => onNavigate('overview')}
+                tone="good"
+              />
+            ) : null}
           </div>
         </section>
 
@@ -388,7 +362,14 @@ export const SalesOverviewPage = ({
                 <h2 className="text-xl font-semibold text-brand-dark">Recent invoices</h2>
                 <p className="mt-1 text-sm text-brand-dark/60">Latest finalized bills. Tap any bill to preview.</p>
               </div>
-              <Receipt size={20} className="text-brand-10" />
+              <button
+                type="button"
+                onClick={() => setDetailPanel('invoice-records')}
+                className="inline-flex items-center gap-2 rounded-2xl border border-brand-30 bg-brand-60 px-4 py-2.5 text-sm font-semibold text-brand-dark transition hover:border-brand-10 hover:text-brand-10"
+              >
+                <Filter size={16} />
+                Invoice records
+              </button>
             </div>
             <div className="mt-5 space-y-3">
               {recentInvoices.map((invoice) => (
@@ -418,18 +399,157 @@ export const SalesOverviewPage = ({
           </div>
         </section>
 
-        <section className="rounded-[32px] border border-brand-30 bg-white shadow-sm">
-          <div className="border-b border-brand-30 bg-brand-60/30 p-5">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      </div>
+
+      {detailPanel && detailPanel !== 'invoice-records' ? (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-brand-dark/40 p-4 backdrop-blur-sm">
+          <section className="max-h-[88vh] w-full max-w-3xl overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-brand-30 bg-brand-60/30 p-5">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
-                  <Filter size={14} />
-                  Invoice records
+                <div className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
+                  Overview detail
                 </div>
-                <h2 className="mt-3 text-xl font-semibold text-brand-dark">Complete invoice history</h2>
-                <p className="mt-1 text-sm text-brand-dark/60">Use filters when you need the full invoice record beyond recent bills.</p>
+                <h2 className="mt-3 text-2xl font-semibold text-brand-dark">
+                  {detailPanel === 'today-sales'
+                    ? 'Today sales'
+                    : detailPanel === 'pending-payments'
+                      ? 'Pending payments'
+                      : detailPanel === 'stock-alerts'
+                        ? 'Stock alerts'
+                        : 'Today focus'}
+                </h2>
               </div>
-              <div className="grid gap-3 md:grid-cols-3 xl:min-w-[42rem]">
+              <button type="button" onClick={() => setDetailPanel(null)} className="rounded-2xl border border-brand-30 bg-white p-2 text-brand-dark">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="max-h-[68vh] space-y-3 overflow-auto p-5">
+              {detailPanel === 'today-sales' ? (
+                todayInvoiceRecords.length ? todayInvoiceRecords.map((invoice) => (
+                  <FocusItem
+                    key={invoice.id}
+                    title={`${invoice.invoiceNumber} • ${invoice.customerName || 'Walk-in customer'}`}
+                    helper={`${formatDateTime(invoice.createdAt)} • ${invoice.paymentStatus} • ${formatCurrency(invoice.totalAmount)}`}
+                    actionLabel="Preview"
+                    onClick={() => {
+                      setDetailPanel(null);
+                      setSelectedInvoice(invoice);
+                    }}
+                  />
+                )) : <EmptyStatePanel compact icon={Receipt} title="No sales today" description="Invoices created today will appear here." />
+              ) : null}
+
+              {detailPanel === 'pending-payments' ? (
+                pendingInvoices.length ? pendingInvoices.map((invoice) => (
+                  <FocusItem
+                    key={invoice.id}
+                    title={`Collect ${formatCurrency(invoice.totalAmount)} from ${invoice.customerName || 'customer'}`}
+                    helper={`${invoice.invoiceNumber} • created ${relativeDate(invoice.createdAt)}`}
+                    actionLabel="Billing"
+                    onClick={() => {
+                      setDetailPanel(null);
+                      onNavigate('billing');
+                    }}
+                    tone="warning"
+                  />
+                )) : <EmptyStatePanel compact icon={CheckCircle2} title="No pending payments" description="All finalized invoices are marked paid." />
+              ) : null}
+
+              {detailPanel === 'stock-alerts' ? (
+                lowStockItems.length ? lowStockItems.map((item) => (
+                  <FocusItem
+                    key={item.id}
+                    title={`${item.name} is low in stock`}
+                    helper={`${item.currentStock} ${item.unit} left • minimum ${item.minimumStock} ${item.unit}`}
+                    actionLabel="Stock"
+                    onClick={() => {
+                      setDetailPanel(null);
+                      onNavigate('inventory');
+                    }}
+                    tone="warning"
+                  />
+                )) : <EmptyStatePanel compact icon={CheckCircle2} title="No stock alerts" description="Inventory is above minimum stock levels." />
+              ) : null}
+
+              {detailPanel === 'today-focus' ? (
+                <>
+                  {pendingInvoices.slice(0, 4).map((invoice) => (
+                    <FocusItem
+                      key={`pending-${invoice.id}`}
+                      title={`Collect ${formatCurrency(invoice.totalAmount)} from ${invoice.customerName || 'customer'}`}
+                      helper={`${invoice.invoiceNumber} • payment pending`}
+                      actionLabel="Billing"
+                      onClick={() => {
+                        setDetailPanel(null);
+                        onNavigate('billing');
+                      }}
+                      tone="warning"
+                    />
+                  ))}
+                  {lowStockItems.slice(0, 4).map((item) => (
+                    <FocusItem
+                      key={`stock-${item.id}`}
+                      title={`${item.name} stock needs attention`}
+                      helper={`${item.currentStock} ${item.unit} left`}
+                      actionLabel="Stock"
+                      onClick={() => {
+                        setDetailPanel(null);
+                        onNavigate('inventory');
+                      }}
+                      tone="warning"
+                    />
+                  ))}
+                  {followUps.slice(0, 4).map((customer) => (
+                    <FocusItem
+                      key={`followup-${customer.id}`}
+                      title={`Follow up with ${customer.customerName}`}
+                      helper={customer.nextFollowUpAt ? `Due ${relativeDate(customer.nextFollowUpAt)}` : `Last contacted ${relativeDate(customer.lastContactedAt)}`}
+                      actionLabel="CRM"
+                      onClick={() => {
+                        setDetailPanel(null);
+                        onNavigate('crm');
+                      }}
+                    />
+                  ))}
+                  {upcomingTasks.slice(0, 4).map((task) => (
+                    <FocusItem
+                      key={`task-${task.id}`}
+                      title={task.title}
+                      helper={`Due ${relativeDate(task.dueAt)} • ${task.priority} priority`}
+                      actionLabel="Calendar"
+                      onClick={() => {
+                        setDetailPanel(null);
+                        onNavigate('overview');
+                      }}
+                      tone={task.priority === 'high' ? 'warning' : 'neutral'}
+                    />
+                  ))}
+                  {!urgentCount ? <EmptyStatePanel compact icon={CheckCircle2} title="No urgent focus items" description="Nothing needs immediate attention right now." /> : null}
+                </>
+              ) : null}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {detailPanel === 'invoice-records' ? (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-brand-dark/40 p-4 backdrop-blur-sm">
+          <section className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-2xl">
+            <div className="border-b border-brand-30 bg-brand-60/30 p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
+                    <Filter size={14} />
+                    Invoice records
+                  </div>
+                  <h2 className="mt-3 text-2xl font-semibold text-brand-dark">Complete invoice history</h2>
+                  <p className="mt-1 text-sm text-brand-dark/60">Filter and inspect all finalized invoices.</p>
+                </div>
+                <button type="button" onClick={() => setDetailPanel(null)} className="rounded-2xl border border-brand-30 bg-white p-2 text-brand-dark">
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="mt-5 grid gap-3 md:grid-cols-3">
                 <label className="grid gap-2 text-sm text-brand-dark/75">
                   <span>Period</span>
                   <select
@@ -470,54 +590,60 @@ export const SalesOverviewPage = ({
                   </span>
                 </label>
               </div>
-            </div>
-
-            <div className="mt-4 grid gap-3 md:grid-cols-3">
-              <MetricTile label="Filtered total" value={formatCurrency(filteredInvoiceSummary.total)} helper={`${filteredInvoiceSummary.count} invoice(s) found`} />
-              <MetricTile label="Pending in filter" value={formatCurrency(filteredInvoiceSummary.pending)} helper="Amount still not collected" />
-              <MetricTile label="Record count" value={String(filteredInvoiceRecords.length)} helper="Tap a row to preview invoice" />
-            </div>
-          </div>
-
-          <div className="max-h-[520px] overflow-auto">
-            {filteredInvoiceRecords.length ? (
-              <table className="min-w-full border-separate border-spacing-0">
-                <thead className="sticky top-0 z-10 bg-white">
-                  <tr className="text-left text-xs font-bold uppercase tracking-wider text-brand-dark/55">
-                    {['Invoice', 'Date', 'Customer', 'Payment', 'Status', 'Total'].map((label) => (
-                      <th key={label} className="border-b border-brand-30 px-5 py-4">{label}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredInvoiceRecords.map((invoice) => (
-                    <tr key={invoice.id} onClick={() => setSelectedInvoice(invoice)} className="cursor-pointer transition hover:bg-brand-60/35">
-                      <td className="border-b border-brand-30/70 px-5 py-4">
-                        <div className="font-semibold text-brand-dark">{invoice.invoiceNumber}</div>
-                        <div className="mt-1 text-xs text-brand-dark/55">Tap to preview</div>
-                      </td>
-                      <td className="border-b border-brand-30/70 px-5 py-4 text-sm text-brand-dark">{formatDateTime(invoice.createdAt)}</td>
-                      <td className="border-b border-brand-30/70 px-5 py-4 text-sm text-brand-dark">{invoice.customerName || 'Walk-in customer'}</td>
-                      <td className="border-b border-brand-30/70 px-5 py-4 text-sm capitalize text-brand-dark">{invoice.paymentMethod.replace('_', ' ')}</td>
-                      <td className="border-b border-brand-30/70 px-5 py-4 text-sm capitalize text-brand-dark">{invoice.paymentStatus}</td>
-                      <td className="border-b border-brand-30/70 px-5 py-4 text-sm font-semibold text-brand-dark">{formatCurrency(invoice.totalAmount)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <div className="p-6">
-                <EmptyStatePanel
-                  compact
-                  icon={Receipt}
-                  title="No invoices match this filter"
-                  description="Try another period, payment status, or search term."
-                />
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <MetricTile label="Filtered total" value={formatCurrency(filteredInvoiceSummary.total)} helper={`${filteredInvoiceSummary.count} invoice(s) found`} />
+                <MetricTile label="Pending in filter" value={formatCurrency(filteredInvoiceSummary.pending)} helper="Amount still not collected" />
+                <MetricTile label="Record count" value={String(filteredInvoiceRecords.length)} helper="Tap a row to preview invoice" />
               </div>
-            )}
-          </div>
-        </section>
-      </div>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-auto">
+              {filteredInvoiceRecords.length ? (
+                <table className="min-w-full border-separate border-spacing-0">
+                  <thead className="sticky top-0 z-10 bg-white">
+                    <tr className="text-left text-xs font-bold uppercase tracking-wider text-brand-dark/55">
+                      {['Invoice', 'Date', 'Customer', 'Payment', 'Status', 'Total'].map((label) => (
+                        <th key={label} className="border-b border-brand-30 px-5 py-4">{label}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredInvoiceRecords.map((invoice) => (
+                      <tr
+                        key={invoice.id}
+                        onClick={() => {
+                          setDetailPanel(null);
+                          setSelectedInvoice(invoice);
+                        }}
+                        className="cursor-pointer transition hover:bg-brand-60/35"
+                      >
+                        <td className="border-b border-brand-30/70 px-5 py-4">
+                          <div className="font-semibold text-brand-dark">{invoice.invoiceNumber}</div>
+                          <div className="mt-1 text-xs text-brand-dark/55">Tap to preview</div>
+                        </td>
+                        <td className="border-b border-brand-30/70 px-5 py-4 text-sm text-brand-dark">{formatDateTime(invoice.createdAt)}</td>
+                        <td className="border-b border-brand-30/70 px-5 py-4 text-sm text-brand-dark">{invoice.customerName || 'Walk-in customer'}</td>
+                        <td className="border-b border-brand-30/70 px-5 py-4 text-sm capitalize text-brand-dark">{invoice.paymentMethod.replace('_', ' ')}</td>
+                        <td className="border-b border-brand-30/70 px-5 py-4 text-sm capitalize text-brand-dark">{invoice.paymentStatus}</td>
+                        <td className="border-b border-brand-30/70 px-5 py-4 text-sm font-semibold text-brand-dark">{formatCurrency(invoice.totalAmount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="p-6">
+                  <EmptyStatePanel
+                    compact
+                    icon={Receipt}
+                    title="No invoices match this filter"
+                    description="Try another period, payment status, or search term."
+                  />
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      ) : null}
 
       <SalesInvoiceDetailModal
         open={!!selectedInvoice}

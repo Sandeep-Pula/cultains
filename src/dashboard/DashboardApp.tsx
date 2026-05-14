@@ -1270,7 +1270,6 @@ export const DashboardApp = () => {
         visibleViews={isOwner ? allowedViews : allowedViews.filter((view) => view !== 'copilot')}
         availableViews={isOwner ? planAvailableViews : planAvailableViews.filter((view) => view !== 'copilot')}
         unavailableViews={planUnavailableViews}
-        subscriptionPlan={data.profile.subscriptionPlan}
         canManageSidebar={isOwner}
         canViewProfile
         onNavigate={(view) => handleNavigate(dashboardHash(view))}
@@ -1369,9 +1368,7 @@ export const DashboardApp = () => {
           {activeView === 'sales-overview' ? (
             <SalesOverviewPage
               data={data}
-              businessConfig={businessConfig}
               onNavigate={(view) => handleNavigate(dashboardHash(view))}
-              onAddCustomer={() => setAddCustomerOpen(true)}
               onAddTeamMember={() => {
                 if (isOwner) {
                   setAddTeamMemberOpen(true);
