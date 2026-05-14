@@ -44,6 +44,7 @@ import type {
   SubscriptionPlan,
   SubscriptionStatus,
   SubscriptionHistoryItem,
+  SubscriptionAccessRules,
   TaskItem,
   TeamMember,
   WeeklyMiscRecord,
@@ -52,13 +53,14 @@ import type {
   TimesheetEntry,
   LeaveRequest,
 } from '../types';
-import { defaultSidebarViews, filterDashboardViews, getInitials, getInventoryStatus, getStageProgress, recalculateTeamMetrics, stageProgressMap } from '../utils';
+import { defaultSidebarViews, filterDashboardViews, getInitials, getInventoryStatus, getStageProgress, recalculateTeamMetrics, stageProgressMap, subscriptionPlanViews } from '../utils';
 import { buildBusinessBarcodeKey, buildInventoryBarcodeValue, buildInvoiceNumber } from '../barcodeUtils';
 
 type DashboardSnapshotListener = (data: DashboardData) => void;
 type DashboardErrorListener = (error: Error) => void;
 type SuperAdminSnapshotListener = (data: { businesses: PlatformBusinessAccount[]; supportThreads: SupportThread[] }) => void;
 type TeamMemberIndex = Record<string, { teamMemberIds: string[]; teamAuthUids: string[]; teamMemberCount: number }>;
+type SubscriptionAccessListener = (rules: SubscriptionAccessRules) => void;
 
 type UserProfileDoc = {
   userId: string;
@@ -132,6 +134,7 @@ const salesInvoiceDoc = (userId: string, invoiceId: string) => doc(requireDb(), 
 const deletedCustomerDoc = (userId: string, recordId: string) => doc(requireDb(), 'users', userId, 'deletedCustomers', recordId);
 const supportThreadsCollection = () => collection(requireDb(), 'supportThreads');
 const supportThreadDoc = (ticketId: string) => doc(requireDb(), 'supportThreads', ticketId);
+const subscriptionAccessDoc = () => doc(requireDb(), 'platformSettings', 'subscriptionAccess');
 
 const nowIso = () => new Date().toISOString();
 const shortUserId = (userId: string) => userId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase() || userId.slice(0, 8).toUpperCase();
@@ -139,6 +142,12 @@ const normalizeSubscriptionPlan = (plan?: string): SubscriptionPlan =>
   plan === 'focused' || plan === 'growth' || plan === 'business_pro' ? plan : 'freemium';
 const normalizeSubscriptionStatus = (status?: string): SubscriptionStatus =>
   status === 'trialing' || status === 'paused' || status === 'cancelled' ? status : 'active';
+const normalizeSubscriptionAccessRules = (value?: Partial<Record<SubscriptionPlan, DashboardView[]>>): SubscriptionAccessRules => ({
+  freemium: filterDashboardViews(value?.freemium).length ? filterDashboardViews(value?.freemium) : [...subscriptionPlanViews.freemium],
+  focused: filterDashboardViews(value?.focused).length ? filterDashboardViews(value?.focused) : [...subscriptionPlanViews.focused],
+  growth: filterDashboardViews(value?.growth).length ? filterDashboardViews(value?.growth) : [...subscriptionPlanViews.growth],
+  business_pro: filterDashboardViews(value?.business_pro).length ? filterDashboardViews(value?.business_pro) : [...subscriptionPlanViews.business_pro],
+});
 
 const getAdminIdToken = async () => {
   const currentUser = auth?.currentUser;
@@ -1234,6 +1243,28 @@ export const dashboardService = {
         userId,
         ...profile,
         profileSetupCompleted,
+        updatedAt: nowIso(),
+      },
+      { merge: true },
+    );
+  },
+
+  subscribeToSubscriptionAccessRules(onData: SubscriptionAccessListener) {
+    return onSnapshot(
+      subscriptionAccessDoc(),
+      (snapshot) => {
+        const data = snapshot.exists() ? snapshot.data() as Partial<SubscriptionAccessRules> : undefined;
+        onData(normalizeSubscriptionAccessRules(data));
+      },
+      () => onData(normalizeSubscriptionAccessRules()),
+    );
+  },
+
+  async updateSubscriptionAccessRules(rules: SubscriptionAccessRules) {
+    await setDoc(
+      subscriptionAccessDoc(),
+      {
+        ...normalizeSubscriptionAccessRules(rules),
         updatedAt: nowIso(),
       },
       { merge: true },

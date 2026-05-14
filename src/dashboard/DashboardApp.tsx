@@ -9,7 +9,17 @@ import { isAdminHost, isSuperAdminEmail, redirectToAdminDashboard } from '../lib
 import { dashboardService } from './services/dashboardService';
 import { getBusinessConfig } from './businessConfig';
 import { getInventoryMovement } from './inventoryMovement';
-import { applySubscriptionAccess, dashboardHash, getStageProgress, isOwnerAccount, parseDashboardView } from './utils';
+import {
+  applySubscriptionAccess,
+  dashboardHash,
+  defaultSidebarViews,
+  getStageProgress,
+  isOwnerAccount,
+  parseDashboardView,
+  subscriptionPlanLabels,
+  subscriptionPlanViews,
+  viewTitles,
+} from './utils';
 import type {
   BillingDefaults,
   BusinessType,
@@ -24,6 +34,7 @@ import type {
   InvoicePaymentStatus,
   ProjectStage,
   SalesInvoiceLineItem,
+  SubscriptionAccessRules,
   TeamMember,
   ToastItem,
   WeeklyMiscRecord,
@@ -77,6 +88,8 @@ export const DashboardApp = () => {
   const [loading, setLoading] = useState(false);
   const [hasInitialSnapshot, setHasInitialSnapshot] = useState(false);
   const [syncIssue, setSyncIssue] = useState<string | null>(null);
+  const [subscriptionAccessRules, setSubscriptionAccessRules] = useState<SubscriptionAccessRules>(subscriptionPlanViews);
+  const [upgradePromptView, setUpgradePromptView] = useState<DashboardView | null>(null);
   const [filters, setFilters] = useState<CustomerFilters>(defaultFilters);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [focusedInventoryItemId, setFocusedInventoryItemId] = useState<string | null>(null);
@@ -118,6 +131,11 @@ export const DashboardApp = () => {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    return dashboardService.subscribeToSubscriptionAccessRules(setSubscriptionAccessRules);
+  }, [user]);
 
   useEffect(() => {
     const handleHashChange = () => setHash(window.location.hash || '#dashboard');
@@ -209,7 +227,7 @@ export const DashboardApp = () => {
   const isSuperAdmin = data?.profile.accountType === 'super_admin' || isSuperAdminIdentity;
   const isOwner = isOwnerAccount(data?.profile.accountType);
   const requiresProfileSetup = Boolean(data && isOwner && !isSuperAdmin && !data.profile.profileSetupCompleted);
-  const allowedViews = applySubscriptionAccess(data?.profile.sidebarViews, data?.profile.subscriptionPlan);
+  const allowedViews = applySubscriptionAccess(data?.profile.sidebarViews, data?.profile.subscriptionPlan, subscriptionAccessRules);
   const navigableViews: DashboardView[] = useMemo(
     () => (
       isSuperAdmin
@@ -237,6 +255,9 @@ export const DashboardApp = () => {
     const fallbackView = navigableViews[0] || 'sales-overview';
     const canUseUtilityView = activeView === 'profile' || (isOwner && activeView === 'settings');
     if (!canUseUtilityView && !navigableViews.includes(activeView)) {
+      if (defaultSidebarViews.includes(activeView)) {
+        setUpgradePromptView(activeView);
+      }
       window.location.hash = dashboardHash(fallbackView);
     }
   }, [activeView, data, isOwner, isSuperAdmin, navigableViews, user]);
@@ -1270,6 +1291,36 @@ export const DashboardApp = () => {
         onToggleCollapse={() => setDesktopSidebarCollapsed((current) => !current)}
         onClose={() => setSidebarOpen(false)}
       />
+      {upgradePromptView ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-dark/45 p-4">
+          <section className="w-full max-w-md rounded-[28px] border border-brand-30 bg-white p-6 text-brand-dark shadow-2xl">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-60 text-brand-10">
+              <AlertTriangle size={22} />
+            </div>
+            <h2 className="mt-4 text-2xl font-semibold">Upgrade required</h2>
+            <p className="mt-2 text-sm leading-6 text-brand-dark/70">
+              {viewTitles[upgradePromptView]} is not included in your current {subscriptionPlanLabels[data.profile.subscriptionPlan]} plan.
+              Upgrade your subscription to unlock this dashboard page.
+            </p>
+            <div className="mt-5 flex flex-wrap justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setUpgradePromptView(null)}
+                className="rounded-2xl border border-brand-30 bg-white px-4 py-2.5 text-sm font-semibold text-brand-dark transition hover:bg-brand-60/40"
+              >
+                Not now
+              </button>
+              <button
+                type="button"
+                onClick={() => setUpgradePromptView(null)}
+                className="rounded-2xl bg-brand-10 px-4 py-2.5 text-sm font-semibold text-brand-60"
+              >
+                Contact admin
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
       <div className={clsx('flex min-h-screen flex-col transition-[padding] duration-300', desktopSidebarCollapsed ? 'lg:pl-24' : 'lg:pl-72')}>
         <Topbar
           activeView={activeView}

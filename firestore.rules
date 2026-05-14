@@ -65,6 +65,11 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
+    match /platformSettings/{settingId} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
+    }
+
     match /cashRegisterCategorySuggestions/{categoryId} {
       allow read: if isSignedIn();
       allow create, update: if isSignedIn();

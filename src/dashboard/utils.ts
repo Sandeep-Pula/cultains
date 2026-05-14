@@ -15,6 +15,7 @@ import type {
   TaskItem,
   TeamMember,
   SubscriptionPlan,
+  SubscriptionAccessRules,
 } from './types';
 
 export const stageOrder: ProjectStage[] = [
@@ -117,7 +118,7 @@ export const subscriptionPlanOptions: SubscriptionPlan[] = ['freemium', 'focused
 
 const sharedPlanViews: DashboardView[] = ['raise-issue'];
 
-export const subscriptionPlanViews: Record<SubscriptionPlan, DashboardView[]> = {
+export const subscriptionPlanViews: SubscriptionAccessRules = {
   freemium: ['cash-register', ...sharedPlanViews],
   focused: ['sales-overview', 'cash-register', 'inventory', 'barcode-desk', ...sharedPlanViews],
   growth: [
@@ -135,11 +136,11 @@ export const subscriptionPlanViews: Record<SubscriptionPlan, DashboardView[]> = 
   business_pro: [...defaultSidebarViews],
 };
 
-export const getViewsForSubscriptionPlan = (plan?: SubscriptionPlan) =>
-  subscriptionPlanViews[plan || 'freemium'] ?? subscriptionPlanViews.freemium;
+export const getViewsForSubscriptionPlan = (plan?: SubscriptionPlan, accessRules?: SubscriptionAccessRules) =>
+  (accessRules ?? subscriptionPlanViews)[plan || 'freemium'] ?? subscriptionPlanViews.freemium;
 
-export const applySubscriptionAccess = (views: DashboardView[] | undefined, plan?: SubscriptionPlan) => {
-  const allowedByPlan = new Set(getViewsForSubscriptionPlan(plan));
+export const applySubscriptionAccess = (views: DashboardView[] | undefined, plan?: SubscriptionPlan, accessRules?: SubscriptionAccessRules) => {
+  const allowedByPlan = new Set(getViewsForSubscriptionPlan(plan, accessRules));
   const normalizedViews = normalizeDashboardViewsForAccess(views);
   return normalizedViews.filter((view) => allowedByPlan.has(view));
 };

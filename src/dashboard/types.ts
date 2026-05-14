@@ -54,6 +54,7 @@ export type TeamRole = string;
 export type AccountType = 'owner' | 'team_member' | 'super_admin';
 export type SubscriptionPlan = 'freemium' | 'focused' | 'growth' | 'business_pro';
 export type SubscriptionStatus = 'active' | 'trialing' | 'paused' | 'cancelled';
+export type SubscriptionAccessRules = Record<SubscriptionPlan, DashboardView[]>;
 
 export interface TeamMember {
   id: string;

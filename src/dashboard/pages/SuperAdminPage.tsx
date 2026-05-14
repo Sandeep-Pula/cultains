@@ -11,10 +11,11 @@ import {
   UserRound,
   UsersRound,
   X,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { dashboardService } from '../services/dashboardService';
-import type { PlatformBusinessAccount, SubscriptionPlan, SupportThread, SupportThreadStatus, WorkspaceProfile } from '../types';
-import { formatDate, formatDateTime, subscriptionPlanLabels, subscriptionPlanOptions } from '../utils';
+import type { DashboardView, PlatformBusinessAccount, SubscriptionAccessRules, SubscriptionPlan, SupportThread, SupportThreadStatus, WorkspaceProfile } from '../types';
+import { defaultSidebarViews, formatDate, formatDateTime, subscriptionPlanLabels, subscriptionPlanOptions, subscriptionPlanViews, viewTitles } from '../utils';
 import { BrandWordmark } from '../../components/BrandWordmark';
 
 type SuperAdminPageProps = {
@@ -25,7 +26,8 @@ type SuperAdminPageProps = {
 };
 
 type TicketFilter = 'all' | 'new' | 'active' | 'waiting' | 'closed';
-type AdminSection = 'support' | 'users';
+type AdminSection = 'support' | 'users' | 'access';
+type UserPlanFilter = SubscriptionPlan | 'all';
 
 const statusLabels: Record<SupportThreadStatus, string> = {
   new: 'New',
@@ -75,6 +77,9 @@ export const SuperAdminPage = ({
   const [statusUpdating, setStatusUpdating] = useState<SupportThreadStatus | null>(null);
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
+  const [userPlanFilter, setUserPlanFilter] = useState<UserPlanFilter>('all');
+  const [accessRules, setAccessRules] = useState<SubscriptionAccessRules>(subscriptionPlanViews);
+  const [savingAccessRules, setSavingAccessRules] = useState(false);
 
   useEffect(() => {
     const unsubscribe = dashboardService.subscribeToSuperAdminConsole(
@@ -93,6 +98,8 @@ export const SuperAdminPage = ({
 
     return () => unsubscribe();
   }, [onError]);
+
+  useEffect(() => dashboardService.subscribeToSubscriptionAccessRules(setAccessRules), []);
 
   const selectedThread = useMemo(
     () => supportThreads.find((thread) => thread.id === selectedTicketId) || null,
@@ -149,9 +156,12 @@ export const SuperAdminPage = ({
 
   const filteredBusinesses = useMemo(() => {
     const normalizedSearch = userSearchText.trim().toLowerCase();
-    if (!normalizedSearch) return businesses;
+    const byPlan = userPlanFilter === 'all'
+      ? businesses
+      : businesses.filter((business) => business.subscriptionPlan === userPlanFilter);
+    if (!normalizedSearch) return byPlan;
 
-    return businesses.filter((business) => [
+    return byPlan.filter((business) => [
       business.hashedUserId,
       business.userId,
       business.companyName,
@@ -162,7 +172,28 @@ export const SuperAdminPage = ({
       ...business.teamMemberIds,
       ...business.teamAuthUids,
     ].join(' ').toLowerCase().includes(normalizedSearch));
-  }, [businesses, userSearchText]);
+  }, [businesses, userPlanFilter, userSearchText]);
+
+  const updateAccessRules = (plan: SubscriptionPlan, view: DashboardView, shouldInclude: boolean) => {
+    setAccessRules((current) => {
+      const nextViews = shouldInclude
+        ? Array.from(new Set([...current[plan], view]))
+        : current[plan].filter((item) => item !== view);
+      return { ...current, [plan]: nextViews };
+    });
+  };
+
+  const saveAccessRules = async () => {
+    setSavingAccessRules(true);
+    try {
+      await dashboardService.updateSubscriptionAccessRules(accessRules);
+      onSuccess('Access rules updated', 'Dashboard page access was updated for every user.');
+    } catch (error) {
+      onError(error, 'Unable to update access rules.');
+    } finally {
+      setSavingAccessRules(false);
+    }
+  };
 
   const filteredThreads = useMemo(() => {
     const normalizedSearch = searchText.trim().toLowerCase();
@@ -297,6 +328,7 @@ export const SuperAdminPage = ({
           <nav className="mt-6 grid gap-2" aria-label="Super admin sections">
             {([
               { id: 'users' as const, label: 'Users', icon: UsersRound },
+              { id: 'access' as const, label: 'Access rules', icon: SlidersHorizontal },
               { id: 'support' as const, label: 'Support', icon: LifeBuoy },
             ]).map((item) => {
               const Icon = item.icon;
@@ -366,19 +398,38 @@ export const SuperAdminPage = ({
                 </p>
               </section>
 
-              <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                <button
+                  type="button"
+                  onClick={() => setUserPlanFilter('all')}
+                  className={`rounded-[28px] border p-5 text-left shadow-sm transition hover:-translate-y-0.5 ${
+                    userPlanFilter === 'all' ? 'border-brand-10 bg-brand-10 text-brand-60' : 'border-brand-30 bg-white text-brand-dark'
+                  }`}
+                >
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">All users</div>
+                  <div className="mt-2 text-3xl font-semibold">{businesses.length}</div>
+                </button>
                 {subscriptionPlanOptions.map((plan) => (
-                  <div key={plan} className="rounded-[28px] border border-brand-30 bg-white p-5 shadow-sm">
-                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark/50">{subscriptionPlanLabels[plan]}</div>
+                  <button
+                    key={plan}
+                    type="button"
+                    onClick={() => setUserPlanFilter(plan)}
+                    className={`rounded-[28px] border p-5 text-left shadow-sm transition hover:-translate-y-0.5 ${
+                      userPlanFilter === plan ? 'border-brand-10 bg-brand-10 text-brand-60' : 'border-brand-30 bg-white text-brand-dark'
+                    }`}
+                  >
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{subscriptionPlanLabels[plan]}</div>
                     <div className="mt-2 text-3xl font-semibold">{planCounts[plan]}</div>
-                  </div>
+                  </button>
                 ))}
               </section>
 
               <section className="mt-6 rounded-[32px] border border-brand-30 bg-white p-5 shadow-sm sm:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-xl font-semibold">All users</h2>
+                    <h2 className="text-xl font-semibold">
+                      {userPlanFilter === 'all' ? 'All users' : `${subscriptionPlanLabels[userPlanFilter]} users`}
+                    </h2>
                     <p className="mt-1 text-sm text-brand-dark/65">
                       Showing Firebase Auth signups with profile and team IDs when available. Business financial records stay untouched.
                     </p>
@@ -481,6 +532,95 @@ export const SuperAdminPage = ({
                     </div>
                   ) : null}
                 </div>
+              </section>
+            </>
+          ) : adminSection === 'access' ? (
+            <>
+              <section className="rounded-[36px] border border-brand-30 bg-white p-6 shadow-sm sm:p-8">
+                <div className="inline-flex items-center gap-2 rounded-full bg-brand-60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
+                  <SlidersHorizontal size={14} />
+                  Access rules
+                </div>
+                <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+                  Manage which plans unlock each dashboard page.
+                </h1>
+                <p className="mt-3 max-w-4xl text-sm leading-6 text-brand-dark/70 sm:text-base">
+                  Drag a dashboard page into a plan, or use the checkboxes. Changes apply globally to every user on that subscription.
+                </p>
+              </section>
+
+              <section className="mt-6 rounded-[32px] border border-brand-30 bg-white p-5 shadow-sm sm:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-semibold">Dashboard pages</h2>
+                    <p className="mt-1 text-sm text-brand-dark/65">Drag any page chip into the subscription cards below.</p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={savingAccessRules}
+                    onClick={saveAccessRules}
+                    className="rounded-2xl bg-brand-10 px-4 py-3 text-sm font-semibold text-brand-60 disabled:opacity-60"
+                  >
+                    {savingAccessRules ? 'Saving...' : 'Save access rules'}
+                  </button>
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {defaultSidebarViews.map((view) => (
+                    <button
+                      key={view}
+                      type="button"
+                      draggable
+                      onDragStart={(event) => event.dataTransfer.setData('text/plain', view)}
+                      className="rounded-full border border-brand-30 bg-brand-60/30 px-3 py-2 text-sm font-semibold text-brand-dark transition hover:bg-brand-60"
+                    >
+                      {viewTitles[view]}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section className="mt-6 grid gap-4 xl:grid-cols-4">
+                {subscriptionPlanOptions.map((plan) => (
+                  <article
+                    key={plan}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      const view = event.dataTransfer.getData('text/plain') as DashboardView;
+                      if (defaultSidebarViews.includes(view)) updateAccessRules(plan, view, true);
+                    }}
+                    className="rounded-[28px] border border-brand-30 bg-white p-4 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark/50">{subscriptionPlanLabels[plan]}</div>
+                        <div className="mt-1 text-sm text-brand-dark/60">{accessRules[plan].length} pages enabled</div>
+                      </div>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      {defaultSidebarViews.map((view) => {
+                        const checked = accessRules[plan].includes(view);
+                        return (
+                          <label
+                            key={view}
+                            className={`flex items-center justify-between gap-3 rounded-2xl border px-3 py-2 text-sm transition ${
+                              checked ? 'border-brand-10/30 bg-brand-60/45 text-brand-dark' : 'border-brand-30 bg-white text-brand-dark/55'
+                            }`}
+                          >
+                            <span>{viewTitles[view]}</span>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(event) => updateAccessRules(plan, view, event.target.checked)}
+                              className="h-4 w-4 accent-brand-10"
+                            />
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </article>
+                ))}
               </section>
             </>
           ) : (
