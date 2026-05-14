@@ -256,14 +256,16 @@ export const DashboardApp = () => {
       return;
     }
     const fallbackView = navigableViews[0] || 'sales-overview';
-    const canUseUtilityView = activeView === 'profile' || (isOwner && activeView === 'settings');
+    const canUseUtilityView =
+      activeView === 'profile' ||
+      (isOwner && (activeView === 'settings' || (activeView === 'raise-issue' && planAvailableViews.includes('raise-issue'))));
     if (!canUseUtilityView && !navigableViews.includes(activeView)) {
       if (defaultSidebarViews.includes(activeView)) {
         setUpgradePromptView(activeView);
       }
       window.location.hash = dashboardHash(fallbackView);
     }
-  }, [activeView, data, isOwner, isSuperAdmin, navigableViews, user]);
+  }, [activeView, data, isOwner, isSuperAdmin, navigableViews, planAvailableViews, user]);
 
   const handleMutationError = (nextError: unknown, fallbackMessage: string) => {
     console.error(nextError);

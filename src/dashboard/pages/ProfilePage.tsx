@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import type { BusinessType, WorkspaceProfile } from '../types';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
-import { formatDate } from '../utils';
+import { formatDate, subscriptionPlanLabels } from '../utils';
 
 type ProfilePageProps = {
   profile: WorkspaceProfile;
@@ -78,6 +78,15 @@ export const ProfilePage = ({
   const [businessTypeText, setBusinessTypeText] = useState(getBusinessTypeLabel(profile.businessType));
   const [businessTypeFocused, setBusinessTypeFocused] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const planLabel = subscriptionPlanLabels[profile.subscriptionPlan] ?? subscriptionPlanLabels.freemium;
+  const nextPlanLabel =
+    profile.subscriptionPlan === 'freemium'
+      ? subscriptionPlanLabels.focused
+      : profile.subscriptionPlan === 'focused'
+        ? subscriptionPlanLabels.growth
+        : profile.subscriptionPlan === 'growth'
+          ? subscriptionPlanLabels.business_pro
+          : null;
 
   useEffect(() => {
     setForm({
@@ -191,11 +200,11 @@ export const ProfilePage = ({
                 </div>
                 <div>
                   <div className="text-xs uppercase tracking-[0.18em] text-brand-60/70">Subscription</div>
-                  <div className="mt-1 text-2xl font-semibold">Freemium</div>
+                  <div className="mt-1 text-2xl font-semibold">{planLabel}</div>
                 </div>
               </div>
               <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-medium text-emerald-200">
-                Active
+                {profile.subscriptionStatus}
               </span>
             </div>
 
@@ -204,7 +213,9 @@ export const ProfilePage = ({
                 <BadgeCheck size={17} className="mt-0.5 shrink-0" />
                 <div>
                   <div className="font-medium">Current plan</div>
-                  <div className="text-brand-60/72">Freemium is the default plan for now. Paid plan pricing can be added later.</div>
+                  <div className="text-brand-60/72">
+                    Your workspace is currently running on {planLabel}. Admin access rules decide which tools are included in this plan.
+                  </div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -220,6 +231,18 @@ export const ProfilePage = ({
               <div className="text-brand-60/68">Renewal checkpoint</div>
               <div className="mt-1 font-medium text-white">{formatDate(profile.renewalDate)}</div>
             </div>
+            {nextPlanLabel ? (
+              <a
+                href="/#pricing"
+                className="mt-4 inline-flex w-full justify-center rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-brand-10 transition hover:bg-brand-60"
+              >
+                Upgrade to {nextPlanLabel}
+              </a>
+            ) : (
+              <div className="mt-4 rounded-2xl bg-white/10 px-4 py-3 text-center text-sm font-semibold text-brand-60">
+                Highest plan active
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -451,7 +474,7 @@ export const ProfilePage = ({
                   <Crown size={16} className="text-brand-10" />
                   Subscription plan
                 </div>
-                <span className="font-medium text-brand-dark">Freemium</span>
+                <span className="font-medium text-brand-dark">{planLabel}</span>
               </div>
             </div>
           </div>

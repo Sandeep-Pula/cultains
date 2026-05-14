@@ -54,7 +54,7 @@ const itemMap: Record<DashboardView, typeof Home> = {
   profile: CircleUserRound,
 };
 
-const customizableViews = defaultSidebarViews;
+const customizableViews: DashboardView[] = defaultSidebarViews.filter((view) => view !== 'raise-issue');
 
 type SidebarProps = {
   activeView: DashboardView;
@@ -174,7 +174,7 @@ const ManageSidebarModal = ({
 
   return (
     <div className="fixed inset-0 z-[140] flex items-start justify-center overflow-y-auto bg-brand-dark/35 p-3 pt-6 backdrop-blur-sm sm:items-center sm:pt-3">
-      <div className="flex h-[min(92vh,860px)] w-full max-w-4xl flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-2xl">
+      <div className="flex h-[min(92vh,860px)] w-full max-w-[1180px] flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-brand-30 px-5 py-4 sm:px-6">
           <div>
             <div className="inline-flex rounded-full bg-brand-60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
@@ -255,9 +255,9 @@ const ManageSidebarModal = ({
                         )}
                       >
                         <GripVertical size={18} className="shrink-0 text-brand-dark/35" aria-hidden="true" />
-                        <Icon size={17} className="text-brand-dark/75" />
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-brand-dark">{viewTitles[view]}</span>
-                        <span className="rounded-full border border-brand-30 bg-brand-60/35 px-3 py-1 text-xs font-semibold text-brand-dark/60">
+                        <Icon size={17} className="shrink-0 text-brand-dark/75" />
+                        <span className="min-w-0 flex-1 text-sm font-medium leading-5 text-brand-dark">{viewTitles[view]}</span>
+                        <span className="shrink-0 rounded-full border border-brand-30 bg-brand-60/35 px-3 py-1 text-xs font-semibold text-brand-dark/60">
                           Drag
                         </span>
                       </div>
@@ -311,9 +311,9 @@ const ManageSidebarModal = ({
                         )}
                       >
                         <GripVertical size={18} className="shrink-0 text-brand-dark/35" aria-hidden="true" />
-                        <Icon size={17} className="text-brand-dark/75" />
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-brand-dark">{viewTitles[view]}</span>
-                        <span className="rounded-full border border-brand-30 bg-brand-60/35 px-3 py-1 text-xs font-semibold text-brand-dark/60">
+                        <Icon size={17} className="shrink-0 text-brand-dark/75" />
+                        <span className="min-w-0 flex-1 text-sm font-medium leading-5 text-brand-dark">{viewTitles[view]}</span>
+                        <span className="shrink-0 rounded-full border border-brand-30 bg-brand-60/35 px-3 py-1 text-xs font-semibold text-brand-dark/60">
                           Drag
                         </span>
                       </div>
@@ -339,15 +339,15 @@ const ManageSidebarModal = ({
                         key={view}
                         className="flex items-center gap-3 rounded-2xl border border-brand-30 bg-white px-4 py-3 opacity-80"
                       >
-                        <Icon size={17} className="text-brand-dark/55" />
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-brand-dark">{viewTitles[view]}</span>
+                        <Icon size={17} className="shrink-0 text-brand-dark/55" />
+                        <span className="min-w-0 flex-1 text-sm font-medium leading-5 text-brand-dark">{viewTitles[view]}</span>
                         <button
                           type="button"
                           onClick={() => {
                             onRequestUpgrade?.(view);
                             onClose();
                           }}
-                          className="rounded-full border border-brand-30 bg-brand-60/35 px-3 py-1 text-xs font-semibold text-brand-dark/60"
+                          className="shrink-0 rounded-full border border-brand-30 bg-brand-60/35 px-3 py-1 text-xs font-semibold text-brand-dark/60 transition hover:border-brand-10 hover:text-brand-10"
                         >
                           Upgrade
                         </button>
@@ -415,6 +415,15 @@ export const Sidebar = ({
   const planUnavailableViews = useMemo(
     () => (unavailableViews ?? customizableViews.filter((view) => !planAvailableViews.includes(view))).filter((view): view is DashboardView => customizableViews.includes(view)),
     [planAvailableViews, unavailableViews],
+  );
+  const utilityViews = useMemo(
+    () =>
+      [
+        ...(canManageSidebar ? (['settings'] as const) : []),
+        ...((visibleViews.includes('raise-issue') || availableViews?.includes('raise-issue')) ? (['raise-issue'] as const) : []),
+        ...(canViewProfile ? (['profile'] as const) : []),
+      ] as DashboardView[],
+    [availableViews, canManageSidebar, canViewProfile, visibleViews],
   );
 
   return (
@@ -539,11 +548,11 @@ export const Sidebar = ({
             </div>
           </div>
 
-          {canManageSidebar || canViewProfile ? (
+          {utilityViews.length ? (
             <div className="mt-auto border-t border-brand-30 pt-4">
               <div className="space-y-1">
-                {([...(canManageSidebar ? (['settings'] as const) : []), ...(canViewProfile ? (['profile'] as const) : [])] as DashboardView[]).map((view) => {
-                  const Icon = view === 'settings' ? Settings : CircleUserRound;
+                {utilityViews.map((view) => {
+                  const Icon = view === 'settings' ? Settings : view === 'raise-issue' ? LifeBuoy : CircleUserRound;
                   return (
                     <a
                       key={view}
