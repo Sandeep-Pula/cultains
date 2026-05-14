@@ -1,8 +1,10 @@
 import type { User } from 'firebase/auth';
 import {
   collection,
+  collectionGroup,
   doc,
   getDoc,
+  getDocs,
   onSnapshot,
   query,
   setDoc,
@@ -10,7 +12,7 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore';
-import { auth, db } from '../../lib/firebase';
+import { auth, db, firebaseConfig } from '../../lib/firebase';
 import { createId } from '../../lib/id';
 import type {
   AccountType,
@@ -54,6 +56,7 @@ import { buildBusinessBarcodeKey, buildInventoryBarcodeValue, buildInvoiceNumber
 type DashboardSnapshotListener = (data: DashboardData) => void;
 type DashboardErrorListener = (error: Error) => void;
 type SuperAdminSnapshotListener = (data: { businesses: PlatformBusinessAccount[]; supportThreads: SupportThread[] }) => void;
+type TeamMemberIndex = Record<string, { teamMemberIds: string[]; teamAuthUids: string[]; teamMemberCount: number }>;
 
 type UserProfileDoc = {
   userId: string;
@@ -112,6 +115,7 @@ const usersCollection = (userId: string, collectionName: string) =>
   collection(requireDb(), 'users', userId, collectionName);
 
 const userDoc = (userId: string) => doc(requireDb(), 'users', userId);
+const rootUsersCollection = () => collection(requireDb(), 'users');
 const cashRegisterCategoriesCollection = () => collection(requireDb(), 'cashRegisterCategorySuggestions');
 const cashRegisterCategoryDoc = (categoryId: string) => doc(requireDb(), 'cashRegisterCategorySuggestions', categoryId);
 const customerDoc = (userId: string, customerId: string) => doc(requireDb(), 'users', userId, 'customers', customerId);
@@ -151,9 +155,21 @@ const parseApiError = async (response: Response, fallback: string) => {
   }
 };
 
+const adminApiUrl = (path: string) => {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const projectId = firebaseConfig.projectId;
+  const isLocal = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
+  if (!projectId || isLocal) {
+    return `/api${normalizedPath}`;
+  }
+
+  return `https://asia-south1-${projectId}.cloudfunctions.net/api${normalizedPath}`;
+};
+
 const fetchAdminUsers = async () => {
   const token = await getAdminIdToken();
-  const response = await fetch('/api/admin/users', {
+  const response = await fetch(adminApiUrl('/admin/users'), {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -174,6 +190,53 @@ const fetchAdminUsers = async () => {
     teamAuthUids: business.teamAuthUids ?? [],
     teamMemberCount: business.teamMemberCount ?? 0,
   }));
+};
+
+const normalizePlatformBusinessAccount = (
+  userId: string,
+  value: Partial<UserProfileDoc> | undefined,
+  teamIndex?: TeamMemberIndex,
+): PlatformBusinessAccount => ({
+  userId,
+  hashedUserId: shortUserId(userId),
+  accountType: value?.accountType || 'owner',
+  companyName: value?.companyName?.trim() || 'Untitled workspace',
+  ownerName: value?.userName?.trim() || 'Unknown owner',
+  email: value?.email?.trim() || '',
+  phone: value?.phone?.trim() || '',
+  businessType: value?.businessType || 'general_business',
+  subscriptionPlan: normalizeSubscriptionPlan(value?.subscriptionPlan),
+  subscriptionStatus: normalizeSubscriptionStatus(value?.subscriptionStatus),
+  renewalDate: value?.renewalDate || '',
+  teamMemberIds: teamIndex?.[userId]?.teamMemberIds ?? [],
+  teamAuthUids: teamIndex?.[userId]?.teamAuthUids ?? [],
+  teamMemberCount: teamIndex?.[userId]?.teamMemberCount ?? 0,
+  createdAt: value?.createdAt || nowIso(),
+  updatedAt: value?.updatedAt || nowIso(),
+});
+
+const fetchFirestoreAdminUsers = async () => {
+  const [usersSnapshot, teamSnapshot] = await Promise.all([
+    getDocs(rootUsersCollection()),
+    getDocs(collectionGroup(requireDb(), 'teamMembers')).catch(() => null),
+  ]);
+  const teamIndex: TeamMemberIndex = {};
+
+  teamSnapshot?.docs.forEach((item) => {
+    const ownerId = item.ref.parent.parent?.id;
+    if (!ownerId) return;
+    const member = normalizeTeamMember(item.id, item.data() as Partial<TeamMember>);
+    const current = teamIndex[ownerId] ?? { teamMemberIds: [], teamAuthUids: [], teamMemberCount: 0 };
+    current.teamMemberIds.push(item.id);
+    if (member.authUid) current.teamAuthUids.push(member.authUid);
+    current.teamMemberCount += 1;
+    teamIndex[ownerId] = current;
+  });
+
+  return usersSnapshot.docs
+    .map((item) => ({ id: item.id, data: item.data() as Partial<UserProfileDoc> }))
+    .filter((item) => item.data.accountType !== 'super_admin' && item.data.accountType !== 'team_member')
+    .map((item) => normalizePlatformBusinessAccount(item.id, item.data, teamIndex));
 };
 const defaultBillingDefaults: BillingDefaults = {
   defaultTaxRate: 5,
@@ -1170,11 +1233,10 @@ export const dashboardService = {
     );
   },
 
-  subscribeToSuperAdminConsole(onData: SuperAdminSnapshotListener, onError: DashboardErrorListener) {
+  subscribeToSuperAdminConsole(onData: SuperAdminSnapshotListener, _onError: DashboardErrorListener) {
     let businesses: PlatformBusinessAccount[] = [];
     let supportThreads: SupportThread[] = [];
     let disposed = false;
-    let reportedUserLoadError = false;
 
     const emit = () => {
       onData({
@@ -1185,19 +1247,20 @@ export const dashboardService = {
 
     const loadBusinesses = async () => {
       try {
-        const nextBusinesses = await fetchAdminUsers();
+        let nextBusinesses: PlatformBusinessAccount[] = [];
+        try {
+          nextBusinesses = await fetchAdminUsers();
+        } catch {
+          nextBusinesses = await fetchFirestoreAdminUsers();
+        }
         if (disposed) return;
         businesses = nextBusinesses.sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
-        reportedUserLoadError = false;
         emit();
       } catch (error) {
         if (disposed) return;
         businesses = [];
         emit();
-        if (!reportedUserLoadError) {
-          reportedUserLoadError = true;
-          onError(error instanceof Error ? error : new Error('Unable to load admin users.'));
-        }
+        console.warn('Unable to load admin users.', error);
       }
     };
 
@@ -1239,7 +1302,7 @@ export const dashboardService = {
     const nextRenewalDate = patch.renewalDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
     const token = await getAdminIdToken();
-    const response = await fetch('/api/admin/users/subscription', {
+    const response = await fetch(adminApiUrl('/admin/users/subscription'), {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
