@@ -1,5 +1,6 @@
 import type { User } from 'firebase/auth';
 import {
+  arrayUnion,
   collection,
   collectionGroup,
   doc,
@@ -42,6 +43,7 @@ import type {
   SupportThreadStatus,
   SubscriptionPlan,
   SubscriptionStatus,
+  SubscriptionHistoryItem,
   TaskItem,
   TeamMember,
   WeeklyMiscRecord,
@@ -76,6 +78,7 @@ type UserProfileDoc = {
   subscriptionPlan: SubscriptionPlan;
   subscriptionStatus: SubscriptionStatus;
   renewalDate: string;
+  subscriptionHistory?: SubscriptionHistoryItem[];
   recentlyViewedIds: string[];
   sidebarViews: DashboardView[];
   billingDefaults?: BillingDefaults;
@@ -189,6 +192,8 @@ const fetchAdminUsers = async () => {
     teamMemberIds: business.teamMemberIds ?? [],
     teamAuthUids: business.teamAuthUids ?? [],
     teamMemberCount: business.teamMemberCount ?? 0,
+    teamMembers: business.teamMembers ?? [],
+    subscriptionHistory: business.subscriptionHistory ?? [],
   }));
 };
 
@@ -211,6 +216,8 @@ const normalizePlatformBusinessAccount = (
   teamMemberIds: teamIndex?.[userId]?.teamMemberIds ?? [],
   teamAuthUids: teamIndex?.[userId]?.teamAuthUids ?? [],
   teamMemberCount: teamIndex?.[userId]?.teamMemberCount ?? 0,
+  teamMembers: [],
+  subscriptionHistory: (value?.subscriptionHistory ?? []) as SubscriptionHistoryItem[],
   createdAt: value?.createdAt || nowIso(),
   updatedAt: value?.updatedAt || nowIso(),
 });
@@ -1301,24 +1308,52 @@ export const dashboardService = {
     const nextStatus = normalizeSubscriptionStatus(patch.subscriptionStatus);
     const nextRenewalDate = patch.renewalDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    const token = await getAdminIdToken();
-    const response = await fetch(adminApiUrl('/admin/users/subscription'), {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userId,
-        subscriptionPlan: nextPlan,
-        subscriptionStatus: nextStatus,
-        renewalDate: nextRenewalDate,
-        updatedAt: timestamp,
-      }),
-    });
+    try {
+      const token = await getAdminIdToken();
+      const response = await fetch(adminApiUrl('/admin/users/subscription'), {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          subscriptionPlan: nextPlan,
+          subscriptionStatus: nextStatus,
+          renewalDate: nextRenewalDate,
+          updatedAt: timestamp,
+        }),
+      });
 
-    if (!response.ok) {
-      throw new Error(await parseApiError(response, 'Unable to update this user subscription.'));
+      if (!response.ok) {
+        throw new Error(await parseApiError(response, 'Unable to update this user subscription.'));
+      }
+      return;
+    } catch (apiError) {
+      const existing = await getDoc(userDoc(userId));
+      const current = existing.exists() ? (existing.data() as Partial<UserProfileDoc>) : {};
+      await setDoc(
+        userDoc(userId),
+        {
+          userId,
+          subscriptionPlan: nextPlan,
+          subscriptionStatus: nextStatus,
+          renewalDate: nextRenewalDate,
+          subscriptionHistory: arrayUnion({
+            id: createId(),
+            fromPlan: normalizeSubscriptionPlan(current.subscriptionPlan),
+            toPlan: nextPlan,
+            status: nextStatus,
+            renewalDate: nextRenewalDate,
+            changedAt: timestamp,
+            changedBy: auth?.currentUser?.email || 'super_admin',
+          }),
+          updatedAt: timestamp,
+        },
+        { merge: true },
+      ).catch(() => {
+        throw apiError;
+      });
     }
   },
 

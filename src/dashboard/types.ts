@@ -71,6 +71,16 @@ export interface TeamMember {
   loginEmail?: string;
 }
 
+export interface SubscriptionHistoryItem {
+  id?: string;
+  fromPlan?: SubscriptionPlan;
+  toPlan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  renewalDate: string;
+  changedAt: string;
+  changedBy?: string;
+}
+
 export interface NoteItem {
   id: string;
   authorId: string;
@@ -293,6 +303,8 @@ export interface PlatformBusinessAccount {
   teamMemberIds: string[];
   teamAuthUids: string[];
   teamMemberCount: number;
+  teamMembers: TeamMember[];
+  subscriptionHistory: SubscriptionHistoryItem[];
   authCreatedAt?: string;
   lastSignInAt?: string;
   createdAt: string;

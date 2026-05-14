@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { defineSecret, defineString } from 'firebase-functions/params';
 import { onRequest } from 'firebase-functions/v2/https';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -28,8 +28,31 @@ type WorkspaceProfile = {
   subscriptionPlan?: SubscriptionPlan;
   subscriptionStatus?: SubscriptionStatus;
   renewalDate?: string;
+  subscriptionHistory?: SubscriptionHistoryItem[];
   createdAt?: unknown;
   updatedAt?: unknown;
+};
+
+type TeamMemberSummary = {
+  id: string;
+  name: string;
+  role: string;
+  email: string;
+  phone: string;
+  status: string;
+  loginEnabled: boolean;
+  authUid?: string;
+  loginEmail?: string;
+};
+
+type SubscriptionHistoryItem = {
+  id?: string;
+  fromPlan?: SubscriptionPlan;
+  toPlan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  renewalDate: string;
+  changedAt: string;
+  changedBy?: string;
 };
 
 type PlatformBusinessAccount = {
@@ -47,6 +70,8 @@ type PlatformBusinessAccount = {
   teamMemberIds: string[];
   teamAuthUids: string[];
   teamMemberCount: number;
+  teamMembers: TeamMemberSummary[];
+  subscriptionHistory: SubscriptionHistoryItem[];
   authCreatedAt?: string;
   lastSignInAt?: string;
   createdAt: string;
@@ -197,16 +222,27 @@ const listAllAuthUsers = async () => {
 
 const loadTeamMemberIndex = async () => {
   const snapshot = await db.collectionGroup('teamMembers').get();
-  const index = new Map<string, { teamMemberIds: string[]; teamAuthUids: string[]; teamMemberCount: number }>();
+  const index = new Map<string, { teamMemberIds: string[]; teamAuthUids: string[]; teamMemberCount: number; teamMembers: TeamMemberSummary[] }>();
 
   snapshot.docs.forEach((item) => {
     const ownerId = item.ref.parent.parent?.id;
     if (!ownerId) return;
-    const data = item.data() as { authUid?: string };
-    const current = index.get(ownerId) ?? { teamMemberIds: [], teamAuthUids: [], teamMemberCount: 0 };
+    const data = item.data() as Partial<TeamMemberSummary>;
+    const current = index.get(ownerId) ?? { teamMemberIds: [], teamAuthUids: [], teamMemberCount: 0, teamMembers: [] };
     current.teamMemberIds.push(item.id);
     if (data.authUid) current.teamAuthUids.push(data.authUid);
     current.teamMemberCount += 1;
+    current.teamMembers.push({
+      id: item.id,
+      name: data.name || 'Team member',
+      role: data.role || 'Team member',
+      email: data.email || data.loginEmail || '',
+      phone: data.phone || '',
+      status: data.status || 'offline',
+      loginEnabled: Boolean(data.loginEnabled),
+      authUid: data.authUid,
+      loginEmail: data.loginEmail,
+    });
     index.set(ownerId, current);
   });
 
@@ -239,7 +275,7 @@ const buildAdminUsersPayload = async () => {
     const name = profile?.userName || authUser?.displayName || email.split('@')[0] || 'Unknown user';
     const createdAt = toIsoString(profile?.createdAt, authCreatedAt || new Date(0).toISOString());
     const updatedAt = toIsoString(profile?.updatedAt, lastSignInAt || createdAt);
-    const team = teamIndex.get(userId) ?? { teamMemberIds: [], teamAuthUids: [], teamMemberCount: 0 };
+    const team = teamIndex.get(userId) ?? { teamMemberIds: [], teamAuthUids: [], teamMemberCount: 0, teamMembers: [] };
 
     users.push({
       userId,
@@ -256,6 +292,8 @@ const buildAdminUsersPayload = async () => {
       teamMemberIds: team.teamMemberIds,
       teamAuthUids: team.teamAuthUids,
       teamMemberCount: team.teamMemberCount,
+      teamMembers: team.teamMembers,
+      subscriptionHistory: Array.isArray(profile?.subscriptionHistory) ? profile.subscriptionHistory : [],
       authCreatedAt,
       lastSignInAt,
       createdAt,
@@ -271,7 +309,7 @@ const updateAdminUserSubscription = async (body: {
   subscriptionPlan?: unknown;
   subscriptionStatus?: unknown;
   renewalDate?: unknown;
-}) => {
+}, changedBy: string) => {
   const userId = String(body.userId || '').trim();
   if (!userId) throw new Error('INVALID_ADMIN_USER_REQUEST');
 
@@ -282,6 +320,18 @@ const updateAdminUserSubscription = async (body: {
   const email = profile.email || authUser?.email || '';
   const ownerName = profile.userName || authUser?.displayName || email.split('@')[0] || 'User';
   const timestamp = new Date().toISOString();
+  const nextPlan = normalizeSubscriptionPlan(body.subscriptionPlan);
+  const nextStatus = normalizeSubscriptionStatus(body.subscriptionStatus);
+  const nextRenewalDate = toIsoString(body.renewalDate, new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());
+  const historyItem: SubscriptionHistoryItem = {
+    id: db.collection('_ids').doc().id,
+    fromPlan: normalizeSubscriptionPlan(profile.subscriptionPlan),
+    toPlan: nextPlan,
+    status: nextStatus,
+    renewalDate: nextRenewalDate,
+    changedAt: timestamp,
+    changedBy,
+  };
 
   await ref.set(
     {
@@ -292,9 +342,10 @@ const updateAdminUserSubscription = async (body: {
       email,
       phone: profile.phone || authUser?.phoneNumber || '',
       businessType: profile.businessType || 'general_business',
-      subscriptionPlan: normalizeSubscriptionPlan(body.subscriptionPlan),
-      subscriptionStatus: normalizeSubscriptionStatus(body.subscriptionStatus),
-      renewalDate: toIsoString(body.renewalDate, new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()),
+      subscriptionPlan: nextPlan,
+      subscriptionStatus: nextStatus,
+      renewalDate: nextRenewalDate,
+      subscriptionHistory: FieldValue.arrayUnion(historyItem),
       createdAt: toIsoString(profile.createdAt, toIsoString(authUser?.metadata.creationTime, timestamp)),
       updatedAt: timestamp,
     },
@@ -880,6 +931,7 @@ const createMcpServer = (authorizationHeader: string | string[] | undefined) => 
 export const api = onRequest(
   {
     region: 'asia-south1',
+    invoker: 'public',
     secrets: [OPENAI_API_KEY],
   },
   async (request, response) => {
@@ -983,8 +1035,8 @@ export const api = onRequest(
           return;
         }
 
-        await requireSuperAdmin(request.headers.authorization);
-        await updateAdminUserSubscription(readJsonBody(request.body));
+        const admin = await requireSuperAdmin(request.headers.authorization);
+        await updateAdminUserSubscription(readJsonBody(request.body), admin.email);
         json(response, 200, { ok: true });
         return;
       }

@@ -10,6 +10,7 @@ import {
   Sparkles,
   UserRound,
   UsersRound,
+  X,
 } from 'lucide-react';
 import { dashboardService } from '../services/dashboardService';
 import type { PlatformBusinessAccount, SubscriptionPlan, SupportThread, SupportThreadStatus, WorkspaceProfile } from '../types';
@@ -73,11 +74,13 @@ export const SuperAdminPage = ({
   const [submitting, setSubmitting] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState<SupportThreadStatus | null>(null);
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = dashboardService.subscribeToSuperAdminConsole(
       (nextData) => {
         setBusinesses(nextData.businesses);
+        setSelectedBusinessId((current) => current && nextData.businesses.some((business) => business.userId === current) ? current : null);
         setSupportThreads(nextData.supportThreads);
         setSelectedTicketId((current) => {
           if (current && nextData.supportThreads.some((thread) => thread.id === current)) {
@@ -99,6 +102,11 @@ export const SuperAdminPage = ({
   const selectedBusiness = useMemo(
     () => businesses.find((business) => business.userId === selectedThread?.ownerUserId) || null,
     [businesses, selectedThread],
+  );
+
+  const selectedUserBusiness = useMemo(
+    () => businesses.find((business) => business.userId === selectedBusinessId) || null,
+    [businesses, selectedBusinessId],
   );
 
   useEffect(() => {
@@ -226,6 +234,8 @@ export const SuperAdminPage = ({
         subscriptionStatus: 'active',
         renewalDate: business.renewalDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       });
+      const changedAt = new Date().toISOString();
+      const renewalDate = business.renewalDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       setBusinesses((current) =>
         current.map((item) =>
           item.userId === business.userId
@@ -233,8 +243,20 @@ export const SuperAdminPage = ({
                 ...item,
                 subscriptionPlan,
                 subscriptionStatus: 'active',
-                renewalDate: business.renewalDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-                updatedAt: new Date().toISOString(),
+                renewalDate,
+                subscriptionHistory: [
+                  {
+                    id: `${business.userId}-${changedAt}`,
+                    fromPlan: business.subscriptionPlan,
+                    toPlan: subscriptionPlan,
+                    status: 'active',
+                    renewalDate,
+                    changedAt,
+                    changedBy: profile.email,
+                  },
+                  ...(item.subscriptionHistory ?? []),
+                ],
+                updatedAt: changedAt,
               }
             : item,
         ),
@@ -374,7 +396,11 @@ export const SuperAdminPage = ({
 
                 <div className="mt-5 grid gap-4 2xl:grid-cols-2">
                   {filteredBusinesses.map((business) => (
-                    <article key={business.userId} className="rounded-[28px] border border-brand-30 bg-brand-60/18 p-4 shadow-sm">
+                    <article
+                      key={business.userId}
+                      onClick={() => setSelectedBusinessId(business.userId)}
+                      className="cursor-pointer rounded-[28px] border border-brand-30 bg-brand-60/18 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-10/40 hover:bg-white"
+                    >
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="min-w-0">
                           <div className="font-mono text-sm font-bold text-brand-10">{business.hashedUserId}</div>
@@ -410,6 +436,7 @@ export const SuperAdminPage = ({
                           <select
                             value={business.subscriptionPlan}
                             disabled={updatingUserId === business.userId}
+                            onClick={(event) => event.stopPropagation()}
                             onChange={(event) => updateUserPlan(business, event.target.value as SubscriptionPlan)}
                             className="mt-1 w-full rounded-2xl border border-brand-30 bg-white px-3 py-2 font-semibold text-brand-dark outline-none"
                           >
@@ -435,6 +462,16 @@ export const SuperAdminPage = ({
                             <span key={teamId} className="rounded-full bg-brand-60/45 px-2.5 py-1 font-mono text-[11px] text-brand-dark/70">{teamId}</span>
                           )) : <span className="text-sm text-brand-dark/50">No team IDs</span>}
                         </div>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setSelectedBusinessId(business.userId);
+                          }}
+                          className="mt-3 rounded-2xl border border-brand-30 bg-white px-3 py-2 text-sm font-semibold text-brand-dark transition hover:bg-brand-10 hover:text-brand-60"
+                        >
+                          View access details
+                        </button>
                       </div>
                     </article>
                   ))}
@@ -777,6 +814,120 @@ export const SuperAdminPage = ({
           )}
         </main>
       </div>
+
+      {selectedUserBusiness ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-dark/45 p-4">
+          <section className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[32px] border border-brand-30 bg-white p-5 shadow-2xl sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <div className="font-mono text-sm font-bold text-brand-10">{selectedUserBusiness.hashedUserId}</div>
+                <h2 className="mt-2 text-2xl font-semibold text-brand-dark">{selectedUserBusiness.companyName}</h2>
+                <p className="mt-1 text-sm text-brand-dark/60">
+                  {selectedUserBusiness.ownerName} • {selectedUserBusiness.email || 'No email'} • {selectedUserBusiness.phone || 'No phone'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedBusinessId(null)}
+                className="rounded-2xl border border-brand-30 bg-brand-60/30 p-3 text-brand-dark transition hover:bg-brand-10 hover:text-brand-60"
+                aria-label="Close user details"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              <div className="rounded-[24px] border border-brand-30 bg-brand-60/20 p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-dark/45">Current plan</div>
+                <div className="mt-2 text-2xl font-semibold">{subscriptionPlanLabels[selectedUserBusiness.subscriptionPlan]}</div>
+                <div className="mt-1 text-sm capitalize text-brand-dark/60">{selectedUserBusiness.subscriptionStatus}</div>
+              </div>
+              <div className="rounded-[24px] border border-brand-30 bg-brand-60/20 p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-dark/45">Renewal</div>
+                <div className="mt-2 text-2xl font-semibold">{selectedUserBusiness.renewalDate ? formatDate(selectedUserBusiness.renewalDate) : 'Not set'}</div>
+                <div className="mt-1 text-sm text-brand-dark/60">Joined {formatDate(selectedUserBusiness.createdAt)}</div>
+              </div>
+              <div className="rounded-[24px] border border-brand-30 bg-brand-60/20 p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-dark/45">Team</div>
+                <div className="mt-2 text-2xl font-semibold">{selectedUserBusiness.teamMemberCount}</div>
+                <div className="mt-1 text-sm text-brand-dark/60">Linked team members</div>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+              <div className="rounded-[24px] border border-brand-30 bg-white p-4">
+                <h3 className="text-lg font-semibold">Access management</h3>
+                <p className="mt-1 text-sm text-brand-dark/60">Change this plan to control which dashboard modules this owner can access.</p>
+                <label className="mt-4 block">
+                  <span className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-dark/45">Assigned plan</span>
+                  <select
+                    value={selectedUserBusiness.subscriptionPlan}
+                    disabled={updatingUserId === selectedUserBusiness.userId}
+                    onChange={(event) => updateUserPlan(selectedUserBusiness, event.target.value as SubscriptionPlan)}
+                    className="mt-2 w-full rounded-2xl border border-brand-30 bg-brand-60/20 px-4 py-3 text-lg font-semibold text-brand-dark outline-none"
+                  >
+                    {subscriptionPlanOptions.map((plan) => (
+                      <option key={plan} value={plan}>{subscriptionPlanLabels[plan]}</option>
+                    ))}
+                  </select>
+                </label>
+                <div className="mt-4 grid gap-3 text-sm text-brand-dark/70">
+                  <div><span className="font-semibold text-brand-dark">Full UID:</span> <span className="font-mono">{selectedUserBusiness.userId}</span></div>
+                  <div><span className="font-semibold text-brand-dark">Business type:</span> {selectedUserBusiness.businessType.replace(/_/g, ' ')}</div>
+                  <div><span className="font-semibold text-brand-dark">Last sign-in:</span> {selectedUserBusiness.lastSignInAt ? formatDateTime(selectedUserBusiness.lastSignInAt) : 'Not available'}</div>
+                </div>
+              </div>
+
+              <div className="rounded-[24px] border border-brand-30 bg-white p-4">
+                <h3 className="text-lg font-semibold">Team members</h3>
+                <div className="mt-3 space-y-3">
+                  {selectedUserBusiness.teamMembers.length ? selectedUserBusiness.teamMembers.map((member) => (
+                    <div key={member.id} className="rounded-[20px] border border-brand-30 bg-brand-60/20 p-3">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <div className="font-semibold">{member.name}</div>
+                          <div className="mt-1 text-sm text-brand-dark/60">{member.email || member.loginEmail || 'No email'} • {member.phone || 'No phone'}</div>
+                        </div>
+                        <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold capitalize text-brand-dark/65">{member.status}</span>
+                      </div>
+                      <div className="mt-2 text-xs text-brand-dark/55">
+                        {member.role} • ID <span className="font-mono">{member.id}</span>{member.authUid ? ` • Auth ${member.authUid.slice(0, 8)}` : ''}
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="rounded-[20px] border border-dashed border-brand-30 bg-brand-60/20 p-4 text-sm text-brand-dark/55">
+                      No team members are linked to this owner yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-[24px] border border-brand-30 bg-white p-4">
+              <h3 className="text-lg font-semibold">Subscription history</h3>
+              <div className="mt-3 space-y-3">
+                {selectedUserBusiness.subscriptionHistory.length ? selectedUserBusiness.subscriptionHistory.map((item, index) => (
+                  <div key={item.id || `${item.changedAt}-${index}`} className="rounded-[20px] border border-brand-30 bg-brand-60/20 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="font-semibold">
+                        {item.fromPlan ? `${subscriptionPlanLabels[item.fromPlan]} to ` : ''}{subscriptionPlanLabels[item.toPlan]}
+                      </div>
+                      <span className="text-sm text-brand-dark/60">{formatDateTime(item.changedAt)}</span>
+                    </div>
+                    <div className="mt-1 text-sm text-brand-dark/60">
+                      Status {item.status} • Renewal {item.renewalDate ? formatDate(item.renewalDate) : 'not set'}{item.changedBy ? ` • Changed by ${item.changedBy}` : ''}
+                    </div>
+                  </div>
+                )) : (
+                  <div className="rounded-[20px] border border-dashed border-brand-30 bg-brand-60/20 p-4 text-sm text-brand-dark/55">
+                    No previous subscription changes recorded yet.
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 };
