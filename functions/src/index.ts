@@ -13,15 +13,44 @@ const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
 const OPENAI_WORKFLOW_ID = defineString('OPENAI_WORKFLOW_ID');
 
 type AccountType = 'owner' | 'team_member' | 'super_admin';
+type SubscriptionPlan = 'freemium' | 'focused' | 'growth' | 'business_pro';
+type SubscriptionStatus = 'active' | 'trialing' | 'paused' | 'cancelled';
 
 type WorkspaceProfile = {
   accountType?: AccountType;
   companyName?: string;
   userName?: string;
   email?: string;
+  phone?: string;
   businessType?: string;
   city?: string;
   workspaceOwnerId?: string;
+  subscriptionPlan?: SubscriptionPlan;
+  subscriptionStatus?: SubscriptionStatus;
+  renewalDate?: string;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+};
+
+type PlatformBusinessAccount = {
+  userId: string;
+  hashedUserId: string;
+  accountType: AccountType;
+  companyName: string;
+  ownerName: string;
+  email: string;
+  phone: string;
+  businessType: string;
+  subscriptionPlan: SubscriptionPlan;
+  subscriptionStatus: SubscriptionStatus;
+  renewalDate: string;
+  teamMemberIds: string[];
+  teamAuthUids: string[];
+  teamMemberCount: number;
+  authCreatedAt?: string;
+  lastSignInAt?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 type AnalyticsScope =
@@ -57,6 +86,7 @@ type CrmWorkflowRunBody = {
 };
 
 const db = getFirestore();
+const superAdminEmails = new Set(['superadmin@pulalabs.com', 'superadmin@aivyapari.com']);
 const crmCollectionByEntity: Partial<Record<CrmEntityType, string>> = {
   contact: 'crmContacts',
   company: 'crmCompanies',
@@ -105,6 +135,171 @@ const requireOwnerProfile = async (authorizationHeader: string | string[] | unde
     email: decoded.email || profile.email || '',
     profile,
   };
+};
+
+const requireSuperAdmin = async (authorizationHeader: string | string[] | undefined) => {
+  const token = getBearerToken(authorizationHeader);
+  if (!token) {
+    throw new Error('MISSING_AUTH_TOKEN');
+  }
+
+  const decoded = await getAuth().verifyIdToken(token);
+  const email = (decoded.email || '').toLowerCase();
+  if (!superAdminEmails.has(email)) {
+    const profileSnapshot = await db.doc(`users/${decoded.uid}`).get();
+    const profile = profileSnapshot.exists ? (profileSnapshot.data() as WorkspaceProfile) : null;
+    if (profile?.accountType !== 'super_admin') {
+      throw new Error('SUPER_ADMIN_ONLY');
+    }
+  }
+
+  return {
+    uid: decoded.uid,
+    email,
+  };
+};
+
+const shortUserId = (userId: string) =>
+  userId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase() || userId.slice(0, 8).toUpperCase();
+
+const normalizeSubscriptionPlan = (plan?: unknown): SubscriptionPlan =>
+  plan === 'focused' || plan === 'growth' || plan === 'business_pro' ? plan : 'freemium';
+
+const normalizeSubscriptionStatus = (status?: unknown): SubscriptionStatus =>
+  status === 'trialing' || status === 'paused' || status === 'cancelled' ? status : 'active';
+
+const toIsoString = (value: unknown, fallback = '') => {
+  if (!value) return fallback;
+  if (typeof value === 'string') {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? fallback : date.toISOString();
+  }
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === 'object' && 'toDate' in value && typeof value.toDate === 'function') {
+    const date = value.toDate();
+    return date instanceof Date && !Number.isNaN(date.getTime()) ? date.toISOString() : fallback;
+  }
+  return fallback;
+};
+
+const listAllAuthUsers = async () => {
+  const users = [];
+  let pageToken: string | undefined;
+
+  do {
+    const result = await getAuth().listUsers(1000, pageToken);
+    users.push(...result.users);
+    pageToken = result.pageToken;
+  } while (pageToken);
+
+  return users;
+};
+
+const loadTeamMemberIndex = async () => {
+  const snapshot = await db.collectionGroup('teamMembers').get();
+  const index = new Map<string, { teamMemberIds: string[]; teamAuthUids: string[]; teamMemberCount: number }>();
+
+  snapshot.docs.forEach((item) => {
+    const ownerId = item.ref.parent.parent?.id;
+    if (!ownerId) return;
+    const data = item.data() as { authUid?: string };
+    const current = index.get(ownerId) ?? { teamMemberIds: [], teamAuthUids: [], teamMemberCount: 0 };
+    current.teamMemberIds.push(item.id);
+    if (data.authUid) current.teamAuthUids.push(data.authUid);
+    current.teamMemberCount += 1;
+    index.set(ownerId, current);
+  });
+
+  return index;
+};
+
+const buildAdminUsersPayload = async () => {
+  const [authUsers, profileSnapshot, teamIndex] = await Promise.all([
+    listAllAuthUsers(),
+    db.collection('users').get(),
+    loadTeamMemberIndex(),
+  ]);
+  const authByUid = new Map(authUsers.map((user) => [user.uid, user]));
+  const profileByUid = new Map(profileSnapshot.docs.map((item) => [item.id, item.data() as WorkspaceProfile]));
+  const allUserIds = new Set([...authByUid.keys(), ...profileByUid.keys()]);
+  const users: PlatformBusinessAccount[] = [];
+
+  allUserIds.forEach((userId) => {
+    const authUser = authByUid.get(userId);
+    const profile = profileByUid.get(userId);
+    const email = profile?.email || authUser?.email || '';
+    const accountType = profile?.accountType || 'owner';
+    const lowerEmail = email.toLowerCase();
+
+    if (accountType === 'super_admin' || superAdminEmails.has(lowerEmail)) return;
+    if (accountType === 'team_member') return;
+
+    const authCreatedAt = toIsoString(authUser?.metadata.creationTime);
+    const lastSignInAt = toIsoString(authUser?.metadata.lastSignInTime);
+    const name = profile?.userName || authUser?.displayName || email.split('@')[0] || 'Unknown user';
+    const createdAt = toIsoString(profile?.createdAt, authCreatedAt || new Date(0).toISOString());
+    const updatedAt = toIsoString(profile?.updatedAt, lastSignInAt || createdAt);
+    const team = teamIndex.get(userId) ?? { teamMemberIds: [], teamAuthUids: [], teamMemberCount: 0 };
+
+    users.push({
+      userId,
+      hashedUserId: shortUserId(userId),
+      accountType,
+      companyName: profile?.companyName || `${name} Workspace`,
+      ownerName: name,
+      email,
+      phone: profile?.phone || authUser?.phoneNumber || '',
+      businessType: profile?.businessType || 'general_business',
+      subscriptionPlan: normalizeSubscriptionPlan(profile?.subscriptionPlan),
+      subscriptionStatus: normalizeSubscriptionStatus(profile?.subscriptionStatus),
+      renewalDate: toIsoString(profile?.renewalDate),
+      teamMemberIds: team.teamMemberIds,
+      teamAuthUids: team.teamAuthUids,
+      teamMemberCount: team.teamMemberCount,
+      authCreatedAt,
+      lastSignInAt,
+      createdAt,
+      updatedAt,
+    });
+  });
+
+  return users.sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+};
+
+const updateAdminUserSubscription = async (body: {
+  userId?: string;
+  subscriptionPlan?: unknown;
+  subscriptionStatus?: unknown;
+  renewalDate?: unknown;
+}) => {
+  const userId = String(body.userId || '').trim();
+  if (!userId) throw new Error('INVALID_ADMIN_USER_REQUEST');
+
+  const authUser = await getAuth().getUser(userId).catch(() => null);
+  const ref = db.doc(`users/${userId}`);
+  const existing = await ref.get();
+  const profile = existing.exists ? (existing.data() as WorkspaceProfile) : {};
+  const email = profile.email || authUser?.email || '';
+  const ownerName = profile.userName || authUser?.displayName || email.split('@')[0] || 'User';
+  const timestamp = new Date().toISOString();
+
+  await ref.set(
+    {
+      userId,
+      accountType: profile.accountType || 'owner',
+      userName: ownerName,
+      companyName: profile.companyName || `${ownerName} Workspace`,
+      email,
+      phone: profile.phone || authUser?.phoneNumber || '',
+      businessType: profile.businessType || 'general_business',
+      subscriptionPlan: normalizeSubscriptionPlan(body.subscriptionPlan),
+      subscriptionStatus: normalizeSubscriptionStatus(body.subscriptionStatus),
+      renewalDate: toIsoString(body.renewalDate, new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()),
+      createdAt: toIsoString(profile.createdAt, toIsoString(authUser?.metadata.creationTime, timestamp)),
+      updatedAt: timestamp,
+    },
+    { merge: true },
+  );
 };
 
 const toNumber = (value: unknown) => {
@@ -770,6 +965,30 @@ export const api = onRequest(
         return;
       }
 
+      if (pathname === '/admin/users') {
+        if (request.method !== 'GET') {
+          json(response, 405, { error: 'Method not allowed.' });
+          return;
+        }
+
+        await requireSuperAdmin(request.headers.authorization);
+        const users = await buildAdminUsersPayload();
+        json(response, 200, { users });
+        return;
+      }
+
+      if (pathname === '/admin/users/subscription') {
+        if (request.method !== 'POST') {
+          json(response, 405, { error: 'Method not allowed.' });
+          return;
+        }
+
+        await requireSuperAdmin(request.headers.authorization);
+        await updateAdminUserSubscription(readJsonBody(request.body));
+        json(response, 200, { ok: true });
+        return;
+      }
+
       if (pathname === '/copilot/analytics') {
         if (request.method !== 'POST') {
           json(response, 405, { error: 'Method not allowed.' });
@@ -812,6 +1031,14 @@ export const api = onRequest(
         }
         if (error.message === 'OWNER_ONLY') {
           json(response, 403, { error: 'Only the business owner can use the business copilot.' });
+          return;
+        }
+        if (error.message === 'SUPER_ADMIN_ONLY') {
+          json(response, 403, { error: 'Only the platform super admin can use this admin action.' });
+          return;
+        }
+        if (error.message === 'INVALID_ADMIN_USER_REQUEST') {
+          json(response, 400, { error: 'Invalid admin user request.' });
           return;
         }
         if (error.message === 'INVALID_CRM_WORKFLOW_REQUEST' || error.message === 'INVALID_CRM_ENTITY_TYPE') {

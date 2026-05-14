@@ -281,6 +281,7 @@ export interface SupportThread {
 export interface PlatformBusinessAccount {
   userId: string;
   hashedUserId: string;
+  accountType: AccountType;
   companyName: string;
   ownerName: string;
   email: string;
@@ -292,6 +293,8 @@ export interface PlatformBusinessAccount {
   teamMemberIds: string[];
   teamAuthUids: string[];
   teamMemberCount: number;
+  authCreatedAt?: string;
+  lastSignInAt?: string;
   createdAt: string;
   updatedAt: string;
 }

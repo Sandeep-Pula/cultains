@@ -1,7 +1,6 @@
 import type { User } from 'firebase/auth';
 import {
   collection,
-  collectionGroup,
   doc,
   getDoc,
   onSnapshot,
@@ -11,7 +10,7 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { auth, db } from '../../lib/firebase';
 import { createId } from '../../lib/id';
 import type {
   AccountType,
@@ -55,7 +54,6 @@ import { buildBusinessBarcodeKey, buildInventoryBarcodeValue, buildInvoiceNumber
 type DashboardSnapshotListener = (data: DashboardData) => void;
 type DashboardErrorListener = (error: Error) => void;
 type SuperAdminSnapshotListener = (data: { businesses: PlatformBusinessAccount[]; supportThreads: SupportThread[] }) => void;
-type TeamMemberIndex = Record<string, { teamMemberIds: string[]; teamAuthUids: string[]; teamMemberCount: number }>;
 
 type UserProfileDoc = {
   userId: string;
@@ -114,7 +112,6 @@ const usersCollection = (userId: string, collectionName: string) =>
   collection(requireDb(), 'users', userId, collectionName);
 
 const userDoc = (userId: string) => doc(requireDb(), 'users', userId);
-const rootUsersCollection = () => collection(requireDb(), 'users');
 const cashRegisterCategoriesCollection = () => collection(requireDb(), 'cashRegisterCategorySuggestions');
 const cashRegisterCategoryDoc = (categoryId: string) => doc(requireDb(), 'cashRegisterCategorySuggestions', categoryId);
 const customerDoc = (userId: string, customerId: string) => doc(requireDb(), 'users', userId, 'customers', customerId);
@@ -135,6 +132,49 @@ const normalizeSubscriptionPlan = (plan?: string): SubscriptionPlan =>
   plan === 'focused' || plan === 'growth' || plan === 'business_pro' ? plan : 'freemium';
 const normalizeSubscriptionStatus = (status?: string): SubscriptionStatus =>
   status === 'trialing' || status === 'paused' || status === 'cancelled' ? status : 'active';
+
+const getAdminIdToken = async () => {
+  const currentUser = auth?.currentUser;
+  if (!currentUser) {
+    throw new Error('Super admin session is not available. Please sign in again.');
+  }
+
+  return currentUser.getIdToken();
+};
+
+const parseApiError = async (response: Response, fallback: string) => {
+  try {
+    const payload = await response.json() as { error?: string };
+    return payload.error || fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const fetchAdminUsers = async () => {
+  const token = await getAdminIdToken();
+  const response = await fetch('/api/admin/users', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseApiError(response, 'Unable to load admin users.'));
+  }
+
+  const payload = await response.json() as { users?: PlatformBusinessAccount[] };
+  return (payload.users ?? []).map((business) => ({
+    ...business,
+    accountType: business.accountType || 'owner',
+    hashedUserId: business.hashedUserId || shortUserId(business.userId),
+    subscriptionPlan: normalizeSubscriptionPlan(business.subscriptionPlan),
+    subscriptionStatus: normalizeSubscriptionStatus(business.subscriptionStatus),
+    teamMemberIds: business.teamMemberIds ?? [],
+    teamAuthUids: business.teamAuthUids ?? [],
+    teamMemberCount: business.teamMemberCount ?? 0,
+  }));
+};
 const defaultBillingDefaults: BillingDefaults = {
   defaultTaxRate: 5,
   defaultPaymentStatus: 'paid',
@@ -578,28 +618,6 @@ const normalizeSupportThread = (threadId: string, value: Partial<SupportThread> 
   unreadForAdmin: value?.unreadForAdmin ?? false,
 });
 
-const normalizePlatformBusinessAccount = (
-  userId: string,
-  value: Partial<UserProfileDoc> | undefined,
-  teamIndex?: TeamMemberIndex,
-): PlatformBusinessAccount => ({
-  userId,
-  hashedUserId: shortUserId(userId),
-  companyName: value?.companyName?.trim() || 'Untitled workspace',
-  ownerName: value?.userName?.trim() || 'Unknown owner',
-  email: value?.email?.trim() || '',
-  phone: value?.phone?.trim() || '',
-  businessType: value?.businessType || 'general_business',
-  subscriptionPlan: normalizeSubscriptionPlan(value?.subscriptionPlan),
-  subscriptionStatus: normalizeSubscriptionStatus(value?.subscriptionStatus),
-  renewalDate: value?.renewalDate || '',
-  teamMemberIds: teamIndex?.[userId]?.teamMemberIds ?? [],
-  teamAuthUids: teamIndex?.[userId]?.teamAuthUids ?? [],
-  teamMemberCount: teamIndex?.[userId]?.teamMemberCount ?? 0,
-  createdAt: value?.createdAt || nowIso(),
-  updatedAt: value?.updatedAt || nowIso(),
-});
-
 const buildCustomerPayload = (
   payload: CustomerCreatePayload,
   actorName: string,
@@ -776,8 +794,8 @@ export const dashboardService = {
           studioAddress: data.studioAddress?.trim() || fallbackProfile.studioAddress,
           teamSize: data.teamSize?.trim() || fallbackProfile.teamSize,
         }),
-      subscriptionPlan: 'freemium',
-      subscriptionStatus: 'active',
+      subscriptionPlan: normalizeSubscriptionPlan(data.subscriptionPlan),
+      subscriptionStatus: normalizeSubscriptionStatus(data.subscriptionStatus),
       renewalDate: data.renewalDate || fallbackProfile.renewalDate,
       recentlyViewedIds: data.recentlyViewedIds ?? [],
       sidebarViews: normalizeSidebarViews(data.sidebarViews ?? fallbackProfile.sidebarViews),
@@ -1154,64 +1172,56 @@ export const dashboardService = {
 
   subscribeToSuperAdminConsole(onData: SuperAdminSnapshotListener, onError: DashboardErrorListener) {
     let businesses: PlatformBusinessAccount[] = [];
-    let ownerProfiles: Array<{ id: string; data: Partial<UserProfileDoc> }> = [];
-    let teamIndex: TeamMemberIndex = {};
     let supportThreads: SupportThread[] = [];
+    let disposed = false;
+    let reportedUserLoadError = false;
 
     const emit = () => {
-      businesses = ownerProfiles
-        .map((item) => normalizePlatformBusinessAccount(item.id, item.data, teamIndex))
-        .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
       onData({
         businesses,
         supportThreads,
       });
     };
 
-    const unsubscribers = [
-      onSnapshot(
-        rootUsersCollection(),
-        (snapshot) => {
-          ownerProfiles = snapshot.docs
-            .map((item) => ({ id: item.id, data: item.data() as Partial<UserProfileDoc> }))
-            .filter((item) => item.data.accountType === 'owner');
-          emit();
-        },
-        (error) => onError(error),
-      ),
-      onSnapshot(
-        collectionGroup(requireDb(), 'teamMembers'),
-        (snapshot) => {
-          const nextIndex: TeamMemberIndex = {};
-          snapshot.docs.forEach((item) => {
-            const ownerId = item.ref.parent.parent?.id;
-            if (!ownerId) return;
-            const member = normalizeTeamMember(item.id, item.data() as Partial<TeamMember>);
-            const current = nextIndex[ownerId] ?? { teamMemberIds: [], teamAuthUids: [], teamMemberCount: 0 };
-            current.teamMemberIds.push(item.id);
-            if (member.authUid) current.teamAuthUids.push(member.authUid);
-            current.teamMemberCount += 1;
-            nextIndex[ownerId] = current;
-          });
-          teamIndex = nextIndex;
-          emit();
-        },
-        (error) => onError(error),
-      ),
-      onSnapshot(
-        supportThreadsCollection(),
-        (snapshot) => {
-          supportThreads = snapshot.docs
-            .map((item) => normalizeSupportThread(item.id, item.data() as Partial<SupportThread>))
-            .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
-          emit();
-        },
-        (error) => onError(error),
-      ),
-    ];
+    const loadBusinesses = async () => {
+      try {
+        const nextBusinesses = await fetchAdminUsers();
+        if (disposed) return;
+        businesses = nextBusinesses.sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+        reportedUserLoadError = false;
+        emit();
+      } catch (error) {
+        if (disposed) return;
+        businesses = [];
+        emit();
+        if (!reportedUserLoadError) {
+          reportedUserLoadError = true;
+          onError(error instanceof Error ? error : new Error('Unable to load admin users.'));
+        }
+      }
+    };
+
+    void loadBusinesses();
+    const refreshTimer = window.setInterval(loadBusinesses, 30000);
+
+    const unsubscribeSupport = onSnapshot(
+      supportThreadsCollection(),
+      (snapshot) => {
+        supportThreads = snapshot.docs
+          .map((item) => normalizeSupportThread(item.id, item.data() as Partial<SupportThread>))
+          .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
+        emit();
+      },
+      () => {
+        supportThreads = [];
+        emit();
+      },
+    );
 
     return () => {
-      unsubscribers.forEach((unsubscribe) => unsubscribe());
+      disposed = true;
+      window.clearInterval(refreshTimer);
+      unsubscribeSupport();
     };
   },
 
@@ -1228,17 +1238,25 @@ export const dashboardService = {
     const nextStatus = normalizeSubscriptionStatus(patch.subscriptionStatus);
     const nextRenewalDate = patch.renewalDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    await setDoc(
-      userDoc(userId),
-      {
+    const token = await getAdminIdToken();
+    const response = await fetch('/api/admin/users/subscription', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         userId,
         subscriptionPlan: nextPlan,
         subscriptionStatus: nextStatus,
         renewalDate: nextRenewalDate,
         updatedAt: timestamp,
-      },
-      { merge: true },
-    );
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(await parseApiError(response, 'Unable to update this user subscription.'));
+    }
   },
 
   async createBusinessSupportTicket(

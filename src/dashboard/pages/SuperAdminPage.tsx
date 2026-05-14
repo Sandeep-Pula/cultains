@@ -219,6 +219,7 @@ export const SuperAdminPage = ({
   };
 
   const updateUserPlan = async (business: PlatformBusinessAccount, subscriptionPlan: SubscriptionPlan) => {
+    if (business.subscriptionPlan === subscriptionPlan) return;
     setUpdatingUserId(business.userId);
     try {
       await dashboardService.updateUserSubscription(business.userId, {
@@ -226,6 +227,19 @@ export const SuperAdminPage = ({
         subscriptionStatus: 'active',
         renewalDate: business.renewalDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       });
+      setBusinesses((current) =>
+        current.map((item) =>
+          item.userId === business.userId
+            ? {
+                ...item,
+                subscriptionPlan,
+                subscriptionStatus: 'active',
+                renewalDate: business.renewalDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                updatedAt: new Date().toISOString(),
+              }
+            : item,
+        ),
+      );
       onSuccess('Subscription updated', `${business.companyName} is now on ${subscriptionPlanLabels[subscriptionPlan]}.`);
     } catch (error) {
       onError(error, 'Unable to update this user subscription.');
@@ -345,7 +359,7 @@ export const SuperAdminPage = ({
                   <div>
                     <h2 className="text-xl font-semibold">All users</h2>
                     <p className="mt-1 text-sm text-brand-dark/65">
-                      Showing owner profile data only. Business financial records stay untouched.
+                      Showing Firebase Auth signups with profile and team IDs when available. Business financial records stay untouched.
                     </p>
                   </div>
                   <label className="relative block w-full sm:w-80">
@@ -359,69 +373,72 @@ export const SuperAdminPage = ({
                   </label>
                 </div>
 
-                <div className="mt-5 overflow-x-auto">
-                  <table className="min-w-[1080px] w-full border-separate border-spacing-y-3 text-left text-sm">
-                    <thead>
-                      <tr className="text-xs uppercase tracking-[0.14em] text-brand-dark/45">
-                        <th className="px-4">User ID</th>
-                        <th className="px-4">User</th>
-                        <th className="px-4">Company</th>
-                        <th className="px-4">Joined</th>
-                        <th className="px-4">Team IDs</th>
-                        <th className="px-4">Subscription</th>
-                        <th className="px-4">Renewal</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredBusinesses.map((business) => (
-                        <tr key={business.userId} className="rounded-[24px] bg-brand-60/20 align-top">
-                          <td className="rounded-l-[24px] px-4 py-4 font-mono text-sm font-semibold text-brand-10">
-                            {business.hashedUserId}
-                            <div className="mt-1 max-w-32 truncate text-[11px] font-normal text-brand-dark/45" title={business.userId}>{business.userId}</div>
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="font-semibold text-brand-dark">{business.ownerName}</div>
-                            <div className="mt-1 text-brand-dark/60">{business.email || 'No email yet'}</div>
-                            <div className="mt-1 text-brand-dark/55">{business.phone || 'No phone yet'}</div>
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="font-semibold text-brand-dark">{business.companyName}</div>
-                            <div className="mt-1 capitalize text-brand-dark/55">{business.businessType.replace(/_/g, ' ')}</div>
-                          </td>
-                          <td className="px-4 py-4 text-brand-dark/70">{formatDate(business.createdAt)}</td>
-                          <td className="px-4 py-4">
-                            <div className="font-semibold text-brand-dark">{business.teamMemberCount} team members</div>
-                            <div className="mt-2 flex max-w-64 flex-wrap gap-1.5">
-                              {business.teamMemberIds.length ? business.teamMemberIds.map((teamId) => (
-                                <span key={teamId} className="rounded-full bg-white px-2.5 py-1 font-mono text-[11px] text-brand-dark/70">{teamId}</span>
-                              )) : <span className="text-brand-dark/50">No team IDs</span>}
-                            </div>
-                            {business.teamAuthUids.length ? (
-                              <div className="mt-2 text-xs text-brand-dark/45">Auth: {business.teamAuthUids.map((id) => id.slice(0, 8)).join(', ')}</div>
-                            ) : null}
-                          </td>
-                          <td className="px-4 py-4">
-                            <select
-                              value={business.subscriptionPlan}
-                              disabled={updatingUserId === business.userId}
-                              onChange={(event) => updateUserPlan(business, event.target.value as SubscriptionPlan)}
-                              className="w-full min-w-40 rounded-2xl border border-brand-30 bg-white px-3 py-2 font-semibold text-brand-dark outline-none"
-                            >
-                              {subscriptionPlanOptions.map((plan) => (
-                                <option key={plan} value={plan}>{subscriptionPlanLabels[plan]}</option>
-                              ))}
-                            </select>
-                            <div className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold capitalize text-emerald-800">
-                              {updatingUserId === business.userId ? 'updating' : business.subscriptionStatus}
-                            </div>
-                          </td>
-                          <td className="rounded-r-[24px] px-4 py-4 text-brand-dark/70">
-                            {business.renewalDate ? formatDate(business.renewalDate) : 'Not set'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="mt-5 grid gap-4 2xl:grid-cols-2">
+                  {filteredBusinesses.map((business) => (
+                    <article key={business.userId} className="rounded-[28px] border border-brand-30 bg-brand-60/18 p-4 shadow-sm">
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <div className="font-mono text-sm font-bold text-brand-10">{business.hashedUserId}</div>
+                          <div className="mt-1 max-w-full truncate font-mono text-[11px] text-brand-dark/45" title={business.userId}>{business.userId}</div>
+                        </div>
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold capitalize text-brand-dark/65">
+                            {business.accountType.replace(/_/g, ' ')}
+                          </div>
+                          <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold capitalize text-brand-dark/65">
+                            {business.subscriptionStatus}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1fr_auto]">
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-dark/45">User</div>
+                          <div className="mt-1 text-base font-semibold text-brand-dark">{business.ownerName}</div>
+                          <div className="mt-1 text-sm text-brand-dark/60">{business.email || 'No email yet'}</div>
+                          <div className="mt-1 text-sm text-brand-dark/55">{business.phone || 'No phone yet'}</div>
+                        </div>
+
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-dark/45">Company</div>
+                          <div className="mt-1 text-base font-semibold text-brand-dark">{business.companyName}</div>
+                          <div className="mt-1 text-sm capitalize text-brand-dark/55">{business.businessType.replace(/_/g, ' ')}</div>
+                          <div className="mt-2 text-xs text-brand-dark/50">Joined {formatDate(business.createdAt)}</div>
+                        </div>
+
+                        <label className="min-w-44">
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-dark/45">Plan</span>
+                          <select
+                            value={business.subscriptionPlan}
+                            disabled={updatingUserId === business.userId}
+                            onChange={(event) => updateUserPlan(business, event.target.value as SubscriptionPlan)}
+                            className="mt-1 w-full rounded-2xl border border-brand-30 bg-white px-3 py-2 font-semibold text-brand-dark outline-none"
+                          >
+                            {subscriptionPlanOptions.map((plan) => (
+                              <option key={plan} value={plan}>{subscriptionPlanLabels[plan]}</option>
+                            ))}
+                          </select>
+                          <div className="mt-2 text-xs text-brand-dark/50">
+                            {updatingUserId === business.userId ? 'Updating...' : business.renewalDate ? `Renewal ${formatDate(business.renewalDate)}` : 'Renewal not set'}
+                          </div>
+                        </label>
+                      </div>
+
+                      <div className="mt-4 rounded-[22px] border border-brand-30 bg-white/70 p-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="text-sm font-semibold text-brand-dark">{business.teamMemberCount} team members</div>
+                          {business.teamAuthUids.length ? (
+                            <div className="text-xs text-brand-dark/45">Auth IDs: {business.teamAuthUids.map((id) => id.slice(0, 8)).join(', ')}</div>
+                          ) : null}
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {business.teamMemberIds.length ? business.teamMemberIds.map((teamId) => (
+                            <span key={teamId} className="rounded-full bg-brand-60/45 px-2.5 py-1 font-mono text-[11px] text-brand-dark/70">{teamId}</span>
+                          )) : <span className="text-sm text-brand-dark/50">No team IDs</span>}
+                        </div>
+                      </div>
+                    </article>
+                  ))}
                   {!filteredBusinesses.length ? (
                     <div className="rounded-[24px] border border-dashed border-brand-30 bg-brand-60/20 px-4 py-8 text-sm text-brand-dark/60">
                       No users match this search.
