@@ -9,7 +9,7 @@ import { isAdminHost, isSuperAdminEmail, redirectToAdminDashboard } from '../lib
 import { dashboardService } from './services/dashboardService';
 import { getBusinessConfig } from './businessConfig';
 import { getInventoryMovement } from './inventoryMovement';
-import { dashboardHash, filterDashboardViews, getStageProgress, isOwnerAccount, parseDashboardView } from './utils';
+import { applySubscriptionAccess, dashboardHash, getStageProgress, isOwnerAccount, parseDashboardView } from './utils';
 import type {
   BillingDefaults,
   BusinessType,
@@ -209,7 +209,7 @@ export const DashboardApp = () => {
   const isSuperAdmin = data?.profile.accountType === 'super_admin' || isSuperAdminIdentity;
   const isOwner = isOwnerAccount(data?.profile.accountType);
   const requiresProfileSetup = Boolean(data && isOwner && !isSuperAdmin && !data.profile.profileSetupCompleted);
-  const allowedViews = filterDashboardViews(data?.profile.sidebarViews);
+  const allowedViews = applySubscriptionAccess(data?.profile.sidebarViews, data?.profile.subscriptionPlan);
   const navigableViews: DashboardView[] = useMemo(
     () => (
       isSuperAdmin
@@ -234,10 +234,9 @@ export const DashboardApp = () => {
       }
       return;
     }
-    if (isOwner) return;
-
     const fallbackView = navigableViews[0] || 'sales-overview';
-    if (!navigableViews.includes(activeView)) {
+    const canUseUtilityView = activeView === 'profile' || (isOwner && activeView === 'settings');
+    if (!canUseUtilityView && !navigableViews.includes(activeView)) {
       window.location.hash = dashboardHash(fallbackView);
     }
   }, [activeView, data, isOwner, isSuperAdmin, navigableViews, user]);
@@ -1237,7 +1236,7 @@ export const DashboardApp = () => {
         viewerName={data.userName}
         viewerLabel={isOwner ? 'Business owner' : 'Team member'}
         businessConfig={businessConfig}
-        visibleViews={isOwner ? data.profile.sidebarViews : data.profile.sidebarViews.filter((view) => view !== 'copilot')}
+        visibleViews={isOwner ? allowedViews : allowedViews.filter((view) => view !== 'copilot')}
         canManageSidebar={isOwner}
         canViewProfile
         onNavigate={(view) => handleNavigate(dashboardHash(view))}

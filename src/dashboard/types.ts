@@ -52,6 +52,8 @@ export type PaymentStage = 'not_started' | 'advance_received' | 'partial_paid' |
 export type RenderQueueStatus = 'queued' | 'in_progress' | 'done';
 export type TeamRole = string;
 export type AccountType = 'owner' | 'team_member' | 'super_admin';
+export type SubscriptionPlan = 'freemium' | 'focused' | 'growth' | 'business_pro';
+export type SubscriptionStatus = 'active' | 'trialing' | 'paused' | 'cancelled';
 
 export interface TeamMember {
   id: string;
@@ -219,8 +221,8 @@ export interface WorkspaceProfile {
   teamSize: string;
   website: string;
   profileSetupCompleted: boolean;
-  subscriptionPlan: 'freemium';
-  subscriptionStatus: 'active';
+  subscriptionPlan: SubscriptionPlan;
+  subscriptionStatus: SubscriptionStatus;
   renewalDate: string;
   sidebarViews: DashboardView[];
   billingDefaults: BillingDefaults;
@@ -278,11 +280,18 @@ export interface SupportThread {
 
 export interface PlatformBusinessAccount {
   userId: string;
+  hashedUserId: string;
   companyName: string;
   ownerName: string;
   email: string;
   phone: string;
   businessType: BusinessType;
+  subscriptionPlan: SubscriptionPlan;
+  subscriptionStatus: SubscriptionStatus;
+  renewalDate: string;
+  teamMemberIds: string[];
+  teamAuthUids: string[];
+  teamMemberCount: number;
   createdAt: string;
   updatedAt: string;
 }

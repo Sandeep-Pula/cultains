@@ -9,10 +9,11 @@ import {
   ShieldCheck,
   Sparkles,
   UserRound,
+  UsersRound,
 } from 'lucide-react';
 import { dashboardService } from '../services/dashboardService';
-import type { PlatformBusinessAccount, SupportThread, SupportThreadStatus, WorkspaceProfile } from '../types';
-import { formatDate, formatDateTime } from '../utils';
+import type { PlatformBusinessAccount, SubscriptionPlan, SupportThread, SupportThreadStatus, WorkspaceProfile } from '../types';
+import { formatDate, formatDateTime, subscriptionPlanLabels, subscriptionPlanOptions } from '../utils';
 import { BrandWordmark } from '../../components/BrandWordmark';
 
 type SuperAdminPageProps = {
@@ -23,6 +24,7 @@ type SuperAdminPageProps = {
 };
 
 type TicketFilter = 'all' | 'new' | 'active' | 'waiting' | 'closed';
+type AdminSection = 'support' | 'users';
 
 const statusLabels: Record<SupportThreadStatus, string> = {
   new: 'New',
@@ -63,11 +65,14 @@ export const SuperAdminPage = ({
   const [supportThreads, setSupportThreads] = useState<SupportThread[]>([]);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [ticketFilter, setTicketFilter] = useState<TicketFilter>('all');
+  const [adminSection, setAdminSection] = useState<AdminSection>('users');
   const [searchText, setSearchText] = useState('');
+  const [userSearchText, setUserSearchText] = useState('');
   const [replyBody, setReplyBody] = useState('');
   const [replyStatus, setReplyStatus] = useState<SupportThreadStatus>('waiting_on_business');
   const [submitting, setSubmitting] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState<SupportThreadStatus | null>(null);
+  const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = dashboardService.subscribeToSuperAdminConsole(
@@ -126,6 +131,31 @@ export const SuperAdminPage = ({
     () => new Set(supportThreads.map((thread) => thread.ownerUserId)).size,
     [supportThreads],
   );
+
+  const planCounts = useMemo(
+    () => subscriptionPlanOptions.reduce<Record<SubscriptionPlan, number>>((counts, plan) => {
+      counts[plan] = businesses.filter((business) => business.subscriptionPlan === plan).length;
+      return counts;
+    }, { freemium: 0, focused: 0, growth: 0, business_pro: 0 }),
+    [businesses],
+  );
+
+  const filteredBusinesses = useMemo(() => {
+    const normalizedSearch = userSearchText.trim().toLowerCase();
+    if (!normalizedSearch) return businesses;
+
+    return businesses.filter((business) => [
+      business.hashedUserId,
+      business.userId,
+      business.companyName,
+      business.ownerName,
+      business.email,
+      business.phone,
+      business.subscriptionPlan,
+      ...business.teamMemberIds,
+      ...business.teamAuthUids,
+    ].join(' ').toLowerCase().includes(normalizedSearch));
+  }, [businesses, userSearchText]);
 
   const filteredThreads = useMemo(() => {
     const normalizedSearch = searchText.trim().toLowerCase();
@@ -188,6 +218,22 @@ export const SuperAdminPage = ({
     }
   };
 
+  const updateUserPlan = async (business: PlatformBusinessAccount, subscriptionPlan: SubscriptionPlan) => {
+    setUpdatingUserId(business.userId);
+    try {
+      await dashboardService.updateUserSubscription(business.userId, {
+        subscriptionPlan,
+        subscriptionStatus: 'active',
+        renewalDate: business.renewalDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      });
+      onSuccess('Subscription updated', `${business.companyName} is now on ${subscriptionPlanLabels[subscriptionPlan]}.`);
+    } catch (error) {
+      onError(error, 'Unable to update this user subscription.');
+    } finally {
+      setUpdatingUserId(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-brand-60 text-brand-dark">
       <div className="grid min-h-screen xl:grid-cols-[300px_minmax(0,1fr)]">
@@ -212,6 +258,29 @@ export const SuperAdminPage = ({
               Use the normal forgot-password flow on the login page whenever you need to reset this super admin credential.
             </p>
           </div>
+
+          <nav className="mt-6 grid gap-2" aria-label="Super admin sections">
+            {([
+              { id: 'users' as const, label: 'Users', icon: UsersRound },
+              { id: 'support' as const, label: 'Support', icon: LifeBuoy },
+            ]).map((item) => {
+              const Icon = item.icon;
+              const active = adminSection === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setAdminSection(item.id)}
+                  className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold transition ${
+                    active ? 'bg-brand-10 text-brand-60' : 'bg-white text-brand-dark hover:bg-brand-60/45'
+                  }`}
+                >
+                  <Icon size={17} />
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
 
           <div className="mt-6 grid gap-3">
             <div className="rounded-[24px] border border-brand-30 bg-white p-4 shadow-sm">
@@ -247,6 +316,122 @@ export const SuperAdminPage = ({
         </aside>
 
         <main className="min-w-0 p-4 sm:p-6 xl:p-8">
+          {adminSection === 'users' ? (
+            <>
+              <section className="rounded-[36px] border border-brand-30 bg-white p-6 shadow-sm sm:p-8">
+                <div className="inline-flex items-center gap-2 rounded-full bg-brand-60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
+                  <UsersRound size={14} />
+                  Users
+                </div>
+                <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+                  User subscriptions and access control.
+                </h1>
+                <p className="mt-3 max-w-4xl text-sm leading-6 text-brand-dark/70 sm:text-base">
+                  Track signed-up owner accounts, their short user IDs, team IDs, and assign a subscription plan for dashboard access testing.
+                </p>
+              </section>
+
+              <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {subscriptionPlanOptions.map((plan) => (
+                  <div key={plan} className="rounded-[28px] border border-brand-30 bg-white p-5 shadow-sm">
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark/50">{subscriptionPlanLabels[plan]}</div>
+                    <div className="mt-2 text-3xl font-semibold">{planCounts[plan]}</div>
+                  </div>
+                ))}
+              </section>
+
+              <section className="mt-6 rounded-[32px] border border-brand-30 bg-white p-5 shadow-sm sm:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-semibold">All users</h2>
+                    <p className="mt-1 text-sm text-brand-dark/65">
+                      Showing owner profile data only. Business financial records stay untouched.
+                    </p>
+                  </div>
+                  <label className="relative block w-full sm:w-80">
+                    <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-brand-dark/45" />
+                    <input
+                      value={userSearchText}
+                      onChange={(event) => setUserSearchText(event.target.value)}
+                      placeholder="Search users, IDs, company, email"
+                      className="w-full rounded-2xl border border-brand-30 bg-brand-60/25 py-3 pl-11 pr-4 text-sm outline-none"
+                    />
+                  </label>
+                </div>
+
+                <div className="mt-5 overflow-x-auto">
+                  <table className="min-w-[1080px] w-full border-separate border-spacing-y-3 text-left text-sm">
+                    <thead>
+                      <tr className="text-xs uppercase tracking-[0.14em] text-brand-dark/45">
+                        <th className="px-4">User ID</th>
+                        <th className="px-4">User</th>
+                        <th className="px-4">Company</th>
+                        <th className="px-4">Joined</th>
+                        <th className="px-4">Team IDs</th>
+                        <th className="px-4">Subscription</th>
+                        <th className="px-4">Renewal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredBusinesses.map((business) => (
+                        <tr key={business.userId} className="rounded-[24px] bg-brand-60/20 align-top">
+                          <td className="rounded-l-[24px] px-4 py-4 font-mono text-sm font-semibold text-brand-10">
+                            {business.hashedUserId}
+                            <div className="mt-1 max-w-32 truncate text-[11px] font-normal text-brand-dark/45" title={business.userId}>{business.userId}</div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="font-semibold text-brand-dark">{business.ownerName}</div>
+                            <div className="mt-1 text-brand-dark/60">{business.email || 'No email yet'}</div>
+                            <div className="mt-1 text-brand-dark/55">{business.phone || 'No phone yet'}</div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="font-semibold text-brand-dark">{business.companyName}</div>
+                            <div className="mt-1 capitalize text-brand-dark/55">{business.businessType.replace(/_/g, ' ')}</div>
+                          </td>
+                          <td className="px-4 py-4 text-brand-dark/70">{formatDate(business.createdAt)}</td>
+                          <td className="px-4 py-4">
+                            <div className="font-semibold text-brand-dark">{business.teamMemberCount} team members</div>
+                            <div className="mt-2 flex max-w-64 flex-wrap gap-1.5">
+                              {business.teamMemberIds.length ? business.teamMemberIds.map((teamId) => (
+                                <span key={teamId} className="rounded-full bg-white px-2.5 py-1 font-mono text-[11px] text-brand-dark/70">{teamId}</span>
+                              )) : <span className="text-brand-dark/50">No team IDs</span>}
+                            </div>
+                            {business.teamAuthUids.length ? (
+                              <div className="mt-2 text-xs text-brand-dark/45">Auth: {business.teamAuthUids.map((id) => id.slice(0, 8)).join(', ')}</div>
+                            ) : null}
+                          </td>
+                          <td className="px-4 py-4">
+                            <select
+                              value={business.subscriptionPlan}
+                              disabled={updatingUserId === business.userId}
+                              onChange={(event) => updateUserPlan(business, event.target.value as SubscriptionPlan)}
+                              className="w-full min-w-40 rounded-2xl border border-brand-30 bg-white px-3 py-2 font-semibold text-brand-dark outline-none"
+                            >
+                              {subscriptionPlanOptions.map((plan) => (
+                                <option key={plan} value={plan}>{subscriptionPlanLabels[plan]}</option>
+                              ))}
+                            </select>
+                            <div className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold capitalize text-emerald-800">
+                              {updatingUserId === business.userId ? 'updating' : business.subscriptionStatus}
+                            </div>
+                          </td>
+                          <td className="rounded-r-[24px] px-4 py-4 text-brand-dark/70">
+                            {business.renewalDate ? formatDate(business.renewalDate) : 'Not set'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {!filteredBusinesses.length ? (
+                    <div className="rounded-[24px] border border-dashed border-brand-30 bg-brand-60/20 px-4 py-8 text-sm text-brand-dark/60">
+                      No users match this search.
+                    </div>
+                  ) : null}
+                </div>
+              </section>
+            </>
+          ) : (
+            <>
           <section className="rounded-[36px] border border-brand-30 bg-white p-6 shadow-sm sm:p-8">
             <div className="inline-flex items-center gap-2 rounded-full bg-brand-60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
               <Sparkles size={14} />
@@ -572,6 +757,8 @@ export const SuperAdminPage = ({
               ) : null}
             </div>
           </section>
+            </>
+          )}
         </main>
       </div>
     </div>

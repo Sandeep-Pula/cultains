@@ -17,7 +17,10 @@ service cloud.firestore {
     function isSuperAdmin() {
       return isSignedIn() &&
         request.auth.token.email != null &&
-        request.auth.token.email == 'superadmin@pulalabs.com';
+        (
+          request.auth.token.email == 'superadmin@pulalabs.com' ||
+          request.auth.token.email == 'superadmin@aivyapari.com'
+        );
     }
 
     function isWorkspaceMember(userId) {
