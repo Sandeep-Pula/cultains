@@ -1270,6 +1270,7 @@ export const DashboardApp = () => {
         visibleViews={isOwner ? allowedViews : allowedViews.filter((view) => view !== 'copilot')}
         availableViews={isOwner ? planAvailableViews : planAvailableViews.filter((view) => view !== 'copilot')}
         unavailableViews={planUnavailableViews}
+        subscriptionPlan={data.profile.subscriptionPlan}
         canManageSidebar={isOwner}
         canViewProfile
         onNavigate={(view) => handleNavigate(dashboardHash(view))}
@@ -1367,9 +1368,15 @@ export const DashboardApp = () => {
           ) : null}
           {activeView === 'sales-overview' ? (
             <SalesOverviewPage
-              companyName={data.profile.companyName}
-              businessProfile={data.profile}
-              salesInvoices={data.salesInvoices}
+              data={data}
+              businessConfig={businessConfig}
+              onNavigate={(view) => handleNavigate(dashboardHash(view))}
+              onAddCustomer={() => setAddCustomerOpen(true)}
+              onAddTeamMember={() => {
+                if (isOwner) {
+                  setAddTeamMemberOpen(true);
+                }
+              }}
             />
           ) : activeView === 'overview' ? (
             <OverviewPage
@@ -1571,6 +1578,9 @@ export const DashboardApp = () => {
                 totalCustomers={data.customers.length}
                 totalTeamMembers={data.team.length}
                 totalInventoryItems={data.inventory.length}
+                visibleViews={allowedViews}
+                availableViews={planAvailableViews}
+                unavailableViews={planUnavailableViews}
                 onSaveProfile={handleSaveWorkspaceProfile}
               />
             ) : (

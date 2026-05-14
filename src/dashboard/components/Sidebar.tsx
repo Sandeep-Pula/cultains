@@ -28,8 +28,8 @@ import {
   X,
 } from 'lucide-react';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
-import type { DashboardView } from '../types';
-import { dashboardHash, defaultSidebarViews, getInitials, viewTitles } from '../utils';
+import type { DashboardView, SubscriptionPlan } from '../types';
+import { dashboardHash, defaultSidebarViews, getInitials, subscriptionPlanLabels, viewTitles } from '../utils';
 
 const itemMap: Record<DashboardView, typeof Home> = {
   'super-admin': ShieldCheck,
@@ -55,6 +55,13 @@ const itemMap: Record<DashboardView, typeof Home> = {
 };
 
 const customizableViews: DashboardView[] = defaultSidebarViews.filter((view) => view !== 'raise-issue');
+const sidebarGroups: Array<{ label: string; views: DashboardView[] }> = [
+  { label: 'Workspace', views: ['sales-overview', 'overview', 'crm'] },
+  { label: 'Sales', views: ['cash-register', 'billing', 'account-ledger'] },
+  { label: 'Stock', views: ['inventory', 'barcode-desk'] },
+  { label: 'Team', views: ['timesheet', 'team'] },
+  { label: 'More tools', views: ['customers', 'email', 'tally-export', 'render-history', 'ai-tools', 'copilot'] },
+];
 
 type SidebarProps = {
   activeView: DashboardView;
@@ -66,6 +73,7 @@ type SidebarProps = {
   visibleViews: DashboardView[];
   availableViews?: DashboardView[];
   unavailableViews?: DashboardView[];
+  subscriptionPlan?: SubscriptionPlan;
   canManageSidebar?: boolean;
   canViewProfile?: boolean;
   onNavigate: (view: DashboardView) => void;
@@ -392,6 +400,7 @@ export const Sidebar = ({
   visibleViews,
   availableViews,
   unavailableViews,
+  subscriptionPlan = 'freemium',
   canManageSidebar = true,
   canViewProfile = true,
   onNavigate,
@@ -424,6 +433,16 @@ export const Sidebar = ({
         ...(canViewProfile ? (['profile'] as const) : []),
       ] as DashboardView[],
     [availableViews, canManageSidebar, canViewProfile, visibleViews],
+  );
+  const groupedViews = useMemo(
+    () =>
+      sidebarGroups
+        .map((group) => ({
+          ...group,
+          views: group.views.filter((view) => orderedViews.includes(view)),
+        }))
+        .filter((group) => group.views.length),
+    [orderedViews],
   );
 
   return (
@@ -487,6 +506,16 @@ export const Sidebar = ({
             </button>
           ) : null}
 
+          {!collapsed ? (
+            <div className="mt-3 rounded-2xl border border-brand-30 bg-white/65 px-4 py-3">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-dark/50">Current plan</div>
+              <div className="mt-1 flex items-center justify-between gap-3">
+                <span className="text-sm font-semibold text-brand-dark">{subscriptionPlanLabels[subscriptionPlan]}</span>
+                <span className="rounded-full bg-brand-10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white">Active</span>
+              </div>
+            </div>
+          ) : null}
+
           <div className={clsx('min-h-0 flex-1 overflow-y-auto', collapsed ? 'mt-8 pr-0' : 'mt-6 pr-1')}>
             {viewerName && !collapsed ? (
               <div className="mb-4 rounded-2xl border border-brand-30 bg-white/65 px-4 py-3">
@@ -495,31 +524,63 @@ export const Sidebar = ({
               </div>
             ) : null}
 
-            <div className="space-y-1">
-              {orderedViews.map((view) => {
-                const Icon = itemMap[view];
-                const active = view === activeView;
-                return (
-                  <a
-                    key={view}
-                    href={dashboardHash(view)}
-                    onClick={() => {
-                      onNavigate(view);
-                      onClose();
-                    }}
-                    className={clsx(
-                      'flex items-center rounded-2xl px-3 py-3 text-sm font-medium transition',
-                      collapsed ? 'justify-center gap-0' : 'gap-3',
-                      active ? 'bg-brand-60 text-brand-10' : 'text-brand-dark/90 hover:bg-brand-60/50',
-                    )}
-                    title={collapsed ? viewTitles[view] : undefined}
-                  >
-                    <Icon size={18} />
-                    {!collapsed ? <span>{viewTitles[view]}</span> : null}
-                  </a>
-                );
-              })}
+            <div className="space-y-5">
+              {groupedViews.map((group) => (
+                <div key={group.label}>
+                  {!collapsed ? (
+                    <div className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-brand-dark/45">{group.label}</div>
+                  ) : null}
+                  <div className="space-y-1">
+                    {group.views.map((view) => {
+                      const Icon = itemMap[view];
+                      const active = view === activeView;
+                      return (
+                        <a
+                          key={view}
+                          href={dashboardHash(view)}
+                          onClick={() => {
+                            onNavigate(view);
+                            onClose();
+                          }}
+                          className={clsx(
+                            'flex items-center rounded-2xl px-3 py-3 text-sm font-medium transition',
+                            collapsed ? 'justify-center gap-0' : 'gap-3',
+                            active ? 'bg-brand-60 text-brand-10' : 'text-brand-dark/90 hover:bg-brand-60/50',
+                          )}
+                          title={collapsed ? viewTitles[view] : undefined}
+                        >
+                          <Icon size={18} />
+                          {!collapsed ? <span>{viewTitles[view]}</span> : null}
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
+
+            {planUnavailableViews.length && !collapsed ? (
+              <div className="mt-6 rounded-3xl border border-brand-30 bg-white/55 p-3">
+                <div className="px-1 text-[10px] font-bold uppercase tracking-[0.18em] text-brand-dark/45">Other tools</div>
+                <div className="mt-2 space-y-1">
+                  {planUnavailableViews.map((view) => {
+                    const Icon = itemMap[view];
+                    return (
+                      <button
+                        key={view}
+                        type="button"
+                        onClick={() => onRequestUpgrade?.(view)}
+                        className="flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-left text-xs font-semibold text-brand-dark/60 transition hover:bg-white hover:text-brand-10"
+                      >
+                        <Icon size={15} className="shrink-0" />
+                        <span className="min-w-0 flex-1">{viewTitles[view]}</span>
+                        <span className="shrink-0 rounded-full bg-brand-60 px-2 py-0.5 text-[10px] font-bold text-brand-dark/60">Upgrade</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
 
             <div className="mt-6 pb-2">
               {orderedViews.includes('ai-tools') && !collapsed ? (

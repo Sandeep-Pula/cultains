@@ -11,9 +11,9 @@ import {
   ShieldCheck,
   UsersRound,
 } from 'lucide-react';
-import type { BusinessType, WorkspaceProfile } from '../types';
+import type { BusinessType, DashboardView, WorkspaceProfile } from '../types';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
-import { formatDate, subscriptionPlanLabels } from '../utils';
+import { formatDate, subscriptionPlanLabels, viewTitles } from '../utils';
 
 type ProfilePageProps = {
   profile: WorkspaceProfile;
@@ -21,6 +21,9 @@ type ProfilePageProps = {
   totalCustomers: number;
   totalTeamMembers: number;
   totalInventoryItems: number;
+  visibleViews: DashboardView[];
+  availableViews: DashboardView[];
+  unavailableViews: DashboardView[];
   onSaveProfile: (profile: Pick<
     WorkspaceProfile,
     'companyName' | 'userName' | 'businessType' | 'workspaceLogoUrl' | 'email' | 'phone' | 'city' | 'studioAddress' | 'gstNumber' | 'teamSize' | 'website' | 'sidebarViews' | 'billingDefaults'
@@ -56,6 +59,9 @@ export const ProfilePage = ({
   totalCustomers,
   totalTeamMembers,
   totalInventoryItems,
+  visibleViews,
+  availableViews,
+  unavailableViews,
   onSaveProfile,
 }: ProfilePageProps) => {
   const [form, setForm] = useState({
@@ -173,7 +179,7 @@ export const ProfilePage = ({
               {profile.companyName}
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-brand-dark/70 sm:text-base">
-              A clean place to maintain company identity, workspace details, and the current subscription state for your dashboard.
+              Business identity, subscription, team size, and billing contact details.
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -214,7 +220,7 @@ export const ProfilePage = ({
                 <div>
                   <div className="font-medium">Current plan</div>
                   <div className="text-brand-60/72">
-                    Your workspace is currently running on {planLabel}. Admin access rules decide which tools are included in this plan.
+                    Your workspace is currently running on {planLabel}.
                   </div>
                 </div>
               </div>
@@ -222,7 +228,7 @@ export const ProfilePage = ({
                 <ShieldCheck size={17} className="mt-0.5 shrink-0" />
                 <div>
                   <div className="font-medium">Included workspace</div>
-                  <div className="text-brand-60/72">Access your CRM, inventory, billing, operations, and AI tools from the same account.</div>
+                  <div className="text-brand-60/72">Access is synced from the plan rules managed in admin.</div>
                 </div>
               </div>
             </div>
@@ -456,6 +462,37 @@ export const ProfilePage = ({
                 <div>
                   <div className="font-medium text-brand-dark">Website</div>
                   <div>{profile.website || 'Add your website or business link.'}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[32px] border border-brand-30 bg-white p-6 shadow-sm">
+            <h3 className="text-xl font-semibold text-brand-dark">Access preview</h3>
+            <p className="mt-2 text-sm text-brand-dark/65">A quick view of what this plan includes, what is hidden from your sidebar, and what needs an upgrade.</p>
+            <div className="mt-5 grid gap-3">
+              <div className="rounded-[24px] border border-brand-30 bg-brand-60/25 p-4">
+                <div className="text-xs font-bold uppercase tracking-[0.16em] text-brand-dark/55">Visible in sidebar</div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {visibleViews.length ? visibleViews.map((view) => (
+                    <span key={view} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand-dark shadow-sm">{viewTitles[view]}</span>
+                  )) : <span className="text-sm text-brand-dark/55">No visible shortcuts selected.</span>}
+                </div>
+              </div>
+              <div className="rounded-[24px] border border-emerald-200 bg-emerald-50 p-4">
+                <div className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-800/70">Hidden but included</div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {availableViews.filter((view) => !visibleViews.includes(view)).length ? availableViews.filter((view) => !visibleViews.includes(view)).map((view) => (
+                    <span key={view} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-900 shadow-sm">{viewTitles[view]}</span>
+                  )) : <span className="text-sm text-emerald-900/65">Everything included is already visible.</span>}
+                </div>
+              </div>
+              <div className="rounded-[24px] border border-brand-30 bg-white p-4">
+                <div className="text-xs font-bold uppercase tracking-[0.16em] text-brand-dark/55">Other tools</div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {unavailableViews.length ? unavailableViews.map((view) => (
+                    <span key={view} className="rounded-full border border-brand-30 bg-brand-60/35 px-3 py-1 text-xs font-semibold text-brand-dark/60">{viewTitles[view]}</span>
+                  )) : <span className="text-sm text-brand-dark/55">This plan includes every dashboard tool.</span>}
                 </div>
               </div>
             </div>
