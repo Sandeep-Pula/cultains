@@ -236,10 +236,10 @@ export const DashboardApp = () => {
       isSuperAdmin
         ? ['super-admin']
         : isOwner
-          ? allowedViews
+          ? planAvailableViews
           : Array.from(new Set<DashboardView>([...allowedViews.filter((view) => view !== 'copilot'), 'profile']))
     ),
-    [allowedViews, isOwner, isSuperAdmin],
+    [allowedViews, isOwner, isSuperAdmin, planAvailableViews],
   );
 
   useEffect(() => {
@@ -259,6 +259,11 @@ export const DashboardApp = () => {
     const canUseUtilityView =
       activeView === 'profile' ||
       (isOwner && (activeView === 'settings' || (activeView === 'raise-issue' && planAvailableViews.includes('raise-issue'))));
+    if (canUseUtilityView || navigableViews.includes(activeView)) {
+      setUpgradePromptView((current) => (current && (current === activeView || navigableViews.includes(current)) ? null : current));
+      return;
+    }
+
     if (!canUseUtilityView && !navigableViews.includes(activeView)) {
       if (defaultSidebarViews.includes(activeView)) {
         setUpgradePromptView(activeView);

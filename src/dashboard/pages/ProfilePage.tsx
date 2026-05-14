@@ -234,19 +234,20 @@ export const ProfilePage = ({
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <a
                 href="/#pricing"
-                className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-white px-4 py-3 text-center text-sm font-semibold text-brand-dark shadow-sm transition hover:bg-brand-60"
+                className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/20"
               >
                 Renew plan
               </a>
               {nextPlanLabel ? (
                 <a
                   href="/#pricing"
-                  className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/25 bg-white/10 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-white hover:text-brand-dark"
+                  className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-white px-4 py-3 text-center text-sm font-bold shadow-sm transition hover:bg-brand-60"
+                  style={{ color: '#0f172a' }}
                 >
                   Upgrade to {nextPlanLabel}
                 </a>
               ) : (
-                <div className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-center text-sm font-semibold text-brand-60">
+                <div className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-center text-sm font-semibold text-white/50">
                   Highest plan active
                 </div>
               )}
