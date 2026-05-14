@@ -25,6 +25,13 @@
   background: linear-gradient(180deg, #ffffff 0%, var(--os-soft) 100%);
 }
 
+.authHero {
+  align-items: flex-start;
+  min-height: auto;
+  overflow: visible;
+  padding-bottom: 6rem;
+}
+
 .heroAnimation {
   position: absolute;
   inset: 0;
@@ -141,6 +148,15 @@
 
 .heroCopy {
   max-width: 720px;
+}
+
+.authHeroInner {
+  grid-template-columns: 1fr;
+  justify-items: center;
+}
+
+.authHeroInner .heroProduct {
+  justify-content: center;
 }
 
 .eyebrow {

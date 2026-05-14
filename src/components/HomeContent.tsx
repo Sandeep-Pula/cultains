@@ -122,7 +122,7 @@ export const HomeContent = () => {
               <Bot size={22} />
               <Sparkles size={22} />
             </div>
-            <span className={styles.eyebrow}>Start with the first Pula Labs product</span>
+            <span className={styles.eyebrow}>Start with the first Pula Business ecosystem</span>
             <h2 className={styles.title}>Try PULA Biz.</h2>
             <p className={styles.lead}>
               Create a workspace, set up your business profile, and start using the operating layer that future Pula

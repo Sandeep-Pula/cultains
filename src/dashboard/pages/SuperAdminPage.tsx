@@ -16,7 +16,7 @@ import {
 import { dashboardService } from '../services/dashboardService';
 import type { DashboardView, PlatformBusinessAccount, SubscriptionAccessRules, SubscriptionPlan, SupportThread, SupportThreadStatus, WorkspaceProfile } from '../types';
 import { defaultSidebarViews, formatDate, formatDateTime, subscriptionPlanLabels, subscriptionPlanOptions, subscriptionPlanViews, viewTitles } from '../utils';
-import { BrandWordmark } from '../../components/BrandWordmark';
+import { ProductWordmark } from '../../components/BrandWordmark';
 
 type SuperAdminPageProps = {
   profile: WorkspaceProfile;
@@ -126,18 +126,8 @@ export const SuperAdminPage = ({
     [businesses],
   );
 
-  const newTickets = useMemo(
-    () => supportThreads.filter((thread) => thread.status === 'new').length,
-    [supportThreads],
-  );
-
   const activeTickets = useMemo(
     () => supportThreads.filter((thread) => ['open', 'in_progress', 'waiting_on_admin', 'waiting_on_business'].includes(thread.status)).length,
-    [supportThreads],
-  );
-
-  const closedTickets = useMemo(
-    () => supportThreads.filter((thread) => thread.status === 'resolved' || thread.status === 'closed').length,
     [supportThreads],
   );
 
@@ -301,35 +291,32 @@ export const SuperAdminPage = ({
   };
 
   return (
-    <div className="min-h-screen bg-brand-60 text-brand-dark">
-      <div className="grid min-h-screen xl:grid-cols-[300px_minmax(0,1fr)]">
-        <aside className="border-r border-brand-30 bg-white/92 p-6 xl:p-7">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-10 text-brand-60 shadow-sm">
+    <div className="min-h-screen bg-[#f5f8fc] text-brand-dark">
+      <div className="grid min-h-screen xl:grid-cols-[280px_minmax(0,1fr)]">
+        <aside className="sticky top-0 h-screen border-r border-brand-30 bg-white p-5 xl:p-6">
+          <div className="flex items-center gap-3 rounded-[26px] border border-brand-30 bg-brand-60/25 p-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-10 text-brand-60 shadow-sm">
               <ShieldCheck size={22} />
             </div>
             <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-dark/55">Platform admin</div>
-              <div className="mt-1 text-lg font-semibold">
-                <BrandWordmark />
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-dark/50">Admin console</div>
+              <div className="mt-1 text-xl font-black leading-none">
+                <ProductWordmark />
               </div>
             </div>
           </div>
 
-          <div className="mt-6 rounded-[28px] border border-brand-30 bg-brand-60/40 p-4">
-            <div className="text-xs uppercase tracking-[0.16em] text-brand-dark/55">Signed in as</div>
-            <div className="mt-2 text-lg font-semibold">{profile.userName}</div>
-            <div className="mt-1 text-sm text-brand-dark/65">{profile.email}</div>
-            <p className="mt-3 text-sm leading-6 text-brand-dark/70">
-              Use the normal forgot-password flow on the login page whenever you need to reset this super admin credential.
-            </p>
+          <div className="mt-5 rounded-[24px] border border-brand-30 bg-white p-4 shadow-sm">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-dark/45">Signed in</div>
+            <div className="mt-2 text-base font-semibold">{profile.userName}</div>
+            <div className="mt-1 truncate text-sm text-brand-dark/58">{profile.email}</div>
           </div>
 
-          <nav className="mt-6 grid gap-2" aria-label="Super admin sections">
+          <nav className="mt-5 grid gap-2" aria-label="PULA Biz admin sections">
             {([
-              { id: 'users' as const, label: 'Users', icon: UsersRound },
-              { id: 'access' as const, label: 'Access rules', icon: SlidersHorizontal },
-              { id: 'support' as const, label: 'Support', icon: LifeBuoy },
+              { id: 'users' as const, label: 'Users', description: `${businesses.length} accounts`, icon: UsersRound },
+              { id: 'access' as const, label: 'Plan access', description: 'Modules by plan', icon: SlidersHorizontal },
+              { id: 'support' as const, label: 'Support', description: `${activeTickets} active tickets`, icon: LifeBuoy },
             ]).map((item) => {
               const Icon = item.icon;
               const active = adminSection === item.id;
@@ -338,63 +325,54 @@ export const SuperAdminPage = ({
                   key={item.id}
                   type="button"
                   onClick={() => setAdminSection(item.id)}
-                  className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold transition ${
-                    active ? 'bg-brand-10 text-brand-60' : 'bg-white text-brand-dark hover:bg-brand-60/45'
+                  className={`flex items-center gap-3 rounded-[20px] border px-3.5 py-3 text-left transition ${
+                    active ? 'border-brand-10 bg-brand-10 text-brand-60 shadow-sm' : 'border-transparent bg-white text-brand-dark hover:border-brand-30 hover:bg-brand-60/30'
                   }`}
                 >
-                  <Icon size={17} />
-                  {item.label}
+                  <Icon size={18} />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold">{item.label}</span>
+                    <span className={`mt-0.5 block text-xs ${active ? 'text-brand-60/70' : 'text-brand-dark/45'}`}>{item.description}</span>
+                  </span>
                 </button>
               );
             })}
           </nav>
 
-          <div className="mt-6 grid gap-3">
-            <div className="rounded-[24px] border border-brand-30 bg-white p-4 shadow-sm">
-              <div className="text-xs uppercase tracking-[0.16em] text-brand-dark/55">Business accounts</div>
-              <div className="mt-2 text-3xl font-semibold">{businesses.length}</div>
+          <div className="mt-5 grid grid-cols-2 gap-2">
+            <div className="rounded-[20px] border border-brand-30 bg-brand-60/25 p-3">
+              <div className="text-[11px] uppercase tracking-[0.14em] text-brand-dark/45">Users</div>
+              <div className="mt-1 text-2xl font-semibold">{businesses.length}</div>
             </div>
-            <div className="rounded-[24px] border border-brand-30 bg-white p-4 shadow-sm">
-              <div className="text-xs uppercase tracking-[0.16em] text-brand-dark/55">New this week</div>
-              <div className="mt-2 text-3xl font-semibold">{newBusinessesThisWeek}</div>
-            </div>
-            <div className="rounded-[24px] border border-brand-30 bg-white p-4 shadow-sm">
-              <div className="text-xs uppercase tracking-[0.16em] text-brand-dark/55">New tickets</div>
-              <div className="mt-2 text-3xl font-semibold">{newTickets}</div>
-            </div>
-            <div className="rounded-[24px] border border-brand-30 bg-white p-4 shadow-sm">
-              <div className="text-xs uppercase tracking-[0.16em] text-brand-dark/55">Active tickets</div>
-              <div className="mt-2 text-3xl font-semibold">{activeTickets}</div>
-            </div>
-            <div className="rounded-[24px] border border-brand-30 bg-white p-4 shadow-sm">
-              <div className="text-xs uppercase tracking-[0.16em] text-brand-dark/55">Closed tickets</div>
-              <div className="mt-2 text-3xl font-semibold">{closedTickets}</div>
+            <div className="rounded-[20px] border border-brand-30 bg-brand-60/25 p-3">
+              <div className="text-[11px] uppercase tracking-[0.14em] text-brand-dark/45">New</div>
+              <div className="mt-1 text-2xl font-semibold">{newBusinessesThisWeek}</div>
             </div>
           </div>
 
           <button
             type="button"
             onClick={onLogout}
-            className="mt-6 inline-flex items-center gap-2 rounded-2xl border border-brand-30 bg-white px-4 py-3 text-sm font-medium text-brand-dark transition hover:bg-brand-60/40"
+            className="absolute bottom-6 left-5 right-5 inline-flex items-center justify-center gap-2 rounded-2xl border border-brand-30 bg-white px-4 py-3 text-sm font-semibold text-brand-dark transition hover:bg-brand-60/40 xl:left-6 xl:right-6"
           >
             <LogOut size={16} />
             Log out
           </button>
         </aside>
 
-        <main className="min-w-0 p-4 sm:p-6 xl:p-8">
+        <main className="min-w-0 p-4 sm:p-6 xl:p-7">
           {adminSection === 'users' ? (
             <>
-              <section className="rounded-[36px] border border-brand-30 bg-white p-6 shadow-sm sm:p-8">
-                <div className="inline-flex items-center gap-2 rounded-full bg-brand-60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
+              <section className="rounded-[28px] border border-brand-30 bg-white p-5 shadow-sm sm:p-6">
+                <div className="inline-flex items-center gap-2 rounded-full bg-brand-60/55 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
                   <UsersRound size={14} />
                   Users
                 </div>
-                <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-                  User subscriptions and access control.
+                <h1 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl">
+                  PULA Biz user access management
                 </h1>
                 <p className="mt-3 max-w-4xl text-sm leading-6 text-brand-dark/70 sm:text-base">
-                  Track signed-up owner accounts, their short user IDs, team IDs, and assign a subscription plan for dashboard access testing.
+                  Review signed-up business owners, assign plans, inspect teams, and control subscription access from one clean workspace.
                 </p>
               </section>
 
@@ -424,7 +402,7 @@ export const SuperAdminPage = ({
                 ))}
               </section>
 
-              <section className="mt-6 rounded-[32px] border border-brand-30 bg-white p-5 shadow-sm sm:p-6">
+              <section className="mt-6 rounded-[28px] border border-brand-30 bg-white p-5 shadow-sm sm:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <h2 className="text-xl font-semibold">
@@ -536,20 +514,20 @@ export const SuperAdminPage = ({
             </>
           ) : adminSection === 'access' ? (
             <>
-              <section className="rounded-[36px] border border-brand-30 bg-white p-6 shadow-sm sm:p-8">
-                <div className="inline-flex items-center gap-2 rounded-full bg-brand-60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
+              <section className="rounded-[28px] border border-brand-30 bg-white p-5 shadow-sm sm:p-6">
+                <div className="inline-flex items-center gap-2 rounded-full bg-brand-60/55 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
                   <SlidersHorizontal size={14} />
-                  Access rules
+                  Plan access
                 </div>
-                <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-                  Manage which plans unlock each dashboard page.
+                <h1 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl">
+                  Build the access matrix for every plan
                 </h1>
                 <p className="mt-3 max-w-4xl text-sm leading-6 text-brand-dark/70 sm:text-base">
                   Drag a dashboard page into a plan, or use the checkboxes. Changes apply globally to every user on that subscription.
                 </p>
               </section>
 
-              <section className="mt-6 rounded-[32px] border border-brand-30 bg-white p-5 shadow-sm sm:p-6">
+              <section className="mt-6 rounded-[28px] border border-brand-30 bg-white p-5 shadow-sm sm:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <h2 className="text-xl font-semibold">Dashboard pages</h2>
@@ -625,25 +603,25 @@ export const SuperAdminPage = ({
             </>
           ) : (
             <>
-          <section className="rounded-[36px] border border-brand-30 bg-white p-6 shadow-sm sm:p-8">
-            <div className="inline-flex items-center gap-2 rounded-full bg-brand-60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
+          <section className="rounded-[28px] border border-brand-30 bg-white p-5 shadow-sm sm:p-6">
+            <div className="inline-flex items-center gap-2 rounded-full bg-brand-60/55 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
               <Sparkles size={14} />
-              Super admin dashboard
+              Support desk
             </div>
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-              Platform control room for business accounts, live ticket queues, and support operations.
+            <h1 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl">
+              Handle PULA Biz support without leaving admin
             </h1>
             <p className="mt-3 max-w-4xl text-sm leading-6 text-brand-dark/70 sm:text-base">
-              Watch new business signups, triage incoming tickets, move work across statuses, and keep each business inside its own private thread with
+              Triage tickets, update status, and keep each business inside its own private thread with
               {' '}
-              <BrandWordmark />
+              <ProductWordmark />
               .
             </p>
           </section>
 
           <section className="mt-6 grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
             <div className="min-h-0 space-y-6">
-              <div className="rounded-[32px] border border-brand-30 bg-white p-6 shadow-sm">
+              <div className="rounded-[28px] border border-brand-30 bg-white p-5 shadow-sm">
                 <div className="flex items-center gap-2 text-brand-dark">
                   <Building2 size={18} />
                   <h2 className="text-xl font-semibold">All business accounts</h2>
@@ -692,7 +670,7 @@ export const SuperAdminPage = ({
                 </div>
               </div>
 
-              <div className="rounded-[32px] border border-brand-30 bg-white p-6 shadow-sm">
+              <div className="rounded-[28px] border border-brand-30 bg-white p-5 shadow-sm">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2 text-brand-dark">
                     <LifeBuoy size={18} />
@@ -781,7 +759,7 @@ export const SuperAdminPage = ({
               </div>
             </div>
 
-            <div className="min-h-0 rounded-[32px] border border-brand-30 bg-white p-6 shadow-sm">
+            <div className="min-h-0 rounded-[28px] border border-brand-30 bg-white p-5 shadow-sm">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <div className="inline-flex items-center gap-2 rounded-full bg-brand-60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
