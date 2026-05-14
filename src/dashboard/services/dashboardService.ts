@@ -1233,7 +1233,7 @@ export const dashboardService = {
     );
   },
 
-  subscribeToSuperAdminConsole(onData: SuperAdminSnapshotListener, _onError: DashboardErrorListener) {
+  subscribeToSuperAdminConsole(onData: SuperAdminSnapshotListener) {
     let businesses: PlatformBusinessAccount[] = [];
     let supportThreads: SupportThread[] = [];
     let disposed = false;

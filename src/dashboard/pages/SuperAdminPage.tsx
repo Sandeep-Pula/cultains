@@ -86,7 +86,6 @@ export const SuperAdminPage = ({
           return nextData.supportThreads[0]?.id || null;
         });
       },
-      (error) => onError(error, 'Unable to load the super admin dashboard.'),
     );
 
     return () => unsubscribe();
