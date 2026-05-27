@@ -15,6 +15,7 @@ const OPENAI_WORKFLOW_ID = defineString('OPENAI_WORKFLOW_ID');
 type AccountType = 'owner' | 'team_member' | 'super_admin';
 type SubscriptionPlan = 'freemium' | 'focused' | 'growth' | 'business_pro';
 type SubscriptionStatus = 'active' | 'trialing' | 'paused' | 'cancelled';
+type CouponStatus = 'active' | 'paused' | 'expired';
 
 type WorkspaceProfile = {
   accountType?: AccountType;
@@ -76,6 +77,22 @@ type PlatformBusinessAccount = {
   lastSignInAt?: string;
   createdAt: string;
   updatedAt: string;
+};
+
+type PlatformCouponWriteBody = {
+  couponId?: string | null;
+  code?: unknown;
+  description?: unknown;
+  discountPercent?: unknown;
+  status?: unknown;
+  appliesToPlans?: unknown;
+  validFrom?: unknown;
+  validUntil?: unknown;
+  maxRedemptions?: unknown;
+};
+
+type PlatformCouponDeleteBody = {
+  couponId?: unknown;
 };
 
 type AnalyticsScope =
@@ -192,6 +209,13 @@ const normalizeSubscriptionPlan = (plan?: unknown): SubscriptionPlan =>
 
 const normalizeSubscriptionStatus = (status?: unknown): SubscriptionStatus =>
   status === 'trialing' || status === 'paused' || status === 'cancelled' ? status : 'active';
+const normalizeCouponStatus = (status?: unknown): CouponStatus =>
+  status === 'paused' || status === 'expired' ? status : 'active';
+const normalizeCouponPlans = (plans?: unknown): SubscriptionPlan[] => {
+  const source = Array.isArray(plans) ? plans : ['focused', 'growth', 'business_pro'];
+  const normalized = source.map((plan) => normalizeSubscriptionPlan(plan));
+  return Array.from(new Set(normalized));
+};
 
 const toIsoString = (value: unknown, fallback = '') => {
   if (!value) return fallback;
@@ -351,6 +375,48 @@ const updateAdminUserSubscription = async (body: {
     },
     { merge: true },
   );
+};
+
+const saveAdminCoupon = async (body: PlatformCouponWriteBody, changedBy: string) => {
+  const timestamp = new Date().toISOString();
+  const code = String(body.code || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+  if (!code) {
+    throw new Error('COUPON_CODE_REQUIRED');
+  }
+
+  const couponId = String(body.couponId || code.toLowerCase()).trim();
+  const ref = db.doc(`platformCoupons/${couponId}`);
+  const existing = await ref.get();
+  const existingData = existing.exists ? existing.data() || {} : {};
+
+  await ref.set(
+    {
+      id: couponId,
+      code,
+      description: String(body.description || '').trim(),
+      discountPercent: Math.min(100, Math.max(0, Number(body.discountPercent || 0))),
+      status: normalizeCouponStatus(body.status),
+      appliesToPlans: normalizeCouponPlans(body.appliesToPlans),
+      validFrom: String(body.validFrom || ''),
+      validUntil: String(body.validUntil || ''),
+      maxRedemptions: Math.max(0, Number(body.maxRedemptions || 0)),
+      redeemedCount: Math.max(0, Number(existingData.redeemedCount || 0)),
+      createdAt: String(existingData.createdAt || timestamp),
+      updatedAt: timestamp,
+      createdBy: String(existingData.createdBy || changedBy || 'super_admin'),
+      updatedBy: changedBy || 'super_admin',
+    },
+    { merge: true },
+  );
+};
+
+const deleteAdminCoupon = async (body: PlatformCouponDeleteBody) => {
+  const couponId = String(body.couponId || '').trim();
+  if (!couponId) {
+    throw new Error('COUPON_ID_REQUIRED');
+  }
+
+  await db.doc(`platformCoupons/${couponId}`).delete();
 };
 
 const toNumber = (value: unknown) => {
@@ -1038,6 +1104,25 @@ export const api = onRequest(
         const admin = await requireSuperAdmin(request.headers.authorization);
         await updateAdminUserSubscription(readJsonBody(request.body), admin.email);
         json(response, 200, { ok: true });
+        return;
+      }
+
+      if (pathname === '/admin/coupons') {
+        const admin = await requireSuperAdmin(request.headers.authorization);
+
+        if (request.method === 'POST') {
+          await saveAdminCoupon(readJsonBody(request.body), admin.email);
+          json(response, 200, { ok: true });
+          return;
+        }
+
+        if (request.method === 'DELETE') {
+          await deleteAdminCoupon(readJsonBody(request.body));
+          json(response, 200, { ok: true });
+          return;
+        }
+
+        json(response, 405, { error: 'Method not allowed.' });
         return;
       }
 

@@ -1380,7 +1380,27 @@ export const dashboardService = {
     }
 
     const id = couponId || normalizedCode.toLowerCase();
-    const existing = await getDoc(platformCouponDoc(id));
+    try {
+      const token = await getAdminIdToken();
+      const response = await fetch(adminApiUrl('/admin/coupons'), {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          couponId: id,
+          ...payload,
+          code: normalizedCode,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await parseApiError(response, 'Unable to save this coupon.'));
+      }
+      return;
+    } catch (apiError) {
+      const existing = await getDoc(platformCouponDoc(id));
     await setDoc(
       platformCouponDoc(id),
       {
@@ -1399,11 +1419,33 @@ export const dashboardService = {
         createdBy: auth?.currentUser?.email || 'super_admin',
       },
       { merge: true },
-    );
+    ).catch(() => {
+      throw apiError;
+    });
+    }
   },
 
   async deletePlatformCoupon(couponId: string) {
-    await deleteDoc(platformCouponDoc(couponId));
+    try {
+      const token = await getAdminIdToken();
+      const response = await fetch(adminApiUrl('/admin/coupons'), {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ couponId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await parseApiError(response, 'Unable to delete this coupon.'));
+      }
+      return;
+    } catch (apiError) {
+      await deleteDoc(platformCouponDoc(couponId)).catch(() => {
+        throw apiError;
+      });
+    }
   },
 
   async updateUserSubscription(
