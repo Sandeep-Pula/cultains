@@ -55,6 +55,23 @@ export type AccountType = 'owner' | 'team_member' | 'super_admin';
 export type SubscriptionPlan = 'freemium' | 'focused' | 'growth' | 'business_pro';
 export type SubscriptionStatus = 'active' | 'trialing' | 'paused' | 'cancelled';
 export type SubscriptionAccessRules = Record<SubscriptionPlan, DashboardView[]>;
+export type CouponStatus = 'active' | 'paused' | 'expired';
+
+export interface PlatformCoupon {
+  id: string;
+  code: string;
+  description: string;
+  discountPercent: number;
+  status: CouponStatus;
+  appliesToPlans: SubscriptionPlan[];
+  validFrom: string;
+  validUntil: string;
+  maxRedemptions: number;
+  redeemedCount: number;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+}
 
 export interface TeamMember {
   id: string;

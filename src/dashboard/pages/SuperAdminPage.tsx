@@ -5,16 +5,20 @@ import {
   LifeBuoy,
   LogOut,
   MessageSquareText,
+  Percent,
+  Plus,
   Search,
   ShieldCheck,
   Sparkles,
+  Tags,
+  Trash2,
   UserRound,
   UsersRound,
   X,
   SlidersHorizontal,
 } from 'lucide-react';
 import { dashboardService } from '../services/dashboardService';
-import type { DashboardView, PlatformBusinessAccount, SubscriptionAccessRules, SubscriptionPlan, SupportThread, SupportThreadStatus, WorkspaceProfile } from '../types';
+import type { CouponStatus, DashboardView, PlatformBusinessAccount, PlatformCoupon, SubscriptionAccessRules, SubscriptionPlan, SupportThread, SupportThreadStatus, WorkspaceProfile } from '../types';
 import { defaultSidebarViews, formatDate, formatDateTime, subscriptionPlanLabels, subscriptionPlanOptions, subscriptionPlanViews, viewTitles } from '../utils';
 import { ProductWordmark } from '../../components/BrandWordmark';
 
@@ -26,8 +30,20 @@ type SuperAdminPageProps = {
 };
 
 type TicketFilter = 'all' | 'new' | 'active' | 'waiting' | 'closed';
-type AdminSection = 'support' | 'users' | 'access';
+type AdminSection = 'users' | 'coupons' | 'access' | 'support';
 type UserPlanFilter = SubscriptionPlan | 'all';
+type CouponFormState = Pick<PlatformCoupon, 'code' | 'description' | 'discountPercent' | 'status' | 'appliesToPlans' | 'validFrom' | 'validUntil' | 'maxRedemptions'>;
+
+const emptyCouponForm = (): CouponFormState => ({
+  code: '',
+  description: '',
+  discountPercent: 10,
+  status: 'active',
+  appliesToPlans: ['focused', 'growth', 'business_pro'],
+  validFrom: new Date().toISOString().slice(0, 10),
+  validUntil: '',
+  maxRedemptions: 0,
+});
 
 const statusLabels: Record<SupportThreadStatus, string> = {
   new: 'New',
@@ -66,6 +82,7 @@ export const SuperAdminPage = ({
 }: SuperAdminPageProps) => {
   const [businesses, setBusinesses] = useState<PlatformBusinessAccount[]>([]);
   const [supportThreads, setSupportThreads] = useState<SupportThread[]>([]);
+  const [coupons, setCoupons] = useState<PlatformCoupon[]>([]);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [ticketFilter, setTicketFilter] = useState<TicketFilter>('all');
   const [adminSection, setAdminSection] = useState<AdminSection>('users');
@@ -80,11 +97,16 @@ export const SuperAdminPage = ({
   const [userPlanFilter, setUserPlanFilter] = useState<UserPlanFilter>('all');
   const [accessRules, setAccessRules] = useState<SubscriptionAccessRules>(subscriptionPlanViews);
   const [savingAccessRules, setSavingAccessRules] = useState(false);
+  const [selectedCouponId, setSelectedCouponId] = useState<string | null>(null);
+  const [couponForm, setCouponForm] = useState<CouponFormState>(() => emptyCouponForm());
+  const [savingCoupon, setSavingCoupon] = useState(false);
+  const [deletingCouponId, setDeletingCouponId] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = dashboardService.subscribeToSuperAdminConsole(
       (nextData) => {
         setBusinesses(nextData.businesses);
+        setCoupons(nextData.coupons);
         setSelectedBusinessId((current) => current && nextData.businesses.some((business) => business.userId === current) ? current : null);
         setSupportThreads(nextData.supportThreads);
         setSelectedTicketId((current) => {
@@ -142,6 +164,16 @@ export const SuperAdminPage = ({
       return counts;
     }, { freemium: 0, focused: 0, growth: 0, business_pro: 0 }),
     [businesses],
+  );
+
+  const activeCouponCount = useMemo(
+    () => coupons.filter((coupon) => coupon.status === 'active').length,
+    [coupons],
+  );
+
+  const couponRedemptions = useMemo(
+    () => coupons.reduce((total, coupon) => total + coupon.redeemedCount, 0),
+    [coupons],
   );
 
   const filteredBusinesses = useMemo(() => {
@@ -290,6 +322,61 @@ export const SuperAdminPage = ({
     }
   };
 
+  const editCoupon = (coupon: PlatformCoupon) => {
+    setSelectedCouponId(coupon.id);
+    setCouponForm({
+      code: coupon.code,
+      description: coupon.description,
+      discountPercent: coupon.discountPercent,
+      status: coupon.status,
+      appliesToPlans: coupon.appliesToPlans,
+      validFrom: coupon.validFrom ? coupon.validFrom.slice(0, 10) : '',
+      validUntil: coupon.validUntil ? coupon.validUntil.slice(0, 10) : '',
+      maxRedemptions: coupon.maxRedemptions,
+    });
+  };
+
+  const resetCouponForm = () => {
+    setSelectedCouponId(null);
+    setCouponForm(emptyCouponForm());
+  };
+
+  const toggleCouponPlan = (plan: SubscriptionPlan, checked: boolean) => {
+    setCouponForm((current) => ({
+      ...current,
+      appliesToPlans: checked
+        ? Array.from(new Set([...current.appliesToPlans, plan]))
+        : current.appliesToPlans.filter((item) => item !== plan),
+    }));
+  };
+
+  const saveCoupon = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSavingCoupon(true);
+    try {
+      await dashboardService.savePlatformCoupon(selectedCouponId, couponForm);
+      onSuccess(selectedCouponId ? 'Coupon updated' : 'Coupon created', `${couponForm.code.trim().toUpperCase()} is ready in the coupon control center.`);
+      resetCouponForm();
+    } catch (error) {
+      onError(error, 'Unable to save this coupon.');
+    } finally {
+      setSavingCoupon(false);
+    }
+  };
+
+  const deleteCoupon = async (coupon: PlatformCoupon) => {
+    setDeletingCouponId(coupon.id);
+    try {
+      await dashboardService.deletePlatformCoupon(coupon.id);
+      if (selectedCouponId === coupon.id) resetCouponForm();
+      onSuccess('Coupon deleted', `${coupon.code} was removed from the control center.`);
+    } catch (error) {
+      onError(error, 'Unable to delete this coupon.');
+    } finally {
+      setDeletingCouponId(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f5f8fc] text-brand-dark">
       <div className="grid min-h-screen xl:grid-cols-[280px_minmax(0,1fr)]">
@@ -315,6 +402,7 @@ export const SuperAdminPage = ({
           <nav className="mt-5 grid gap-2" aria-label="PULA Biz admin sections">
             {([
               { id: 'users' as const, label: 'Users', description: `${businesses.length} accounts`, icon: UsersRound },
+              { id: 'coupons' as const, label: 'Coupons', description: `${activeCouponCount} active codes`, icon: Tags },
               { id: 'access' as const, label: 'Plan access', description: 'Modules by plan', icon: SlidersHorizontal },
               { id: 'support' as const, label: 'Support', description: `${activeTickets} active tickets`, icon: LifeBuoy },
             ]).map((item) => {
@@ -509,6 +597,239 @@ export const SuperAdminPage = ({
                       No users match this search.
                     </div>
                   ) : null}
+                </div>
+              </section>
+            </>
+          ) : adminSection === 'coupons' ? (
+            <>
+              <section className="rounded-[28px] border border-brand-30 bg-white p-5 shadow-sm sm:p-6">
+                <div className="inline-flex items-center gap-2 rounded-full bg-brand-60/55 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark">
+                  <Tags size={14} />
+                  Coupon control center
+                </div>
+                <h1 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl">
+                  Create and control discount codes
+                </h1>
+                <p className="mt-3 max-w-4xl text-sm leading-6 text-brand-dark/70 sm:text-base">
+                  Manage coupon codes, percentage discounts, plan eligibility, redemption limits, and active status from one admin workspace.
+                </p>
+              </section>
+
+              <section className="mt-6 grid gap-4 md:grid-cols-3">
+                <div className="rounded-[28px] border border-brand-30 bg-white p-5 shadow-sm">
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark/45">Total coupons</div>
+                  <div className="mt-2 text-3xl font-semibold">{coupons.length}</div>
+                </div>
+                <div className="rounded-[28px] border border-brand-30 bg-white p-5 shadow-sm">
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark/45">Active codes</div>
+                  <div className="mt-2 text-3xl font-semibold">{activeCouponCount}</div>
+                </div>
+                <div className="rounded-[28px] border border-brand-30 bg-white p-5 shadow-sm">
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-dark/45">Redemptions</div>
+                  <div className="mt-2 text-3xl font-semibold">{couponRedemptions}</div>
+                </div>
+              </section>
+
+              <section className="mt-6 grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
+                <form onSubmit={saveCoupon} className="rounded-[28px] border border-brand-30 bg-white p-5 shadow-sm sm:p-6">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-xl font-semibold">{selectedCouponId ? 'Edit coupon' : 'New coupon'}</h2>
+                      <p className="mt-1 text-sm text-brand-dark/60">Use uppercase letters, numbers, hyphen, or underscore.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={resetCouponForm}
+                      className="rounded-2xl border border-brand-30 bg-brand-60/25 px-3 py-2 text-sm font-semibold text-brand-dark"
+                    >
+                      Reset
+                    </button>
+                  </div>
+
+                  <div className="mt-5 grid gap-4">
+                    <label className="grid gap-2 text-sm font-medium text-brand-dark">
+                      Coupon code
+                      <input
+                        value={couponForm.code}
+                        onChange={(event) => setCouponForm((current) => ({ ...current, code: event.target.value.toUpperCase() }))}
+                        placeholder="PULA3MONTHS"
+                        className="rounded-2xl border border-brand-30 bg-brand-60/25 px-4 py-3 font-mono text-sm outline-none"
+                        required
+                      />
+                    </label>
+
+                    <label className="grid gap-2 text-sm font-medium text-brand-dark">
+                      Description
+                      <input
+                        value={couponForm.description}
+                        onChange={(event) => setCouponForm((current) => ({ ...current, description: event.target.value }))}
+                        placeholder="Launch offer for early testers"
+                        className="rounded-2xl border border-brand-30 bg-brand-60/25 px-4 py-3 text-sm outline-none"
+                      />
+                    </label>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <label className="grid gap-2 text-sm font-medium text-brand-dark">
+                        Discount %
+                        <input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={couponForm.discountPercent}
+                          onChange={(event) => setCouponForm((current) => ({ ...current, discountPercent: Number(event.target.value) }))}
+                          className="rounded-2xl border border-brand-30 bg-brand-60/25 px-4 py-3 text-sm outline-none"
+                        />
+                      </label>
+                      <label className="grid gap-2 text-sm font-medium text-brand-dark">
+                        Status
+                        <select
+                          value={couponForm.status}
+                          onChange={(event) => setCouponForm((current) => ({ ...current, status: event.target.value as CouponStatus }))}
+                          className="rounded-2xl border border-brand-30 bg-brand-60/25 px-4 py-3 text-sm outline-none"
+                        >
+                          <option value="active">Active</option>
+                          <option value="paused">Paused</option>
+                          <option value="expired">Expired</option>
+                        </select>
+                      </label>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <label className="grid gap-2 text-sm font-medium text-brand-dark">
+                        Valid from
+                        <input
+                          type="date"
+                          value={couponForm.validFrom}
+                          onChange={(event) => setCouponForm((current) => ({ ...current, validFrom: event.target.value }))}
+                          className="rounded-2xl border border-brand-30 bg-brand-60/25 px-4 py-3 text-sm outline-none"
+                        />
+                      </label>
+                      <label className="grid gap-2 text-sm font-medium text-brand-dark">
+                        Valid until
+                        <input
+                          type="date"
+                          value={couponForm.validUntil}
+                          onChange={(event) => setCouponForm((current) => ({ ...current, validUntil: event.target.value }))}
+                          className="rounded-2xl border border-brand-30 bg-brand-60/25 px-4 py-3 text-sm outline-none"
+                        />
+                      </label>
+                    </div>
+
+                    <label className="grid gap-2 text-sm font-medium text-brand-dark">
+                      Max redemptions
+                      <input
+                        type="number"
+                        min={0}
+                        value={couponForm.maxRedemptions}
+                        onChange={(event) => setCouponForm((current) => ({ ...current, maxRedemptions: Number(event.target.value) }))}
+                        className="rounded-2xl border border-brand-30 bg-brand-60/25 px-4 py-3 text-sm outline-none"
+                      />
+                      <span className="text-xs font-normal text-brand-dark/55">Use 0 for no limit until payment gateway rules are added.</span>
+                    </label>
+
+                    <div>
+                      <div className="text-sm font-medium text-brand-dark">Applies to plans</div>
+                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                        {subscriptionPlanOptions.map((plan) => (
+                          <label key={plan} className="flex items-center justify-between gap-3 rounded-2xl border border-brand-30 bg-brand-60/20 px-3 py-2 text-sm font-semibold text-brand-dark">
+                            {subscriptionPlanLabels[plan]}
+                            <input
+                              type="checkbox"
+                              checked={couponForm.appliesToPlans.includes(plan)}
+                              onChange={(event) => toggleCouponPlan(plan, event.target.checked)}
+                              className="h-4 w-4 accent-brand-10"
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={savingCoupon || !couponForm.code.trim()}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-10 px-4 py-3 text-sm font-semibold text-brand-60 disabled:opacity-60"
+                    >
+                      <Plus size={16} />
+                      {savingCoupon ? 'Saving...' : selectedCouponId ? 'Save coupon' : 'Create coupon'}
+                    </button>
+                  </div>
+                </form>
+
+                <div className="rounded-[28px] border border-brand-30 bg-white p-5 shadow-sm sm:p-6">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-xl font-semibold">Coupon library</h2>
+                      <p className="mt-1 text-sm text-brand-dark/60">Click a code to edit it. Deleting removes it from admin control immediately.</p>
+                    </div>
+                    <div className="inline-flex items-center gap-2 rounded-full bg-brand-60/40 px-3 py-2 text-sm font-semibold text-brand-dark">
+                      <Percent size={16} />
+                      Percentage discounts
+                    </div>
+                  </div>
+
+                  <div className="mt-5 grid gap-3">
+                    {coupons.length ? coupons.map((coupon) => (
+                      <article key={coupon.id} className="rounded-[24px] border border-brand-30 bg-brand-60/18 p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                          <button type="button" onClick={() => editCoupon(coupon)} className="min-w-0 text-left">
+                            <div className="font-mono text-lg font-black text-brand-10">{coupon.code}</div>
+                            <div className="mt-1 text-sm text-brand-dark/65">{coupon.description || 'No description'}</div>
+                          </button>
+                          <div className="flex items-center gap-2">
+                            <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${
+                              coupon.status === 'active'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : coupon.status === 'paused'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : 'bg-rose-100 text-rose-800'
+                            }`}>
+                              {coupon.status}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={deletingCouponId === coupon.id}
+                              onClick={() => deleteCoupon(coupon)}
+                              className="rounded-2xl border border-rose-200 bg-white p-2 text-rose-700 transition hover:bg-rose-50 disabled:opacity-60"
+                              aria-label={`Delete ${coupon.code}`}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                          <div className="rounded-2xl bg-white p-3">
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-dark/45">Discount</div>
+                            <div className="mt-1 text-xl font-semibold">{coupon.discountPercent}%</div>
+                          </div>
+                          <div className="rounded-2xl bg-white p-3">
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-dark/45">Used</div>
+                            <div className="mt-1 text-xl font-semibold">{coupon.redeemedCount}</div>
+                          </div>
+                          <div className="rounded-2xl bg-white p-3">
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-dark/45">Limit</div>
+                            <div className="mt-1 text-xl font-semibold">{coupon.maxRedemptions || 'No limit'}</div>
+                          </div>
+                          <div className="rounded-2xl bg-white p-3">
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-dark/45">Ends</div>
+                            <div className="mt-1 text-sm font-semibold">{coupon.validUntil ? formatDate(coupon.validUntil) : 'Not set'}</div>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {coupon.appliesToPlans.map((plan) => (
+                            <span key={plan} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand-dark/65">
+                              {subscriptionPlanLabels[plan]}
+                            </span>
+                          ))}
+                        </div>
+                      </article>
+                    )) : (
+                      <div className="rounded-[24px] border border-dashed border-brand-30 bg-brand-60/20 px-4 py-10 text-sm text-brand-dark/60">
+                        No coupons yet. Create the first launch or festival code from the form.
+                      </div>
+                    )}
+                  </div>
                 </div>
               </section>
             </>

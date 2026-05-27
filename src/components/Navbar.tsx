@@ -145,6 +145,7 @@ export const Navbar = () => {
         <a href="/#product" className={styles.link} aria-current={currentPath === '/' && currentHash === '#product' ? 'page' : undefined} onClick={(event) => goToHash(event, '#product')}>Biz</a>
         <a href="/#tools" className={styles.link} aria-current={currentPath === '/' && currentHash === '#tools' ? 'page' : undefined} onClick={(event) => goToHash(event, '#tools')}>AI tools</a>
         <a href="/#business-os" className={styles.link} aria-current={currentPath === '/' && currentHash === '#business-os' ? 'page' : undefined} onClick={(event) => goToHash(event, '#business-os')}>Why Biz</a>
+        <a href="/#apps" className={styles.link} aria-current={currentPath === '/' && currentHash === '#apps' ? 'page' : undefined} onClick={(event) => goToHash(event, '#apps')}>Apps</a>
         <a href="/#pricing" className={styles.link} aria-current={currentPath === '/' && currentHash === '#pricing' ? 'page' : undefined} onClick={(event) => goToHash(event, '#pricing')}>Pricing</a>
         <a href="/survey" className={styles.link} aria-current={currentPath.replace(/\/+$/, '') === '/survey' ? 'page' : undefined} onClick={goToSurvey}>Survey</a>
 

@@ -7,6 +7,7 @@
 .productSection,
 .labSection,
 .servicesSection,
+.appSection,
 .footer {
   --os-ink: #252456;
   --os-body: #454779;
@@ -265,7 +266,8 @@
 
 .productSection,
 .labSection,
-.servicesSection {
+.servicesSection,
+.appSection {
   padding: 5rem 0;
 }
 
@@ -274,7 +276,8 @@
   background: #ffffff;
 }
 
-.labSection {
+.labSection,
+.appSection {
   background: var(--os-soft);
 }
 
@@ -380,6 +383,169 @@
 .serviceItem svg {
   color: var(--os-blue);
   flex-shrink: 0;
+}
+
+.appGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(min(100%, 390px), 0.75fr);
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  align-items: center;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.appCopy {
+  width: 100%;
+  max-width: 760px;
+  min-width: 0;
+}
+
+.appCopy h2 {
+  margin-top: 1rem;
+  color: var(--os-ink);
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 4vw, 4rem);
+  font-weight: 600;
+  line-height: 1.04;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+
+.appCopy p {
+  margin-top: 0.95rem;
+  color: var(--os-body);
+  font-size: clamp(1rem, 1.5vw, 1.12rem);
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.appPanel {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 1.1rem;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid var(--os-line);
+  box-shadow: 0 22px 60px rgba(37, 36, 86, 0.1);
+}
+
+.appStatus {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  min-height: 3rem;
+  padding: 0.85rem;
+  border-radius: 8px;
+  background: rgba(18, 53, 91, 0.08);
+  color: var(--os-blue);
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.appStatus span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.appStatus svg {
+  flex: 0 0 auto;
+  margin-top: 0.12rem;
+}
+
+.appButtonGrid {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.appButton {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 3.25rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid rgba(18, 53, 91, 0.16);
+  background: #ffffff;
+  color: var(--os-ink);
+  font-weight: 850;
+  text-align: left;
+  box-shadow: 0 10px 24px rgba(37, 36, 86, 0.07);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.appButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(18, 53, 91, 0.32);
+  box-shadow: 0 14px 30px rgba(37, 36, 86, 0.11);
+}
+
+.appButton svg {
+  color: var(--os-blue);
+  flex-shrink: 0;
+}
+
+.appButton span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.packageLinks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.packageLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.8rem;
+  padding: 0.72rem 0.8rem;
+  border-radius: 8px;
+  background: #153d66;
+  border: 1px solid rgba(18, 53, 91, 0.18);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 850;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.packageLink:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(18, 53, 91, 0.22);
+}
+
+.packageLink span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.appNotes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.appNotes span {
+  display: flex;
+  align-items: center;
+  min-height: 3rem;
+  padding: 0.62rem;
+  border-radius: 8px;
+  background: rgba(37, 36, 86, 0.06);
+  color: var(--os-body);
+  font-size: 0.8rem;
+  font-weight: 750;
+  line-height: 1.3;
 }
 
 .footer {
@@ -678,7 +844,8 @@
   }
 
   .heroInner,
-  .labGrid {
+  .labGrid,
+  .appGrid {
     grid-template-columns: 1fr;
   }
 
@@ -737,6 +904,22 @@
   .footerBottom {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .appNotes {
+    grid-template-columns: 1fr;
+  }
+
+  .packageLinks {
+    grid-template-columns: 1fr;
+  }
+
+  .appPanel {
+    padding: 0.9rem;
+  }
+
+  .appSection {
+    overflow: hidden;
   }
 
   .heroAnimation span {

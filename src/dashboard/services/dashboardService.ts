@@ -3,6 +3,7 @@ import {
   arrayUnion,
   collection,
   collectionGroup,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -33,6 +34,7 @@ import type {
   InvoicePaymentStatus,
   InventoryProcurementStatus,
   NoteItem,
+  PlatformCoupon,
   PlatformBusinessAccount,
   RenderAsset,
   RenderRequest,
@@ -58,7 +60,7 @@ import { buildBusinessBarcodeKey, buildInventoryBarcodeValue, buildInvoiceNumber
 
 type DashboardSnapshotListener = (data: DashboardData) => void;
 type DashboardErrorListener = (error: Error) => void;
-type SuperAdminSnapshotListener = (data: { businesses: PlatformBusinessAccount[]; supportThreads: SupportThread[] }) => void;
+type SuperAdminSnapshotListener = (data: { businesses: PlatformBusinessAccount[]; supportThreads: SupportThread[]; coupons: PlatformCoupon[] }) => void;
 type TeamMemberIndex = Record<string, { teamMemberIds: string[]; teamAuthUids: string[]; teamMemberCount: number }>;
 type SubscriptionAccessListener = (rules: SubscriptionAccessRules) => void;
 
@@ -135,6 +137,8 @@ const deletedCustomerDoc = (userId: string, recordId: string) => doc(requireDb()
 const supportThreadsCollection = () => collection(requireDb(), 'supportThreads');
 const supportThreadDoc = (ticketId: string) => doc(requireDb(), 'supportThreads', ticketId);
 const subscriptionAccessDoc = () => doc(requireDb(), 'platformSettings', 'subscriptionAccess');
+const platformCouponsCollection = () => collection(requireDb(), 'platformCoupons');
+const platformCouponDoc = (couponId: string) => doc(requireDb(), 'platformCoupons', couponId);
 
 const nowIso = () => new Date().toISOString();
 const shortUserId = (userId: string) => userId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase() || userId.slice(0, 8).toUpperCase();
@@ -142,6 +146,28 @@ const normalizeSubscriptionPlan = (plan?: string): SubscriptionPlan =>
   plan === 'focused' || plan === 'growth' || plan === 'business_pro' ? plan : 'freemium';
 const normalizeSubscriptionStatus = (status?: string): SubscriptionStatus =>
   status === 'trialing' || status === 'paused' || status === 'cancelled' ? status : 'active';
+const normalizeCouponStatus = (status?: string): PlatformCoupon['status'] =>
+  status === 'paused' || status === 'expired' ? status : 'active';
+const normalizeCouponPlans = (plans?: unknown): SubscriptionPlan[] => {
+  const source = Array.isArray(plans) ? plans : ['focused', 'growth', 'business_pro'];
+  const normalized = source.map((plan) => normalizeSubscriptionPlan(String(plan)));
+  return Array.from(new Set(normalized));
+};
+const normalizeCoupon = (id: string, value: Partial<PlatformCoupon>): PlatformCoupon => ({
+  id,
+  code: value.code?.trim().toUpperCase() || id.toUpperCase(),
+  description: value.description?.trim() || '',
+  discountPercent: Math.min(100, Math.max(0, Number(value.discountPercent || 0))),
+  status: normalizeCouponStatus(value.status),
+  appliesToPlans: normalizeCouponPlans(value.appliesToPlans),
+  validFrom: value.validFrom || nowIso(),
+  validUntil: value.validUntil || '',
+  maxRedemptions: Math.max(0, Number(value.maxRedemptions || 0)),
+  redeemedCount: Math.max(0, Number(value.redeemedCount || 0)),
+  createdAt: value.createdAt || nowIso(),
+  updatedAt: value.updatedAt || nowIso(),
+  createdBy: value.createdBy || '',
+});
 const normalizeSubscriptionAccessRules = (value?: Partial<Record<SubscriptionPlan, DashboardView[]>>): SubscriptionAccessRules => ({
   freemium: filterDashboardViews(value?.freemium).length ? filterDashboardViews(value?.freemium) : [...subscriptionPlanViews.freemium],
   focused: filterDashboardViews(value?.focused).length ? filterDashboardViews(value?.focused) : [...subscriptionPlanViews.focused],
@@ -1274,12 +1300,14 @@ export const dashboardService = {
   subscribeToSuperAdminConsole(onData: SuperAdminSnapshotListener) {
     let businesses: PlatformBusinessAccount[] = [];
     let supportThreads: SupportThread[] = [];
+    let coupons: PlatformCoupon[] = [];
     let disposed = false;
 
     const emit = () => {
       onData({
         businesses,
         supportThreads,
+        coupons,
       });
     };
 
@@ -1319,11 +1347,63 @@ export const dashboardService = {
       },
     );
 
+    const unsubscribeCoupons = onSnapshot(
+      platformCouponsCollection(),
+      (snapshot) => {
+        coupons = snapshot.docs
+          .map((item) => normalizeCoupon(item.id, item.data() as Partial<PlatformCoupon>))
+          .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
+        emit();
+      },
+      () => {
+        coupons = [];
+        emit();
+      },
+    );
+
     return () => {
       disposed = true;
       window.clearInterval(refreshTimer);
       unsubscribeSupport();
+      unsubscribeCoupons();
     };
+  },
+
+  async savePlatformCoupon(
+    couponId: string | null,
+    payload: Pick<PlatformCoupon, 'code' | 'description' | 'discountPercent' | 'status' | 'appliesToPlans' | 'validFrom' | 'validUntil' | 'maxRedemptions'>,
+  ) {
+    const timestamp = nowIso();
+    const normalizedCode = payload.code.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+    if (!normalizedCode) {
+      throw new Error('Enter a coupon code.');
+    }
+
+    const id = couponId || normalizedCode.toLowerCase();
+    const existing = await getDoc(platformCouponDoc(id));
+    await setDoc(
+      platformCouponDoc(id),
+      {
+        id,
+        code: normalizedCode,
+        description: payload.description.trim(),
+        discountPercent: Math.min(100, Math.max(0, Number(payload.discountPercent || 0))),
+        status: normalizeCouponStatus(payload.status),
+        appliesToPlans: normalizeCouponPlans(payload.appliesToPlans),
+        validFrom: payload.validFrom,
+        validUntil: payload.validUntil,
+        maxRedemptions: Math.max(0, Number(payload.maxRedemptions || 0)),
+        redeemedCount: existing.exists() ? Number((existing.data() as Partial<PlatformCoupon>).redeemedCount || 0) : 0,
+        createdAt: existing.exists() ? String((existing.data() as Partial<PlatformCoupon>).createdAt || timestamp) : timestamp,
+        updatedAt: timestamp,
+        createdBy: auth?.currentUser?.email || 'super_admin',
+      },
+      { merge: true },
+    );
+  },
+
+  async deletePlatformCoupon(couponId: string) {
+    await deleteDoc(platformCouponDoc(couponId));
   },
 
   async updateUserSubscription(

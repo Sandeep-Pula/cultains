@@ -13,6 +13,7 @@ import {
   Users,
 } from 'lucide-react';
 import { AuthCard } from './AuthCard';
+import { AppInstallSection } from './AppInstallSection';
 import { ProductWordmark } from './BrandWordmark';
 import styles from './PublicHome.module.css';
 
@@ -202,6 +203,8 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
           </div>
         </div>
       </section>
+
+      <AppInstallSection />
 
       <footer id="contact" className={styles.footer}>
         <div className={styles.container}>

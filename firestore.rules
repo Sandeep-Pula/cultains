@@ -70,6 +70,10 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
+    match /platformCoupons/{couponId} {
+      allow read, write: if isSuperAdmin();
+    }
+
     match /cashRegisterCategorySuggestions/{categoryId} {
       allow read: if isSignedIn();
       allow create, update: if isSignedIn();

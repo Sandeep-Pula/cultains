@@ -208,7 +208,7 @@
 
   .links {
     display: grid;
-    grid-template-columns: repeat(5, max-content);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     justify-content: center;
     align-items: center;
     width: 100%;
@@ -219,12 +219,17 @@
 
   .link {
     font-size: 0.8rem;
+    min-width: 0;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .navActions {
     grid-column: 1 / -1;
     justify-self: center;
-    width: min(100%, 360px);
+    width: min(100%, 340px);
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.18fr);
     flex-wrap: nowrap;

@@ -21,6 +21,10 @@
         }
       },
       {
+        "source": "/downloads/**",
+        "destination": "/downloads/not-found.txt"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

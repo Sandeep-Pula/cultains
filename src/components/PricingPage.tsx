@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
+  AlertTriangle,
   BadgeIndianRupee,
   Boxes,
   Check,
   Crown,
   Handshake,
+  X,
 } from 'lucide-react';
 import styles from './PricingPage.module.css';
 
@@ -115,6 +117,7 @@ const plans = [
 
 export const PricingPage = () => {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
+  const [showTrialNotice, setShowTrialNotice] = useState(true);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -122,6 +125,37 @@ export const PricingPage = () => {
 
   return (
     <div className={styles.page}>
+      {showTrialNotice ? (
+        <div className={styles.noticeOverlay} role="dialog" aria-modal="true" aria-labelledby="trial-notice-title">
+          <motion.div
+            className={styles.noticeDialog}
+            initial={{ opacity: 0, y: 18, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.28 }}
+          >
+            <button
+              type="button"
+              className={styles.noticeClose}
+              onClick={() => setShowTrialNotice(false)}
+              aria-label="Close pricing notice"
+            >
+              <X size={18} />
+            </button>
+            <div className={styles.noticeIcon}>
+              <AlertTriangle size={22} />
+            </div>
+            <h1 id="trial-notice-title">3 months free trial is active right now.</h1>
+            <p>
+              We are currently offering PULA Biz free for the first 3 months. Actual billing starts after the trial.
+              Prices shown here are working estimates and may change while we finalize the subscription model.
+            </p>
+            <button type="button" className={styles.noticeButton} onClick={() => setShowTrialNotice(false)}>
+              View plans
+            </button>
+          </motion.div>
+        </div>
+      ) : null}
+
       <section className={styles.planSection} aria-label="PULA Biz pricing plans">
         <div className={styles.billingSwitch} aria-label="Choose billing cycle">
           <button
