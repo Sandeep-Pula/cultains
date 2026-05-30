@@ -170,6 +170,46 @@ export const SettingsPage = ({
             </select>
           </label>
           <label className="grid gap-2 text-sm text-brand-dark/75">
+            <span>Default GST mode</span>
+            <select
+              value={billingDefaults.defaultTaxMode || 'intra_state'}
+              onChange={(event) => setBillingDefaults((current) => ({
+                ...current,
+                defaultTaxMode: event.target.value as NonNullable<typeof current.defaultTaxMode>,
+              }))}
+              className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none"
+            >
+              <option value="intra_state">CGST + SGST (intra-state)</option>
+              <option value="inter_state">IGST (inter-state)</option>
+              <option value="no_gst">No GST</option>
+            </select>
+          </label>
+          <label className="grid gap-2 text-sm text-brand-dark/75">
+            <span>Default place of supply</span>
+            <input
+              value={billingDefaults.defaultPlaceOfSupply || ''}
+              onChange={(event) => setBillingDefaults((current) => ({ ...current, defaultPlaceOfSupply: event.target.value }))}
+              className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none"
+              placeholder="Telangana"
+            />
+          </label>
+          <label className="grid gap-2 text-sm text-brand-dark/75">
+            <span>Invoice number prefix</span>
+            <input
+              value={billingDefaults.invoicePrefix || 'INV'}
+              onChange={(event) => setBillingDefaults((current) => ({ ...current, invoicePrefix: event.target.value.toUpperCase() }))}
+              className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none"
+            />
+          </label>
+          <label className="grid gap-2 text-sm text-brand-dark/75">
+            <span>Quotation number prefix</span>
+            <input
+              value={billingDefaults.quotationPrefix || 'QUO'}
+              onChange={(event) => setBillingDefaults((current) => ({ ...current, quotationPrefix: event.target.value.toUpperCase() }))}
+              className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none"
+            />
+          </label>
+          <label className="grid gap-2 text-sm text-brand-dark/75">
             <span>Default payment method</span>
             <select
               value={billingDefaults.defaultPaymentMethod}

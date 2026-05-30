@@ -1,4 +1,4 @@
-import { Printer, X } from 'lucide-react';
+import { Ban, Printer, X } from 'lucide-react';
 import type { SalesInvoice, WorkspaceProfile } from '../types';
 import { formatCurrency, formatDateTime } from '../utils';
 import { printSalesInvoice } from '../invoicePrint';
@@ -9,6 +9,7 @@ type SalesInvoiceDetailModalProps = {
   companyName: string;
   businessProfile: WorkspaceProfile;
   onClose: () => void;
+  onVoid?: (invoiceId: string, reason: string) => Promise<void>;
 };
 
 export const SalesInvoiceDetailModal = ({
@@ -17,6 +18,7 @@ export const SalesInvoiceDetailModal = ({
   companyName,
   businessProfile,
   onClose,
+  onVoid,
 }: SalesInvoiceDetailModalProps) => {
   if (!open || !invoice) return null;
 
@@ -27,7 +29,7 @@ export const SalesInvoiceDetailModal = ({
           <div>
             <h2 className="text-2xl font-semibold tracking-tight text-brand-dark">{invoice.invoiceNumber}</h2>
             <p className="mt-1 text-sm text-brand-dark/65">
-              Created {formatDateTime(invoice.createdAt)} for {invoice.customerName}
+              {invoice.documentType === 'quotation' ? 'Quotation' : invoice.status === 'voided' ? 'Voided invoice' : 'Invoice'} created {formatDateTime(invoice.createdAt)} for {invoice.customerName}
             </p>
           </div>
           <button
@@ -42,7 +44,7 @@ export const SalesInvoiceDetailModal = ({
 
         <div className="ui-scrollable min-h-0 flex-1 px-5 py-5 sm:px-6">
           <div className="space-y-5">
-            <div className="rounded-[28px] border border-brand-30 bg-white p-5 sm:p-6">
+            <div className="dashboard-paper-receipt rounded-[28px] border border-brand-30 bg-white p-5 sm:p-6">
               <div className="border-b border-dashed border-brand-dark/35 pb-4 text-center">
                 {businessProfile.workspaceLogoUrl ? (
                   <img
@@ -65,6 +67,8 @@ export const SalesInvoiceDetailModal = ({
                 <div><span className="font-semibold">Bill No:</span> {invoice.invoiceNumber}</div>
                 <div className="sm:text-right"><span className="font-semibold">Date:</span> {new Date(invoice.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
                 <div><span className="font-semibold">Customer:</span> {invoice.customerName}</div>
+                {invoice.customerGstin ? <div className="sm:text-right"><span className="font-semibold">Customer GSTIN:</span> {invoice.customerGstin}</div> : null}
+                {invoice.placeOfSupply ? <div><span className="font-semibold">Place of supply:</span> {invoice.placeOfSupply}</div> : null}
                 <div className="sm:text-right"><span className="font-semibold">Payment:</span> {invoice.paymentMethod.replace('_', ' ')}</div>
                 <div><span className="font-semibold">Billed By:</span> {invoice.billedBy}</div>
                 <div className="sm:text-right"><span className="font-semibold">Status:</span> {invoice.paymentStatus}</div>
@@ -88,6 +92,7 @@ export const SalesInvoiceDetailModal = ({
                         <td className="px-2 py-3">
                           <div className="font-semibold">{line.itemName}</div>
                           <div className="mt-1 text-xs text-black/70">SKU: {line.sku} | Barcode: {line.barcodeValue}</div>
+                          {line.hsnSac ? <div className="mt-1 text-xs text-black/70">HSN/SAC: {line.hsnSac}</div> : null}
                         </td>
                         <td className="px-2 py-3 text-right">{line.quantity}</td>
                         <td className="px-2 py-3 text-right">{formatCurrency(line.unitPrice)}</td>
@@ -99,14 +104,15 @@ export const SalesInvoiceDetailModal = ({
               </div>
             </div>
 
-            <div className="rounded-[28px] border border-brand-30 bg-white p-5">
+            <div className="dashboard-paper-receipt rounded-[28px] border border-brand-30 bg-white p-5">
               <div className="space-y-3 text-sm text-black">
                 <div className="flex items-center justify-between">
                   <span>Subtotal</span>
                   <strong>{formatCurrency(invoice.subtotal)}</strong>
                 </div>
+                {invoice.discountAmount > 0 ? <div className="flex items-center justify-between"><span>Discount</span><strong>-{formatCurrency(invoice.discountAmount)}</strong></div> : null}
                 <div className="flex items-center justify-between">
-                  <span>IGST @ {invoice.taxRate}%</span>
+                  <span>{invoice.taxMode === 'intra_state' ? `CGST + SGST @ ${invoice.taxRate}%` : invoice.taxMode === 'no_gst' ? 'GST not applied' : `IGST @ ${invoice.taxRate}%`}</span>
                   <strong>{formatCurrency(invoice.taxAmount)}</strong>
                 </div>
                 <div className="flex items-center justify-between border-t border-dashed border-brand-dark/35 pt-3 text-xl font-semibold">
@@ -116,7 +122,7 @@ export const SalesInvoiceDetailModal = ({
               </div>
             </div>
 
-            <div className="rounded-[28px] border border-brand-30 bg-white p-5 text-center text-black">
+            <div className="dashboard-paper-receipt rounded-[28px] border border-brand-30 bg-white p-5 text-center text-black">
               <div className="text-xl font-semibold">Thank You</div>
               <p className="mt-3 text-sm leading-6 text-black/75">
                 {invoice.notes.trim()
@@ -134,8 +140,22 @@ export const SalesInvoiceDetailModal = ({
                   className="inline-flex items-center gap-2 rounded-2xl bg-brand-10 px-4 py-3 text-sm font-medium text-brand-60"
                 >
                   <Printer size={16} />
-                  Reprint invoice
+                  {invoice.documentType === 'quotation' ? 'Print quotation' : 'Reprint invoice'}
                 </button>
+                {invoice.status === 'finalized' && onVoid ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const reason = window.prompt(`Reason for voiding ${invoice.invoiceNumber}?`);
+                      if (reason === null) return;
+                      void onVoid(invoice.id, reason).then(onClose);
+                    }}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700"
+                  >
+                    <Ban size={16} />
+                    Void invoice
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={onClose}

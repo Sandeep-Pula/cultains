@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Camera, CreditCard } from 'lucide-react';
 import type {
   InventoryItem,
+  GstTaxMode,
   InvoicePaymentMethod,
   InvoicePaymentStatus,
   SalesInvoice,
@@ -25,6 +26,11 @@ type BillingPageProps = {
     paymentStatus: InvoicePaymentStatus;
     paymentMethod: InvoicePaymentMethod;
     taxRate: number;
+    taxMode?: GstTaxMode;
+    documentPrefix?: string;
+    customerGstin?: string;
+    placeOfSupply?: string;
+    discountAmount?: number;
     notes: string;
     billedBy: string;
     lineItems: SalesInvoiceLineItem[];
@@ -44,6 +50,12 @@ type BillingPageProps = {
     paymentStatus: InvoicePaymentStatus;
     paymentMethod: InvoicePaymentMethod;
     taxRate: number;
+    taxMode?: GstTaxMode;
+    documentPrefix?: string;
+    customerGstin?: string;
+    placeOfSupply?: string;
+    discountAmount?: number;
+    documentType?: 'invoice' | 'quotation';
     notes: string;
     billedBy: string;
     lineItems: SalesInvoiceLineItem[];
@@ -58,6 +70,7 @@ type BillingPageProps = {
     updatedAt: string;
   }>;
   onDeleteDraft: (invoiceId: string) => Promise<void>;
+  onVoidInvoice: (invoiceId: string, reason: string) => Promise<void>;
 };
 
 export const BillingPage = ({
@@ -69,6 +82,7 @@ export const BillingPage = ({
   onFinalizeSale,
   onSaveDraft,
   onDeleteDraft,
+  onVoidInvoice,
 }: BillingPageProps) => {
   const [selectedInvoice, setSelectedInvoice] = useState<SalesInvoice | null>(null);
 
@@ -114,6 +128,7 @@ export const BillingPage = ({
         onFinalizeSale={onFinalizeSale}
         onSaveDraft={onSaveDraft}
         onDeleteDraft={onDeleteDraft}
+        onVoidInvoice={onVoidInvoice}
       />
 
         <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border border-brand-30 bg-white shadow-sm">
@@ -126,7 +141,7 @@ export const BillingPage = ({
               <table className="min-w-full border-separate border-spacing-0">
                 <thead className="sticky top-0 z-10 bg-white">
                   <tr className="text-left text-xs font-bold uppercase tracking-wider text-brand-dark/55">
-                    {['Invoice', 'Date', 'Customer', 'Method', 'Status', 'Total'].map((label) => (
+                    {['Document', 'Date', 'Customer', 'Method', 'Status', 'Total'].map((label) => (
                       <th key={label} className="border-b border-brand-30 px-5 py-4">{label}</th>
                     ))}
                   </tr>
@@ -136,7 +151,7 @@ export const BillingPage = ({
                     <tr key={invoice.id} onClick={() => setSelectedInvoice(invoice)} className="cursor-pointer transition hover:bg-brand-60/35">
                       <td className="border-b border-brand-30/70 px-5 py-4">
                         <div className="font-semibold text-brand-dark">{invoice.invoiceNumber}</div>
-                        <div className="mt-1 text-xs text-brand-dark/55">Tap to preview</div>
+                        <div className="mt-1 text-xs capitalize text-brand-dark/55">{invoice.documentType.replace('_', ' ')} · tap to preview</div>
                       </td>
                       <td className="border-b border-brand-30/70 px-5 py-4 text-sm text-brand-dark">{formatDateTime(invoice.createdAt)}</td>
                       <td className="border-b border-brand-30/70 px-5 py-4 text-sm text-brand-dark">{invoice.customerName}</td>
@@ -167,6 +182,7 @@ export const BillingPage = ({
         companyName={companyName}
         businessProfile={businessProfile}
         onClose={() => setSelectedInvoice(null)}
+        onVoid={onVoidInvoice}
       />
     </>
   );

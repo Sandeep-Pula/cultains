@@ -84,10 +84,20 @@ export interface TeamMember {
   workload: number;
   status: 'online' | 'busy' | 'offline';
   allowedViews: DashboardView[];
+  permissions?: StaffPermission[];
   loginEnabled: boolean;
   authUid?: string;
   loginEmail?: string;
 }
+
+export type StaffPermission =
+  | 'view'
+  | 'create'
+  | 'edit'
+  | 'delete'
+  | 'approve'
+  | 'export'
+  | 'refund';
 
 export interface SubscriptionHistoryItem {
   id?: string;
@@ -213,6 +223,13 @@ export interface CustomerProject {
   renderQueue: RenderRequest[];
   activities: ActivityItem[];
   internalNotes: NoteItem[];
+  canonicalContactId?: string;
+  canonicalCompanyId?: string;
+  canonicalLeadId?: string;
+  canonicalDealId?: string;
+  quotationIds?: string[];
+  invoiceIds?: string[];
+  supportThreadIds?: string[];
 }
 
 export interface DeletedCustomerRecord {
@@ -269,6 +286,10 @@ export interface BillingDefaults {
   printerDeviceName?: string;
   printerPaperWidth?: '58mm' | '80mm';
   networkPrinterAddress?: string;
+  defaultTaxMode?: GstTaxMode;
+  defaultPlaceOfSupply?: string;
+  invoicePrefix?: string;
+  quotationPrefix?: string;
 }
 
 export type SupportThreadStatus = 'new' | 'open' | 'in_progress' | 'waiting_on_admin' | 'waiting_on_business' | 'resolved' | 'closed';
@@ -398,6 +419,17 @@ export interface InventoryItem {
   assignedProjectIds: string[];
   clearanceReason: string;
   notes: string;
+  hsnSac?: string;
+  size?: string;
+  color?: string;
+  variantLabel?: string;
+  branchId?: string;
+  supplierGstin?: string;
+  damagedStock?: number;
+  purchaseOrderNumber?: string;
+  goodsReceiptNumber?: string;
+  physicalCount?: number;
+  lastPhysicalCountAt?: string;
 }
 
 export type FinanceKind = 'income' | 'expense';
@@ -453,7 +485,9 @@ export interface WeeklyMiscRecord {
 
 export type InvoicePaymentStatus = 'pending' | 'paid';
 export type InvoicePaymentMethod = 'cash' | 'upi' | 'credit_card' | 'debit_card' | 'bank_transfer' | 'mixed';
-export type SalesInvoiceStatus = 'draft' | 'finalized';
+export type SalesInvoiceStatus = 'draft' | 'quotation' | 'finalized' | 'voided' | 'credit_note';
+export type SalesDocumentType = 'invoice' | 'quotation' | 'credit_note';
+export type GstTaxMode = 'intra_state' | 'inter_state' | 'no_gst';
 
 export interface SalesInvoiceLineItem {
   inventoryItemId: string;
@@ -463,25 +497,44 @@ export interface SalesInvoiceLineItem {
   quantity: number;
   unitPrice: number;
   lineSubtotal: number;
+  hsnSac?: string;
+  discountAmount?: number;
 }
 
 export interface SalesInvoice {
   id: string;
   invoiceNumber: string;
   status: SalesInvoiceStatus;
+  documentType: SalesDocumentType;
   businessBarcodeKey: string;
   customerName: string;
+  customerGstin?: string;
+  placeOfSupply?: string;
+  taxMode: GstTaxMode;
   paymentStatus: InvoicePaymentStatus;
   paymentMethod: InvoicePaymentMethod;
   lineItems: SalesInvoiceLineItem[];
   subtotal: number;
+  discountAmount: number;
+  taxableAmount: number;
   taxRate: number;
   taxAmount: number;
+  cgstAmount: number;
+  sgstAmount: number;
+  igstAmount: number;
   totalAmount: number;
   notes: string;
   billedBy: string;
   createdAt: string;
   updatedAt: string;
+  validUntil?: string;
+  voidedAt?: string;
+  voidedBy?: string;
+  voidReason?: string;
+  originalInvoiceId?: string;
+  printCount?: number;
+  lastPrintedAt?: string;
+  shiftId?: string;
 }
 
 export interface CashRegisterMenuSize {

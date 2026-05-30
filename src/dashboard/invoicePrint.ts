@@ -434,7 +434,12 @@ export const printSalesInvoice = (
   const escapedPaymentMethod = escapeHtml(paymentMethodLabels[invoice.paymentMethod]);
   const escapedRefundPolicy = escapeHtml(refundPolicy);
   const escapedLogoUrl = businessProfile.workspaceLogoUrl ? escapeHtml(businessProfile.workspaceLogoUrl) : '';
-  const taxLabel = invoice.taxRate > 0 ? `IGST @ ${invoice.taxRate}%` : 'IGST @ 0%';
+  const taxLabel =
+    invoice.taxMode === 'intra_state'
+      ? `CGST + SGST @ ${invoice.taxRate}%`
+      : invoice.taxMode === 'no_gst'
+        ? 'GST not applied'
+        : `IGST @ ${invoice.taxRate}%`;
 
   const body = `
     <div class="india-invoice">
@@ -446,9 +451,11 @@ export const printSalesInvoice = (
         ${escapedGstin ? `<div class="invoice-address">GSTIN : ${escapedGstin}</div>` : ''}
       </div>
       <div class="invoice-meta-grid">
-        <div class="invoice-meta-cell"><span class="invoice-meta-label">Bill No:</span> ${escapeHtml(invoice.invoiceNumber)}</div>
+        <div class="invoice-meta-cell"><span class="invoice-meta-label">${invoice.documentType === 'quotation' ? 'Quotation No:' : 'Bill No:'}</span> ${escapeHtml(invoice.invoiceNumber)}</div>
         <div class="invoice-meta-cell right"><span class="invoice-meta-label">Date:</span> ${formatInvoiceDate(invoice.createdAt)}</div>
         <div class="invoice-meta-cell"><span class="invoice-meta-label">Customer:</span> ${escapedCustomerName}</div>
+        ${invoice.customerGstin ? `<div class="invoice-meta-cell right"><span class="invoice-meta-label">Customer GSTIN:</span> ${escapeHtml(invoice.customerGstin)}</div>` : ''}
+        ${invoice.placeOfSupply ? `<div class="invoice-meta-cell"><span class="invoice-meta-label">Place of Supply:</span> ${escapeHtml(invoice.placeOfSupply)}</div>` : ''}
         <div class="invoice-meta-cell right"><span class="invoice-meta-label">Payment:</span> ${escapedPaymentMethod}</div>
         <div class="invoice-meta-cell"><span class="invoice-meta-label">Billed By:</span> ${escapedBilledBy}</div>
         <div class="invoice-meta-cell right"><span class="invoice-meta-label">Status:</span> ${escapeHtml(invoice.paymentStatus)}</div>
@@ -469,7 +476,7 @@ export const printSalesInvoice = (
               <td class="num">${index + 1}</td>
               <td>
                 <div class="invoice-item-name">${escapeHtml(line.itemName)}</div>
-                <div class="invoice-item-sub">SKU: ${escapeHtml(line.sku)} | Barcode: ${escapeHtml(line.barcodeValue)}</div>
+                <div class="invoice-item-sub">SKU: ${escapeHtml(line.sku)} | Barcode: ${escapeHtml(line.barcodeValue)}${line.hsnSac ? ` | HSN/SAC: ${escapeHtml(line.hsnSac)}` : ''}</div>
               </td>
               <td class="qty">${line.quantity}</td>
               <td class="rate">${formatCurrency(line.unitPrice)}</td>
@@ -479,6 +486,7 @@ export const printSalesInvoice = (
         </tbody>
       </table>
       <div class="invoice-summary">
+        ${invoice.discountAmount > 0 ? `<div class="invoice-summary-row"><span>Discount</span><span></span><strong>-${formatCurrency(invoice.discountAmount)}</strong></div>` : ''}
         <div class="invoice-summary-row">
           <span>Subtotal</span>
           <span>${totalQuantity} item(s)</span>

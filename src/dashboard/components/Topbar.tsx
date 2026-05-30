@@ -1,4 +1,4 @@
-import { LogOut, Menu, Search } from 'lucide-react';
+import { LogOut, Menu, Moon, Search, Sun } from 'lucide-react';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
 import type { DashboardView } from '../types';
 import { viewTitles } from '../utils';
@@ -24,6 +24,8 @@ type TopbarProps = {
   onToggleDesktopSidebar: () => void;
   desktopSidebarCollapsed: boolean;
   onOpenAiva: () => void;
+  darkMode: boolean;
+  onToggleDarkMode: () => void;
   onLogout: () => void;
 };
 
@@ -36,6 +38,8 @@ export const Topbar = ({
   onSearchResultSelect,
   onOpenSidebar,
   onOpenAiva,
+  darkMode,
+  onToggleDarkMode,
   onLogout,
 }: TopbarProps) => {
   const hasSearch = search.trim().length > 0;
@@ -111,6 +115,16 @@ export const Topbar = ({
           aria-label="Open AIVA assistant"
         >
           <AivaAvatar size="sm" />
+        </button>
+
+        <button
+          type="button"
+          onClick={onToggleDarkMode}
+          className="shrink-0 rounded-2xl border border-brand-dark/10 bg-white/55 p-2.5 text-brand-dark transition hover:bg-white"
+          aria-label={darkMode ? 'Switch dashboard to light mode' : 'Switch dashboard to dark mode'}
+          title={darkMode ? 'Light mode' : 'Dark mode'}
+        >
+          {darkMode ? <Sun size={17} /> : <Moon size={17} />}
         </button>
 
         <a

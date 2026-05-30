@@ -14,8 +14,6 @@ import { isSuperAdminEmail } from './adminRouting';
 import { createId } from './id';
 import { dashboardService } from '../dashboard/services/dashboardService';
 
-const SUPER_ADMIN_PASSWORD = 'Idi_Yaparam@1';
-
 const requireAuth = () => {
   if (!auth) {
     throw new Error('Firebase authentication is not configured yet. Add the required VITE_FIREBASE_* variables and reload the app.');
@@ -46,33 +44,6 @@ export const authService = {
     const authInstance = requireAuth();
     await setPersistence(authInstance, browserLocalPersistence);
     const normalizedEmail = email.trim().toLowerCase();
-
-    if (isSuperAdminEmail(normalizedEmail) && password === SUPER_ADMIN_PASSWORD) {
-      let superAdminCredential;
-
-      try {
-        superAdminCredential = await signInWithEmailAndPassword(authInstance, normalizedEmail, password);
-      } catch {
-        try {
-          superAdminCredential = await createUserWithEmailAndPassword(authInstance, normalizedEmail, password);
-          await updateProfile(superAdminCredential.user, { displayName: 'Pula Labs Super Admin' });
-        } catch (createError) {
-          const createCode = createError instanceof Error && 'code' in createError ? String(createError.code) : '';
-          if (createCode === 'auth/email-already-in-use') {
-            try {
-              superAdminCredential = await signInWithEmailAndPassword(authInstance, normalizedEmail, password);
-            } catch {
-              throw new Error('The super admin account already exists with a different password. Use forgot password to reset it.');
-            }
-          } else {
-            throw createError;
-          }
-        }
-      }
-
-      await dashboardService.ensureSuperAdminProfile(superAdminCredential.user);
-      return superAdminCredential.user;
-    }
 
     const credential = await signInWithEmailAndPassword(authInstance, normalizedEmail, password);
 

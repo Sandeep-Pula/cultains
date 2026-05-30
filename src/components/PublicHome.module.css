@@ -146,6 +146,24 @@
 
 .heroCopy {
   max-width: 720px;
+  min-width: 0;
+}
+
+.heroEyebrow {
+  display: inline-block;
+  align-items: center;
+  max-width: 100%;
+  padding: 0.48rem 0.88rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid var(--os-line);
+  color: var(--os-blue);
+  font-size: 0.76rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  line-height: 1.45;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .authHeroInner .heroProduct {
@@ -180,6 +198,7 @@
   margin-top: 1.6rem;
   font-size: clamp(2.65rem, 5.9vw, 6rem);
   line-height: 0.96;
+  overflow-wrap: anywhere;
 }
 
 .hero p,
@@ -192,6 +211,45 @@
 .hero p {
   margin-top: 1.25rem;
   font-size: clamp(1rem, 1.7vw, 1.18rem);
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.primaryAction,
+.secondaryAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 3rem;
+  padding: 0.78rem 1rem;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  font-weight: 850;
+  line-height: 1.25;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.primaryAction {
+  background: var(--os-blue);
+  color: #ffffff;
+  box-shadow: 0 12px 28px rgba(18, 53, 91, 0.2);
+}
+
+.secondaryAction {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--os-line);
+  color: var(--os-blue);
+}
+
+.primaryAction:hover,
+.secondaryAction:hover {
+  transform: translateY(-2px);
 }
 
 .heroProduct {
@@ -244,6 +302,27 @@
   margin-top: 1rem;
 }
 
+.dailyWorkList {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.dailyWorkList span {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--os-ink);
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.dailyWorkList svg {
+  flex-shrink: 0;
+  color: var(--os-blue);
+}
+
 .productMetrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -279,6 +358,32 @@
 .labSection,
 .appSection {
   background: var(--os-soft);
+}
+
+.contactStrip {
+  padding: 4rem 0;
+  background: #ffffff;
+}
+
+.contactStripInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: clamp(1.4rem, 4vw, 2.5rem);
+  border-radius: 8px;
+  background: var(--os-soft);
+  border: 1px solid var(--os-line);
+}
+
+.contactStrip h2 {
+  max-width: 760px;
+  margin-top: 1rem;
+  color: var(--os-ink);
+  font-family: var(--font-serif);
+  font-size: clamp(1.8rem, 3vw, 3rem);
+  font-weight: 600;
+  line-height: 1.06;
 }
 
 .sectionHeader {
@@ -853,6 +958,11 @@
     justify-content: flex-start;
   }
 
+  .contactStripInner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .productMetrics {
     grid-template-columns: 1fr;
   }
@@ -912,6 +1022,12 @@
 
   .packageLinks {
     grid-template-columns: 1fr;
+  }
+
+  .heroActions,
+  .heroActions a,
+  .contactStripInner .primaryAction {
+    width: 100%;
   }
 
   .appPanel {
@@ -990,7 +1106,8 @@
   }
 
   .hero h1 {
-    font-size: clamp(2.15rem, 10vw, 2.75rem);
+    font-size: clamp(2rem, 9vw, 2.45rem);
+    line-height: 1;
   }
 
   .sectionHeader h2,

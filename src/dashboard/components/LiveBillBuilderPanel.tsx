@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BrowserCodeReader, BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser';
 import { BarcodeFormat, DecodeHintType, NotFoundException } from '@zxing/library';
-import { Camera, CameraOff, CheckCircle2, ClipboardList, Plus, ScanLine, Trash2, X } from 'lucide-react';
+import { Camera, CameraOff, CheckCircle2, ClipboardList, FileText, Plus, ScanLine, Trash2, X } from 'lucide-react';
 import type {
   BillingDefaults,
+  GstTaxMode,
   InventoryItem,
   InvoicePaymentMethod,
   InvoicePaymentStatus,
@@ -40,6 +41,11 @@ type LiveBillBuilderPanelProps = {
     paymentStatus: InvoicePaymentStatus;
     paymentMethod: InvoicePaymentMethod;
     taxRate: number;
+    taxMode?: GstTaxMode;
+    documentPrefix?: string;
+    customerGstin?: string;
+    placeOfSupply?: string;
+    discountAmount?: number;
     notes: string;
     billedBy: string;
     lineItems: SalesInvoiceLineItem[];
@@ -59,6 +65,12 @@ type LiveBillBuilderPanelProps = {
     paymentStatus: InvoicePaymentStatus;
     paymentMethod: InvoicePaymentMethod;
     taxRate: number;
+    taxMode?: GstTaxMode;
+    documentPrefix?: string;
+    customerGstin?: string;
+    placeOfSupply?: string;
+    discountAmount?: number;
+    documentType?: 'invoice' | 'quotation';
     notes: string;
     billedBy: string;
     lineItems: SalesInvoiceLineItem[];
@@ -73,6 +85,7 @@ type LiveBillBuilderPanelProps = {
     updatedAt: string;
   }>;
   onDeleteDraft: (invoiceId: string) => Promise<void>;
+  onVoidInvoice?: (invoiceId: string, reason: string) => Promise<void>;
 };
 
 const toDraftLineItems = (lineItems: SalesInvoiceLineItem[], inventory: InventoryItem[]): DraftLineItem[] =>
@@ -116,12 +129,17 @@ export const LiveBillBuilderPanel = ({
   onFinalizeSale,
   onSaveDraft,
   onDeleteDraft,
+  onVoidInvoice,
 }: LiveBillBuilderPanelProps) => {
   const [customerName, setCustomerName] = useState('Walk-in customer');
   const [taxRate, setTaxRate] = useState('5');
   const [paymentStatus, setPaymentStatus] = useState<InvoicePaymentStatus>('paid');
   const [paymentMethod, setPaymentMethod] = useState<InvoicePaymentMethod>('cash');
   const [notes, setNotes] = useState('');
+  const [taxMode, setTaxMode] = useState<GstTaxMode>('intra_state');
+  const [customerGstin, setCustomerGstin] = useState('');
+  const [placeOfSupply, setPlaceOfSupply] = useState('');
+  const [discountAmount, setDiscountAmount] = useState('0');
   const [manualBarcode, setManualBarcode] = useState('');
   const [draftItems, setDraftItems] = useState<DraftLineItem[]>([]);
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
@@ -163,12 +181,16 @@ export const LiveBillBuilderPanel = ({
     setPaymentMethod(billingDefaults.defaultPaymentMethod);
     setTaxRate(String(billingDefaults.defaultTaxRate));
     setNotes(billingDefaults.defaultInvoiceNotes);
+    setTaxMode(billingDefaults.defaultTaxMode || 'intra_state');
+    setPlaceOfSupply(billingDefaults.defaultPlaceOfSupply || '');
   }, [billingDefaults]);
 
   const subtotal = draftItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const parsedTaxRate = Number(taxRate || '0');
-  const taxAmount = Number(((subtotal * parsedTaxRate) / 100).toFixed(2));
-  const totalAmount = subtotal + taxAmount;
+  const parsedDiscount = Math.min(subtotal, Number(discountAmount || '0'));
+  const taxableAmount = subtotal - parsedDiscount;
+  const taxAmount = taxMode === 'no_gst' ? 0 : Number(((taxableAmount * parsedTaxRate) / 100).toFixed(2));
+  const totalAmount = taxableAmount + taxAmount;
 
   const stopScanner = useCallback(() => {
     scannerControlsRef.current?.stop();
@@ -393,6 +415,10 @@ export const LiveBillBuilderPanel = ({
     setPaymentMethod(billingDefaults.defaultPaymentMethod);
     setTaxRate(String(billingDefaults.defaultTaxRate));
     setNotes(billingDefaults.defaultInvoiceNotes);
+    setTaxMode(billingDefaults.defaultTaxMode || 'intra_state');
+    setPlaceOfSupply(billingDefaults.defaultPlaceOfSupply || '');
+    setCustomerGstin('');
+    setDiscountAmount('0');
     setInvoiceError(null);
   };
 
@@ -403,6 +429,10 @@ export const LiveBillBuilderPanel = ({
     setPaymentMethod(invoice.paymentMethod);
     setTaxRate(String(invoice.taxRate));
     setNotes(invoice.notes);
+    setTaxMode(invoice.taxMode);
+    setPlaceOfSupply(invoice.placeOfSupply || '');
+    setCustomerGstin(invoice.customerGstin || '');
+    setDiscountAmount(String(invoice.discountAmount || 0));
     setDraftItems(toDraftLineItems(invoice.lineItems, inventory));
     setInvoiceError(null);
   };
@@ -422,6 +452,11 @@ export const LiveBillBuilderPanel = ({
         paymentStatus,
         paymentMethod,
         taxRate: parsedTaxRate,
+        taxMode,
+        documentPrefix: billingDefaults.invoicePrefix,
+        customerGstin,
+        placeOfSupply,
+        discountAmount: parsedDiscount,
         notes,
         billedBy,
         lineItems: draftItems.map((line) => ({
@@ -439,14 +474,23 @@ export const LiveBillBuilderPanel = ({
         id: result.invoiceId,
         invoiceNumber: result.invoiceNumber,
         status: 'finalized',
+        documentType: 'invoice',
         businessBarcodeKey: inventory[0]?.barcodeBusinessKey || '',
         customerName,
+        customerGstin,
+        placeOfSupply,
+        taxMode,
         paymentStatus,
         paymentMethod,
         lineItems: result.lineItems,
         subtotal: result.subtotal,
+        discountAmount: parsedDiscount,
+        taxableAmount,
         taxRate: parsedTaxRate,
         taxAmount: result.taxAmount,
+        cgstAmount: taxMode === 'intra_state' ? result.taxAmount / 2 : 0,
+        sgstAmount: taxMode === 'intra_state' ? result.taxAmount / 2 : 0,
+        igstAmount: taxMode === 'inter_state' ? result.taxAmount : 0,
         totalAmount: result.totalAmount,
         notes,
         billedBy,
@@ -481,6 +525,11 @@ export const LiveBillBuilderPanel = ({
         paymentStatus,
         paymentMethod,
         taxRate: parsedTaxRate,
+        taxMode,
+        documentPrefix: billingDefaults.invoicePrefix,
+        customerGstin,
+        placeOfSupply,
+        discountAmount: parsedDiscount,
         notes,
         billedBy,
         lineItems: draftItems.map((line) => ({
@@ -496,6 +545,45 @@ export const LiveBillBuilderPanel = ({
       setActiveDraftId(result.invoiceId);
     } catch (error) {
       setInvoiceError(error instanceof Error ? error.message : 'Unable to save the invoice draft right now.');
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
+  const handleSaveQuotation = async () => {
+    if (!draftItems.length) {
+      setInvoiceError('Add at least one item before creating a quotation.');
+      return;
+    }
+    setSavingDraft(true);
+    setInvoiceError(null);
+    try {
+      await onSaveDraft({
+        customerName,
+        paymentStatus: 'pending',
+        paymentMethod,
+        taxRate: parsedTaxRate,
+        taxMode,
+        documentPrefix: billingDefaults.quotationPrefix,
+        customerGstin,
+        placeOfSupply,
+        discountAmount: parsedDiscount,
+        documentType: 'quotation',
+        notes,
+        billedBy,
+        lineItems: draftItems.map((line) => ({
+          inventoryItemId: line.inventoryItemId,
+          barcodeValue: line.barcodeValue,
+          itemName: line.itemName,
+          sku: line.sku,
+          quantity: line.quantity,
+          unitPrice: line.unitPrice,
+          lineSubtotal: line.unitPrice * line.quantity,
+        })),
+      });
+      resetDraft();
+    } catch (error) {
+      setInvoiceError(error instanceof Error ? error.message : 'Unable to save this quotation.');
     } finally {
       setSavingDraft(false);
     }
@@ -537,6 +625,15 @@ export const LiveBillBuilderPanel = ({
             >
               <ClipboardList size={16} />
               {savingDraft ? 'Saving draft...' : activeDraftId ? 'Update draft' : 'Save as draft'}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleSaveQuotation()}
+              disabled={savingDraft || !draftItems.length}
+              className="inline-flex items-center gap-2 rounded-2xl border border-brand-30 bg-white px-4 py-3 text-sm font-medium text-brand-dark disabled:opacity-60"
+            >
+              <FileText size={16} />
+              Save quotation
             </button>
           </div>
         </div>
@@ -590,6 +687,26 @@ export const LiveBillBuilderPanel = ({
               <label className="grid gap-2 text-sm text-brand-dark/75">
                 <span>Tax rate (%)</span>
                 <input inputMode="decimal" value={taxRate} onChange={(event) => /^(\d+(\.\d{0,2})?)?$/.test(event.target.value) && setTaxRate(event.target.value)} className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none" />
+              </label>
+              <label className="grid gap-2 text-sm text-brand-dark/75">
+                <span>GST mode</span>
+                <select value={taxMode} onChange={(event) => setTaxMode(event.target.value as GstTaxMode)} className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none">
+                  <option value="intra_state">CGST + SGST (within state)</option>
+                  <option value="inter_state">IGST (inter-state)</option>
+                  <option value="no_gst">No GST</option>
+                </select>
+              </label>
+              <label className="grid gap-2 text-sm text-brand-dark/75">
+                <span>Discount amount</span>
+                <input inputMode="decimal" value={discountAmount} onChange={(event) => /^(\d+(\.\d{0,2})?)?$/.test(event.target.value) && setDiscountAmount(event.target.value)} className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none" />
+              </label>
+              <label className="grid gap-2 text-sm text-brand-dark/75">
+                <span>Customer GSTIN</span>
+                <input value={customerGstin} onChange={(event) => setCustomerGstin(event.target.value.toUpperCase())} placeholder="Optional GSTIN" className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none" />
+              </label>
+              <label className="grid gap-2 text-sm text-brand-dark/75">
+                <span>Place of supply</span>
+                <input value={placeOfSupply} onChange={(event) => setPlaceOfSupply(event.target.value)} placeholder="State / region" className="rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 outline-none" />
               </label>
               <label className="grid gap-2 text-sm text-brand-dark/75">
                 <span>Payment status</span>
@@ -678,7 +795,8 @@ export const LiveBillBuilderPanel = ({
             <div className="rounded-[28px] border border-brand-30 bg-brand-10 p-5 text-brand-60">
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm"><span>Subtotal</span><strong>{formatCurrency(subtotal)}</strong></div>
-                <div className="flex items-center justify-between text-sm"><span>Tax ({parsedTaxRate}%)</span><strong>{formatCurrency(taxAmount)}</strong></div>
+                {parsedDiscount > 0 ? <div className="flex items-center justify-between text-sm"><span>Discount</span><strong>-{formatCurrency(parsedDiscount)}</strong></div> : null}
+                <div className="flex items-center justify-between text-sm"><span>{taxMode === 'intra_state' ? 'CGST + SGST' : taxMode === 'inter_state' ? 'IGST' : 'GST'} ({taxMode === 'no_gst' ? 0 : parsedTaxRate}%)</span><strong>{formatCurrency(taxAmount)}</strong></div>
                 <div className="flex items-center justify-between border-t border-white/15 pt-3 text-xl font-semibold"><span>Total</span><strong>{formatCurrency(totalAmount)}</strong></div>
               </div>
             </div>
@@ -783,6 +901,7 @@ export const LiveBillBuilderPanel = ({
         companyName={companyName}
         businessProfile={businessProfile}
         onClose={() => setSelectedInvoice(null)}
+        onVoid={onVoidInvoice}
       />
     </>
   );

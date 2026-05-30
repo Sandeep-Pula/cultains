@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { authService } from '../lib/authService';
 import { isSuperAdminEmail, redirectToAdminDashboard } from '../lib/adminRouting';
-import { BrandWordmark } from './BrandWordmark';
+import { ProductWordmark } from './BrandWordmark';
 import styles from './AuthPage.module.css';
 
 type AuthCardProps = {
@@ -206,7 +206,7 @@ export const AuthCard = ({ mode, adminOnly = false }: AuthCardProps) => {
 
       {!adminOnly ? (
       <p className={styles.switchText}>
-        {isForgotPassword ? 'Remembered your password?' : isSignup ? 'Already have an account?' : <>New to <BrandWordmark />?</>}
+        {isForgotPassword ? 'Remembered your password?' : isSignup ? 'Already have an account?' : <>New to <ProductWordmark />?</>}
         {' '}
         <button
           type="button"

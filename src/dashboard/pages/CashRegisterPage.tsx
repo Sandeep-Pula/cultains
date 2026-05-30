@@ -40,6 +40,7 @@ import type {
   CashRegisterMenuItem,
   CashRegisterMenuSize,
   CashRegisterCategorySuggestion,
+  GstTaxMode,
   InvoicePaymentMethod,
   InvoicePaymentStatus,
   SalesInvoice,
@@ -83,6 +84,9 @@ type CashRegisterPageProps = {
     paymentStatus: InvoicePaymentStatus;
     paymentMethod: InvoicePaymentMethod;
     taxRate: number;
+    taxMode?: GstTaxMode;
+    documentPrefix?: string;
+    discountAmount?: number;
     notes: string;
     billedBy: string;
     lineItems: SalesInvoiceLineItem[];
@@ -102,6 +106,9 @@ type CashRegisterPageProps = {
     paymentStatus: InvoicePaymentStatus;
     paymentMethod: InvoicePaymentMethod;
     taxRate: number;
+    taxMode?: GstTaxMode;
+    documentPrefix?: string;
+    discountAmount?: number;
     notes: string;
     billedBy: string;
     lineItems: SalesInvoiceLineItem[];
@@ -116,6 +123,7 @@ type CashRegisterPageProps = {
     updatedAt: string;
   }>;
   onDeleteDraft: (invoiceId: string) => Promise<void>;
+  onVoidInvoice: (invoiceId: string, reason: string) => Promise<void>;
   onSaveCategorySuggestion: (category: string) => Promise<void>;
 };
 
@@ -571,6 +579,7 @@ export const CashRegisterPage = ({
   onFinalizeSale,
   onSaveDraft,
   onDeleteDraft,
+  onVoidInvoice,
   onSaveCategorySuggestion,
 }: CashRegisterPageProps) => {
   const [uploadText, setUploadText] = useState('');
@@ -589,6 +598,8 @@ export const CashRegisterPage = ({
   const [customerName, setCustomerName] = useState('Walk-in customer');
   const [paymentMethod, setPaymentMethod] = useState<InvoicePaymentMethod>(businessProfile.billingDefaults.defaultPaymentMethod || 'upi');
   const [paymentStatus, setPaymentStatus] = useState<InvoicePaymentStatus>(businessProfile.billingDefaults.defaultPaymentStatus || 'paid');
+  const [taxMode, setTaxMode] = useState<GstTaxMode>(businessProfile.billingDefaults.defaultTaxMode || 'intra_state');
+  const [discountAmount, setDiscountAmount] = useState('0');
   const [notes, setNotes] = useState('');
   const [invoiceError, setInvoiceError] = useState<string | null>(null);
   const [finalizing, setFinalizing] = useState(false);
@@ -618,8 +629,13 @@ export const CashRegisterPage = ({
   );
   const defaultTaxRate = businessProfile.billingDefaults.defaultTaxRate;
   const subtotal = cart.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);
-  const taxAmount = Number(((subtotal * defaultTaxRate) / 100).toFixed(2));
-  const totalAmount = subtotal + taxAmount;
+  const normalizedDiscount = Math.min(Math.max(0, Number(discountAmount || 0)), subtotal);
+  const taxableAmount = subtotal - normalizedDiscount;
+  const taxAmount = taxMode === 'no_gst' ? 0 : Number(((taxableAmount * defaultTaxRate) / 100).toFixed(2));
+  const cgstAmount = taxMode === 'intra_state' ? Number((taxAmount / 2).toFixed(2)) : 0;
+  const sgstAmount = taxMode === 'intra_state' ? Number((taxAmount - cgstAmount).toFixed(2)) : 0;
+  const igstAmount = taxMode === 'inter_state' ? taxAmount : 0;
+  const totalAmount = taxableAmount + taxAmount;
   const upiId = businessProfile.billingDefaults.defaultUpiId || '';
   const upiUri = `upi://pay?pa=${encodeURIComponent(upiId.trim())}&pn=${encodeURIComponent(companyName || businessProfile.companyName)}&am=${totalAmount.toFixed(2)}&cu=INR&tn=${encodeURIComponent('Cash register sale')}`;
   const upiQrUrl = upiId.trim() && totalAmount > 0
@@ -788,6 +804,7 @@ export const CashRegisterPage = ({
     setActiveDraftId(null);
     setCart([]);
     setCustomerName('Walk-in customer');
+    setDiscountAmount('0');
     setNotes('');
     setInvoiceError(null);
   };
@@ -797,6 +814,8 @@ export const CashRegisterPage = ({
     setCustomerName(invoice.customerName);
     setPaymentStatus(invoice.paymentStatus);
     setPaymentMethod(invoice.paymentMethod);
+    setTaxMode(invoice.taxMode);
+    setDiscountAmount(String(invoice.discountAmount || 0));
     setNotes(invoice.notes);
     setCart(invoice.lineItems.map((line, index) => {
       const menuItemId = line.inventoryItemId.replace(/^cash-/, '') || `draft-${index}`;
@@ -828,6 +847,9 @@ export const CashRegisterPage = ({
         paymentStatus,
         paymentMethod,
         taxRate: defaultTaxRate,
+        taxMode,
+        documentPrefix: businessProfile.billingDefaults.invoicePrefix,
+        discountAmount: normalizedDiscount,
         notes,
         billedBy,
         lineItems: buildLineItems(),
@@ -854,6 +876,9 @@ export const CashRegisterPage = ({
         paymentStatus,
         paymentMethod,
         taxRate: defaultTaxRate,
+        taxMode,
+        documentPrefix: businessProfile.billingDefaults.invoicePrefix,
+        discountAmount: normalizedDiscount,
         notes,
         billedBy,
         lineItems: buildLineItems(),
@@ -864,6 +889,7 @@ export const CashRegisterPage = ({
           {
             id: result.invoiceId,
             invoiceNumber: result.invoiceNumber,
+            documentType: 'invoice',
             status: 'finalized',
             businessBarcodeKey: '',
             customerName,
@@ -872,7 +898,13 @@ export const CashRegisterPage = ({
             lineItems: result.lineItems,
             subtotal: result.subtotal,
             taxRate: defaultTaxRate,
+            taxMode,
+            discountAmount: normalizedDiscount,
+            taxableAmount,
             taxAmount: result.taxAmount,
+            cgstAmount,
+            sgstAmount,
+            igstAmount,
             totalAmount: result.totalAmount,
             notes,
             billedBy,
@@ -1100,9 +1132,24 @@ export const CashRegisterPage = ({
             )}
           </div>
 
-          <div className="mt-3 shrink-0 rounded-2xl border border-brand-30 bg-brand-10 p-3 text-white">
-            <div className="flex justify-between text-xs"><span>Subtotal</span><strong>{formatCurrency(subtotal)}</strong></div>
-            <div className="mt-1.5 flex justify-between text-xs"><span>GST estimate ({defaultTaxRate}%)</span><strong>{formatCurrency(taxAmount)}</strong></div>
+          <div className="dashboard-invoice-total mt-3 shrink-0 rounded-2xl border border-brand-30 bg-brand-10 p-3 text-white">
+            <div className="grid grid-cols-2 gap-2">
+              <label className="text-[11px] font-semibold uppercase tracking-wide text-white/75">
+                GST mode
+                <select value={taxMode} onChange={(event) => setTaxMode(event.target.value as GstTaxMode)} className="mt-1 w-full rounded-xl border border-white/20 bg-white/10 px-2 py-2 text-xs text-white outline-none">
+                  <option value="intra_state" className="text-brand-dark">CGST + SGST</option>
+                  <option value="inter_state" className="text-brand-dark">IGST</option>
+                  <option value="no_gst" className="text-brand-dark">No GST</option>
+                </select>
+              </label>
+              <label className="text-[11px] font-semibold uppercase tracking-wide text-white/75">
+                Discount
+                <input type="number" min="0" step="0.01" value={discountAmount} onChange={(event) => setDiscountAmount(event.target.value)} className="mt-1 w-full rounded-xl border border-white/20 bg-white/10 px-2 py-2 text-xs text-white outline-none" />
+              </label>
+            </div>
+            <div className="mt-3 flex justify-between text-xs"><span>Subtotal</span><strong>{formatCurrency(subtotal)}</strong></div>
+            {normalizedDiscount > 0 ? <div className="mt-1.5 flex justify-between text-xs"><span>Discount</span><strong>-{formatCurrency(normalizedDiscount)}</strong></div> : null}
+            <div className="mt-1.5 flex justify-between text-xs"><span>{taxMode === 'intra_state' ? 'CGST + SGST' : taxMode === 'inter_state' ? 'IGST' : 'GST'} ({taxMode === 'no_gst' ? 0 : defaultTaxRate}%)</span><strong>{formatCurrency(taxAmount)}</strong></div>
             <div className="mt-2 flex justify-between border-t border-white/20 pt-2 text-lg font-semibold"><span>Total</span><strong>{formatCurrency(totalAmount)}</strong></div>
           </div>
 
@@ -1290,7 +1337,7 @@ export const CashRegisterPage = ({
         </div>
       )}
 
-      <SalesInvoiceDetailModal open={!!selectedInvoice} invoice={selectedInvoice} companyName={companyName} businessProfile={businessProfile} onClose={() => setSelectedInvoice(null)} />
+      <SalesInvoiceDetailModal open={!!selectedInvoice} invoice={selectedInvoice} companyName={companyName} businessProfile={businessProfile} onClose={() => setSelectedInvoice(null)} onVoid={onVoidInvoice} />
     </>
   );
 };

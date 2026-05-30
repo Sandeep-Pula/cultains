@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BriefcaseBusiness, CalendarClock, Mail, Phone, Trash2, X } from 'lucide-react';
-import type { CustomerProject, FinanceEntry, SalesInvoice, TeamMember, TeamRole, TaskItem, WorkspaceProfile } from '../types';
+import type { CustomerProject, FinanceEntry, SalesInvoice, StaffPermission, TeamMember, TeamRole, TaskItem, WorkspaceProfile } from '../types';
 import { SalaryPaycheckDetailModal } from './SalaryPaycheckDetailModal';
 import { accessControlledViews, formatCurrency, formatDateTime, genericTeamRoleSuggestions, relativeDate, viewTitles } from '../utils';
+
+const permissionOptions: StaffPermission[] = ['view', 'create', 'edit', 'delete', 'approve', 'export', 'refund'];
 
 type TeamMemberDrawerProps = {
   member: TeamMember | null;
@@ -308,6 +310,27 @@ export const TeamMemberDrawer = ({
                         }
                       />
                       <span>{viewTitles[view]}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="mt-6 text-sm font-semibold text-brand-dark">Action permissions</div>
+                <p className="mt-1 text-sm text-brand-dark/60">These permissions are enforced for staff workspace writes.</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {permissionOptions.map((permission) => (
+                    <label key={permission} className="flex items-center gap-3 rounded-2xl border border-brand-30 bg-brand-60/35 px-4 py-3 text-sm capitalize text-brand-dark">
+                      <input
+                        type="checkbox"
+                        checked={(member.permissions ?? []).includes(permission)}
+                        onChange={(event) =>
+                          handleFieldSave(
+                            'permissions',
+                            event.target.checked
+                              ? [...(member.permissions ?? []), permission]
+                              : (member.permissions ?? []).filter((item) => item !== permission),
+                          )
+                        }
+                      />
+                      <span>{permission}</span>
                     </label>
                   ))}
                 </div>

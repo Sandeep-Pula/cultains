@@ -21,6 +21,16 @@ type InventoryFormPayload = Pick<
   | 'storageLocation'
   | 'supplierName'
   | 'supplierPhone'
+  | 'supplierGstin'
+  | 'hsnSac'
+  | 'size'
+  | 'color'
+  | 'variantLabel'
+  | 'branchId'
+  | 'damagedStock'
+  | 'purchaseOrderNumber'
+  | 'goodsReceiptNumber'
+  | 'physicalCount'
   | 'notes'
 >;
 
@@ -62,6 +72,16 @@ const initialState = {
   storageLocation: '',
   supplierName: '',
   supplierPhone: '',
+  supplierGstin: '',
+  hsnSac: '',
+  size: '',
+  color: '',
+  variantLabel: '',
+  branchId: '',
+  damagedStock: '0',
+  purchaseOrderNumber: '',
+  goodsReceiptNumber: '',
+  physicalCount: '0',
   notes: '',
 };
 
@@ -81,6 +101,16 @@ const toFormState = (item?: Partial<InventoryItem> | null) => ({
   storageLocation: item?.storageLocation ?? initialState.storageLocation,
   supplierName: item?.supplierName ?? initialState.supplierName,
   supplierPhone: item?.supplierPhone ?? initialState.supplierPhone,
+  supplierGstin: item?.supplierGstin ?? initialState.supplierGstin,
+  hsnSac: item?.hsnSac ?? initialState.hsnSac,
+  size: item?.size ?? initialState.size,
+  color: item?.color ?? initialState.color,
+  variantLabel: item?.variantLabel ?? initialState.variantLabel,
+  branchId: item?.branchId ?? initialState.branchId,
+  damagedStock: String(item?.damagedStock ?? initialState.damagedStock),
+  purchaseOrderNumber: item?.purchaseOrderNumber ?? initialState.purchaseOrderNumber,
+  goodsReceiptNumber: item?.goodsReceiptNumber ?? initialState.goodsReceiptNumber,
+  physicalCount: String(item?.physicalCount ?? item?.currentStock ?? initialState.physicalCount),
   notes: item?.notes ?? initialState.notes,
 });
 
@@ -165,7 +195,7 @@ export const AddInventoryItemModal = ({
   }, [categoryQuery]);
 
   const setNumberField = (
-    field: 'currentStock' | 'reservedStock' | 'minimumStock' | 'reorderQuantity' | 'costPerUnit' | 'sellingPrice',
+    field: 'currentStock' | 'reservedStock' | 'minimumStock' | 'reorderQuantity' | 'costPerUnit' | 'sellingPrice' | 'damagedStock' | 'physicalCount',
     value: string,
   ) => {
     if (!/^\d*$/.test(value)) return;
@@ -184,6 +214,8 @@ export const AddInventoryItemModal = ({
       reorderQuantity: Number(form.reorderQuantity || '0'),
       costPerUnit: Number(form.costPerUnit || '0'),
       sellingPrice: Number(form.sellingPrice || '0'),
+      damagedStock: Number(form.damagedStock || '0'),
+      physicalCount: Number(form.physicalCount || '0'),
       barcodeValue: form.barcodeValue.trim(),
       itemCode: form.itemCode.trim() || form.sku.trim(),
       storageLocation: form.storageLocation.trim() || 'Main warehouse',
@@ -384,6 +416,14 @@ export const AddInventoryItemModal = ({
               ['Storage location', 'storageLocation'],
               ['Supplier name', 'supplierName'],
               ['Supplier phone', 'supplierPhone'],
+              ['Supplier GSTIN', 'supplierGstin'],
+              ['HSN / SAC', 'hsnSac'],
+              ['Size', 'size'],
+              ['Color', 'color'],
+              ['Variant label', 'variantLabel'],
+              ['Branch', 'branchId'],
+              ['Purchase order', 'purchaseOrderNumber'],
+              ['Goods receipt', 'goodsReceiptNumber'],
             ].map(([label, key]) => (
               <label key={key} className="grid gap-2 text-sm text-brand-dark/80">
                 <span className="flex items-center gap-2 font-medium text-brand-dark">
@@ -470,6 +510,8 @@ export const AddInventoryItemModal = ({
               ['Reorder quantity', 'reorderQuantity'],
               ['Cost per unit', 'costPerUnit'],
               ['Selling price', 'sellingPrice'],
+              ['Damaged stock', 'damagedStock'],
+              ['Physical count', 'physicalCount'],
             ].map(([label, key]) => (
               <label key={key} className="grid gap-2 text-sm text-brand-dark/80">
                 <span className="flex items-center gap-2 font-medium text-brand-dark">
@@ -482,7 +524,7 @@ export const AddInventoryItemModal = ({
                   value={form[key as keyof typeof form] as string}
                   onChange={(event) =>
                     setNumberField(
-                      key as 'currentStock' | 'reservedStock' | 'minimumStock' | 'reorderQuantity' | 'costPerUnit' | 'sellingPrice',
+                      key as 'currentStock' | 'reservedStock' | 'minimumStock' | 'reorderQuantity' | 'costPerUnit' | 'sellingPrice' | 'damagedStock' | 'physicalCount',
                       event.target.value,
                     )
                   }

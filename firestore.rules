@@ -16,18 +16,10 @@ service cloud.firestore {
 
     function isSuperAdmin() {
       return isSignedIn() &&
+        request.auth.token.email != null &&
         (
-          (
-            request.auth.token.email != null &&
-            (
-              request.auth.token.email == 'superadmin@pulalabs.com' ||
-              request.auth.token.email == 'superadmin@aivyapari.com'
-            )
-          ) ||
-          (
-            exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountType == 'super_admin'
-          )
+          request.auth.token.email == 'superadmin@pulalabs.com' ||
+          request.auth.token.email == 'superadmin@aivyapari.com'
         );
     }
 
@@ -40,17 +32,48 @@ service cloud.firestore {
 
     function managesTeamAccount(userId) {
       return isSignedIn() && (
-        (request.resource != null && request.resource.data.workspaceOwnerId == request.auth.uid) ||
-        (resource != null && resource.data.workspaceOwnerId == request.auth.uid)
+        (
+          request.resource != null &&
+          request.resource.data.accountType == 'team_member' &&
+          request.resource.data.workspaceOwnerId == request.auth.uid
+        ) ||
+        (
+          resource != null &&
+          resource.data.accountType == 'team_member' &&
+          resource.data.workspaceOwnerId == request.auth.uid
+        )
       );
+    }
+
+    function hasWorkspacePermission(userId, permission) {
+      return isWorkspaceMember(userId) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny([permission]);
+    }
+
+    function createsOwnerProfile(userId) {
+      return isOwnUserDocument(userId) &&
+        request.resource.data.accountType == 'owner' &&
+        request.resource.data.workspaceOwnerId == userId;
+    }
+
+    function preservesOwnIdentity() {
+      return request.resource.data.get('accountType', 'owner') == resource.data.get('accountType', 'owner') &&
+        request.resource.data.get('workspaceOwnerId', '') == resource.data.get('workspaceOwnerId', '') &&
+        request.resource.data.get('linkedTeamMemberId', '') == resource.data.get('linkedTeamMemberId', '');
     }
 
     match /users/{userId} {
       allow read: if isSuperAdmin() || isOwner(userId) || isWorkspaceMember(userId) || managesTeamAccount(userId);
-      allow write: if isSuperAdmin() || isOwnUserDocument(userId) || managesTeamAccount(userId);
+      allow create: if isSuperAdmin() || createsOwnerProfile(userId) || managesTeamAccount(userId);
+      allow update: if isSuperAdmin() || (isOwnUserDocument(userId) && preservesOwnIdentity()) || managesTeamAccount(userId);
+      allow delete: if isSuperAdmin();
 
       match /{document=**} {
-        allow read, write: if isSuperAdmin() || isOwner(userId) || isWorkspaceMember(userId);
+        allow read: if isSuperAdmin() || isOwner(userId) || isWorkspaceMember(userId);
+        allow create: if isSuperAdmin() || isOwner(userId) || hasWorkspacePermission(userId, 'create');
+        allow update: if isSuperAdmin() || isOwner(userId) || hasWorkspacePermission(userId, 'edit');
+        allow delete: if isSuperAdmin() || isOwner(userId) || hasWorkspacePermission(userId, 'delete');
       }
     }
 
@@ -62,12 +85,12 @@ service cloud.firestore {
 
       allow create: if isSuperAdmin() || (
         request.resource.data.ownerUserId != null &&
-        (isOwner(request.resource.data.ownerUserId) || isWorkspaceMember(request.resource.data.ownerUserId))
+        (isOwner(request.resource.data.ownerUserId) || hasWorkspacePermission(request.resource.data.ownerUserId, 'create'))
       );
 
       allow update: if isSuperAdmin() || (
         resource.data.ownerUserId != null &&
-        (isOwner(resource.data.ownerUserId) || isWorkspaceMember(resource.data.ownerUserId))
+        (isOwner(resource.data.ownerUserId) || hasWorkspacePermission(resource.data.ownerUserId, 'edit'))
       );
 
       allow delete: if isSuperAdmin();

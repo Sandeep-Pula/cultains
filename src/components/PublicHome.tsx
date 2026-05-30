@@ -6,15 +6,19 @@ import {
   Boxes,
   BrainCircuit,
   CheckCircle2,
+  FileText,
   Globe,
   Handshake,
   Mail,
   MapPin,
+  ReceiptText,
+  ShoppingBag,
   Users,
 } from 'lucide-react';
 import { AuthCard } from './AuthCard';
 import { AppInstallSection } from './AppInstallSection';
 import { ProductWordmark } from './BrandWordmark';
+import { PublicNarrativeDemo } from './PublicNarrativeDemo';
 import styles from './PublicHome.module.css';
 
 type PublicHomeProps = {
@@ -24,43 +28,55 @@ type PublicHomeProps = {
 
 const modules = [
   {
-    title: 'CRM and customers',
-    description: 'Track leads, customers, follow-ups, notes, and ownership in one workspace.',
+    title: 'Manage customers and sales',
+    description: 'Save customer details, track leads, schedule follow-ups, prepare quotations, and monitor deals until payment.',
     icon: <Users size={22} />,
   },
   {
-    title: 'Billing and finance',
-    description: 'Create invoices, watch dues, and keep ledger visibility close to sales activity.',
+    title: 'Create GST bills and quotations',
+    description: 'Generate Indian GST invoices, share quotations before a sale, track pending payments, and keep billing history organized.',
     icon: <BadgeIndianRupee size={22} />,
   },
   {
-    title: 'Inventory and operations',
-    description: 'Manage products, stock, reorder signals, barcode workflows, and daily execution.',
+    title: 'Control products and stock',
+    description: 'Track item variants, barcodes, available stock, low-stock alerts, damaged items, suppliers, and purchase references.',
     icon: <Boxes size={22} />,
   },
   {
-    title: 'AI tools hub',
-    description: 'Use business-focused AI tools without separating them from real operational work.',
-    icon: <Bot size={22} />,
+    title: 'Run the billing counter',
+    description: 'Use a simple cash register for daily sales, discounts, GST billing, invoice reprints, and voided bill records.',
+    icon: <ShoppingBag size={22} />,
+  },
+  {
+    title: 'Track staff and permissions',
+    description: 'Give team members their own login, choose which areas they can access, and control the actions they are allowed to perform.',
+    icon: <Users size={22} />,
+  },
+  {
+    title: 'See finance and business activity',
+    description: 'Review sales, dues, ledger entries, Tally-ready exports, tasks, operations, and owner-level business visibility.',
+    icon: <ReceiptText size={22} />,
   },
 ];
 
 const operatingAdvantages = [
-  'One operating command center',
-  'Business data connected to daily work',
-  'AI tools inside the same workspace',
-  'Owner visibility across every module',
+  'Know which customers need a follow-up today',
+  'See bills, dues, and stock without checking multiple registers',
+  'Give staff access without giving away full control',
+  'Review the business from your phone, tablet, or computer',
 ];
 
 const dashboardServices = [
-  'Customers and CRM',
-  'Sales overview',
-  'Billing',
-  'Inventory',
-  'Team management',
-  'Account ledger',
-  'Operations',
-  'AI tools',
+  'Customer records and follow-ups',
+  'Leads, deals, and sales pipeline',
+  'Pre-sale quotations',
+  'GST invoices with CGST, SGST, and IGST',
+  'Retail billing and cash register',
+  'Inventory, variants, and barcodes',
+  'Staff logins and permissions',
+  'Ledger visibility and Tally export',
+  'Daily tasks and operations',
+  'Business-focused AI tools',
 ];
 
 const fadeUp = {
@@ -95,11 +111,17 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
           >
-            <h1 id="home-title">Run the business from one operating platform.</h1>
+            <span className={styles.heroEyebrow}>Business software for Indian shops and growing teams</span>
+            <h1 id="home-title">Manage customers, bills, stock, and staff from one place.</h1>
             <p>
-              <ProductWordmark /> brings customers, billing, inventory, team work, finance, operations, and AI tools
-              into one clean workspace for business owners and teams.
+              <ProductWordmark /> helps business owners handle daily sales, GST invoices, quotations, customer
+              follow-ups, inventory, team access, and finance visibility without switching between notebooks,
+              spreadsheets, and separate apps.
             </p>
+            <div className={styles.heroActions}>
+              <a href="#demo" className={styles.primaryAction}>Watch PULA Biz in action</a>
+              <a href="#contact" className={styles.secondaryAction}>Talk to us</a>
+            </div>
           </motion.div>
 
           <motion.div
@@ -119,12 +141,22 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
                   className={styles.businessLogo}
                 />
                 <p>
-                  A command center for daily business work: customers, invoices, stock, teams, operations, and AI tools.
+                  One practical workspace for the work your business handles every day.
                 </p>
+                <div className={styles.dailyWorkList}>
+                  {[
+                    'Prepare quotations and GST invoices',
+                    'Track customers, leads, and follow-ups',
+                    'Monitor stock, variants, and barcodes',
+                    'Run counter sales and review dues',
+                  ].map((item) => (
+                    <span key={item}><CheckCircle2 size={16} />{item}</span>
+                  ))}
+                </div>
                 <div className={styles.productMetrics} aria-label="PULA Biz operating coverage">
-                  <span>Indian market friendly</span>
-                  <span>Owner driven dashboards</span>
-                  <span>24x7 support</span>
+                  <span>Built for Indian GST billing</span>
+                  <span>Useful for retail and service businesses</span>
+                  <span>Works across web and devices</span>
                 </div>
               </div>
             )}
@@ -132,16 +164,19 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
         </div>
       </section>
 
+      <PublicNarrativeDemo />
+
       <section id="product" className={styles.productSection} aria-labelledby="product-title">
         <div className={styles.container}>
           <motion.div className={styles.sectionHeader} {...fadeUp}>
             <span className={styles.eyebrow}>
               <ProductWordmark className={styles.inlineProductWordmark} />
             </span>
-            <h2 id="product-title">One operating layer for the services your dashboard already supports.</h2>
+            <h2 id="product-title">What can your business do with PULA Biz?</h2>
             <p>
-              Biz starts with the work companies do every day. It gives owners a cleaner way to see what is
-              happening across customers, sales, billing, stock, team activity, and AI assistance.
+              PULA Biz combines the daily work that usually gets split across paper registers, WhatsApp messages,
+              spreadsheets, billing tools, and memory. Start with the services your business needs today and keep
+              the information connected as you grow.
             </p>
           </motion.div>
 
@@ -166,11 +201,11 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
         <div className={styles.container}>
           <div className={styles.labGrid}>
             <motion.div className={styles.labCopy} {...fadeUp}>
-              <span className={styles.eyebrow}>Why Biz</span>
-              <h2 id="tools-title">Business software should connect the work, not scatter it into separate tools.</h2>
+              <span className={styles.eyebrow}>Why business owners use it</span>
+              <h2 id="tools-title">Spend less time searching for information. See what needs attention.</h2>
               <p>
-                PULA Biz keeps the daily operating layer together so owners can see customers, stock, invoices,
-                finance, teams, and AI assistance in the same environment.
+                When customer details, bills, stock, staff activity, and pending payments live in different places,
+                owners have to ask around before making a decision. PULA Biz brings that day-to-day picture together.
               </p>
             </motion.div>
 
@@ -189,8 +224,12 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
       <section id="business-os" className={styles.servicesSection} aria-labelledby="coverage-title">
         <div className={styles.container}>
           <motion.div className={styles.sectionHeader} {...fadeUp}>
-            <span className={styles.eyebrow}>What it covers</span>
-            <h2 id="coverage-title">Built around the real dashboard services businesses need.</h2>
+            <span className={styles.eyebrow}>Services included</span>
+            <h2 id="coverage-title">Choose the tools that match the way your business works.</h2>
+            <p>
+              Whether you run a retail shop, a service business, or a growing team, PULA Biz gives you a shared place
+              to manage sales and operations clearly.
+            </p>
           </motion.div>
 
           <div className={styles.serviceGrid}>
@@ -205,6 +244,21 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
       </section>
 
       <AppInstallSection />
+
+      <section className={styles.contactStrip} aria-labelledby="contact-strip-title">
+        <div className={styles.container}>
+          <div className={styles.contactStripInner}>
+            <div>
+              <span className={styles.eyebrow}>Need a simple walkthrough?</span>
+              <h2 id="contact-strip-title">Tell us how your business works. We will show where PULA Biz fits.</h2>
+            </div>
+            <a href="mailto:contact@pulabiz.com?subject=PULA%20Biz%20product%20walkthrough" className={styles.primaryAction}>
+              <FileText size={18} />
+              Request a walkthrough
+            </a>
+          </div>
+        </div>
+      </section>
 
       <footer id="contact" className={styles.footer}>
         <div className={styles.container}>

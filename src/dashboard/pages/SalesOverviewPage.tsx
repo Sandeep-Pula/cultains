@@ -51,7 +51,7 @@ const todayInvoices = (salesInvoices: SalesInvoice[]) => {
   const end = endOfDay(today).getTime();
 
   return salesInvoices.filter((invoice) => {
-    if (invoice.status === 'draft') return false;
+    if (invoice.status !== 'finalized') return false;
     const createdAt = new Date(invoice.createdAt).getTime();
     return createdAt >= start && createdAt <= end;
   });
@@ -66,7 +66,7 @@ const summarizeInvoices = (salesInvoices: SalesInvoice[]) => ({
 });
 
 const filterInvoicesByRange = (salesInvoices: SalesInvoice[], range: InvoiceRange) => {
-  const finalized = salesInvoices.filter((invoice) => invoice.status !== 'draft');
+  const finalized = salesInvoices.filter((invoice) => invoice.status === 'finalized');
   if (range === 'all') return finalized;
 
   const today = new Date();
@@ -177,7 +177,7 @@ export const SalesOverviewPage = ({
   const pendingInvoices = useMemo(
     () =>
       data.salesInvoices
-        .filter((invoice) => invoice.status !== 'draft' && invoice.paymentStatus === 'pending')
+        .filter((invoice) => invoice.status === 'finalized' && invoice.paymentStatus === 'pending')
         .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()),
     [data.salesInvoices],
   );
@@ -206,7 +206,7 @@ export const SalesOverviewPage = ({
   const recentInvoices = useMemo(
     () =>
       data.salesInvoices
-        .filter((invoice) => invoice.status !== 'draft')
+        .filter((invoice) => invoice.status === 'finalized')
         .slice()
         .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
         .slice(0, 5),

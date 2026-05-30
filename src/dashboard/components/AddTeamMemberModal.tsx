@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { DashboardView, TeamMember, TeamRole } from '../types';
+import type { DashboardView, StaffPermission, TeamMember, TeamRole } from '../types';
 import type { WorkspaceBusinessConfig } from '../businessConfig';
 import { accessControlledViews, genericTeamRoleSuggestions, getInitials, viewTitles } from '../utils';
 
@@ -8,8 +8,10 @@ type AddTeamMemberModalProps = {
   existingTeam: TeamMember[];
   businessConfig: WorkspaceBusinessConfig;
   onClose: () => void;
-  onSubmit: (payload: Pick<TeamMember, 'name' | 'role' | 'email' | 'phone' | 'status' | 'allowedViews' | 'loginEnabled' | 'loginEmail'> & { password?: string }) => void;
+  onSubmit: (payload: Pick<TeamMember, 'name' | 'role' | 'email' | 'phone' | 'status' | 'allowedViews' | 'permissions' | 'loginEnabled' | 'loginEmail'> & { password?: string }) => void;
 };
+
+const permissionOptions: StaffPermission[] = ['view', 'create', 'edit', 'delete', 'approve', 'export', 'refund'];
 
 const initialState: {
   name: string;
@@ -18,6 +20,7 @@ const initialState: {
   phone: string;
   status: TeamMember['status'];
   allowedViews: DashboardView[];
+  permissions: StaffPermission[];
   loginEnabled: boolean;
   loginEmail: string;
   password: string;
@@ -28,6 +31,7 @@ const initialState: {
   phone: '',
   status: 'online' as const,
   allowedViews: ['sales-overview', 'billing', 'barcode-desk'],
+  permissions: ['view', 'create', 'edit'],
   loginEnabled: false,
   loginEmail: '',
   password: '',
@@ -160,6 +164,32 @@ export const AddTeamMemberModal = ({ open, existingTeam, businessConfig, onClose
                       }
                     />
                     <span>{viewTitles[view]}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-3 rounded-3xl border border-brand-30 bg-brand-60/30 p-4">
+              <div>
+                <div className="font-medium text-brand-dark">Action permissions</div>
+                <div className="mt-1 text-xs text-brand-dark/60">Control what this teammate can change, approve, export, or refund.</div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {permissionOptions.map((permission) => (
+                  <label key={permission} className="flex items-center gap-3 rounded-2xl border border-brand-30 bg-white px-3 py-2 text-sm capitalize text-brand-dark">
+                    <input
+                      type="checkbox"
+                      checked={form.permissions.includes(permission)}
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          permissions: event.target.checked
+                            ? [...current.permissions, permission]
+                            : current.permissions.filter((item) => item !== permission),
+                        }))
+                      }
+                    />
+                    <span>{permission}</span>
                   </label>
                 ))}
               </div>

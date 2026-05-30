@@ -45,6 +45,16 @@ type InventoryPageProps = {
     | 'storageLocation'
     | 'supplierName'
     | 'supplierPhone'
+    | 'supplierGstin'
+    | 'hsnSac'
+    | 'size'
+    | 'color'
+    | 'variantLabel'
+    | 'branchId'
+    | 'damagedStock'
+    | 'purchaseOrderNumber'
+    | 'goodsReceiptNumber'
+    | 'physicalCount'
     | 'notes'
   >) => Promise<void>;
   onUpdateItem: (itemId: string, patch: Partial<InventoryItem>) => Promise<void>;

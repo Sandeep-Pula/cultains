@@ -30,6 +30,7 @@ import type {
   DashboardData,
   DashboardView,
   FinanceEntry,
+  GstTaxMode,
   InventoryItem,
   InvoicePaymentMethod,
   InvoicePaymentStatus,
@@ -99,6 +100,7 @@ export const DashboardApp = () => {
     if (typeof window === 'undefined') return false;
     return window.localStorage.getItem('dashboard-sidebar-collapsed') === 'true';
   });
+  const [darkMode, setDarkMode] = useState(() => window.localStorage.getItem('dashboard-theme') === 'dark');
   const [archiveCandidateId, setArchiveCandidateId] = useState<string | null>(null);
   const [deleteCandidateId, setDeleteCandidateId] = useState<string | null>(null);
   const [addCustomerOpen, setAddCustomerOpen] = useState(false);
@@ -112,6 +114,14 @@ export const DashboardApp = () => {
   const pushToast = useCallback((title: string, description?: string) => {
     setToasts((current) => [...current, { id: createId(), title, description }]);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.dashboardTheme = darkMode ? 'dark' : 'light';
+    window.localStorage.setItem('dashboard-theme', darkMode ? 'dark' : 'light');
+    return () => {
+      delete document.documentElement.dataset.dashboardTheme;
+    };
+  }, [darkMode]);
 
   useEffect(() => {
     if (!auth) {
@@ -613,7 +623,7 @@ export const DashboardApp = () => {
   };
 
   const handleAddTeamMember = async (
-    payload: Pick<TeamMember, 'name' | 'role' | 'email' | 'phone' | 'status' | 'allowedViews' | 'loginEnabled' | 'loginEmail'> & { password?: string },
+    payload: Pick<TeamMember, 'name' | 'role' | 'email' | 'phone' | 'status' | 'allowedViews' | 'permissions' | 'loginEnabled' | 'loginEmail'> & { password?: string },
   ) => {
     if (!user || !data) return;
     if (!isOwner) {
@@ -652,6 +662,7 @@ export const DashboardApp = () => {
             authUid,
             loginEmail,
             allowedViews: payload.allowedViews.length ? payload.allowedViews : ['billing'],
+            permissions: payload.permissions,
             loginEnabled: payload.loginEnabled,
           },
         );
@@ -716,6 +727,7 @@ export const DashboardApp = () => {
           authUid: createdUser.uid,
           loginEmail,
           allowedViews: member.allowedViews,
+          permissions: member.permissions,
           loginEnabled: true,
         },
       );
@@ -809,6 +821,16 @@ export const DashboardApp = () => {
       | 'storageLocation'
       | 'supplierName'
       | 'supplierPhone'
+      | 'supplierGstin'
+      | 'hsnSac'
+      | 'size'
+      | 'color'
+      | 'variantLabel'
+      | 'branchId'
+      | 'damagedStock'
+      | 'purchaseOrderNumber'
+      | 'goodsReceiptNumber'
+      | 'physicalCount'
       | 'notes'
     >,
   ) => {
@@ -884,6 +906,11 @@ export const DashboardApp = () => {
     paymentStatus: InvoicePaymentStatus;
     paymentMethod: InvoicePaymentMethod;
     taxRate: number;
+    taxMode?: GstTaxMode;
+    documentPrefix?: string;
+    customerGstin?: string;
+    placeOfSupply?: string;
+    discountAmount?: number;
     notes: string;
     billedBy: string;
     lineItems: SalesInvoiceLineItem[];
@@ -908,6 +935,11 @@ export const DashboardApp = () => {
     paymentStatus: InvoicePaymentStatus;
     paymentMethod: InvoicePaymentMethod;
     taxRate: number;
+    taxMode?: GstTaxMode;
+    documentPrefix?: string;
+    customerGstin?: string;
+    placeOfSupply?: string;
+    discountAmount?: number;
     notes: string;
     billedBy: string;
     lineItems: SalesInvoiceLineItem[];
@@ -980,6 +1012,12 @@ export const DashboardApp = () => {
     paymentStatus: InvoicePaymentStatus;
     paymentMethod: InvoicePaymentMethod;
     taxRate: number;
+    taxMode?: GstTaxMode;
+    documentPrefix?: string;
+    customerGstin?: string;
+    placeOfSupply?: string;
+    discountAmount?: number;
+    documentType?: 'invoice' | 'quotation';
     notes: string;
     billedBy: string;
     lineItems: SalesInvoiceLineItem[];
@@ -1008,6 +1046,17 @@ export const DashboardApp = () => {
       pushToast('Draft removed', 'The invoice draft was deleted.');
     } catch (nextError) {
       handleMutationError(nextError, 'Unable to remove this invoice draft.');
+      throw nextError;
+    }
+  };
+
+  const handleVoidInvoice = async (invoiceId: string, reason: string) => {
+    if (!user) throw new Error('Please log in again before voiding an invoice.');
+    try {
+      await dashboardService.voidSalesInvoice(workspaceUserId, invoiceId, data?.userName || user.email || 'Authorized user', reason);
+      pushToast('Invoice voided', 'The document remains in history and stock was restored where applicable.');
+    } catch (nextError) {
+      handleMutationError(nextError, 'Unable to void this invoice.');
       throw nextError;
     }
   };
@@ -1344,6 +1393,8 @@ export const DashboardApp = () => {
           onSearchResultSelect={handleSearchResultSelect}
           onOpenSidebar={() => setSidebarOpen(true)}
           onOpenAiva={() => setAivaOpen(true)}
+          darkMode={darkMode}
+          onToggleDarkMode={() => setDarkMode((current) => !current)}
           onToggleDesktopSidebar={() => setDesktopSidebarCollapsed((current) => !current)}
           desktopSidebarCollapsed={desktopSidebarCollapsed}
           onLogout={handleLogout}
@@ -1455,6 +1506,7 @@ export const DashboardApp = () => {
               onFinalizeSale={handleFinalizeCashRegisterSale}
               onSaveDraft={handleSaveInvoiceDraft}
               onDeleteDraft={handleDeleteInvoiceDraft}
+              onVoidInvoice={handleVoidInvoice}
               onSaveCategorySuggestion={handleSaveCashRegisterCategorySuggestion}
             />
           ) : activeView === 'email' ? (
@@ -1481,6 +1533,7 @@ export const DashboardApp = () => {
               onFinalizeSale={handleFinalizeBarcodeSale}
               onSaveDraft={handleSaveInvoiceDraft}
               onDeleteDraft={handleDeleteInvoiceDraft}
+              onVoidInvoice={handleVoidInvoice}
             />
           ) : activeView === 'account-ledger' ? (
             <AccountLedgerPage

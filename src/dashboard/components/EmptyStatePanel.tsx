@@ -22,7 +22,7 @@ export const EmptyStatePanel = ({
   compact = false,
 }: EmptyStatePanelProps) => (
   <div
-    className={`rounded-3xl border border-dashed border-brand-30 bg-white/80 text-center ${
+    className={`dashboard-empty-state rounded-3xl border border-dashed border-brand-30 bg-white/80 text-center ${
       compact ? 'p-5' : 'p-8'
     }`}
   >

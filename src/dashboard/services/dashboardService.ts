@@ -30,6 +30,7 @@ import type {
   DashboardData,
   DeletedCustomerRecord,
   FinanceEntry,
+  GstTaxMode,
   InvoicePaymentMethod,
   InvoicePaymentStatus,
   InventoryProcurementStatus,
@@ -39,6 +40,7 @@ import type {
   RenderAsset,
   RenderRequest,
   SalesInvoice,
+  SalesDocumentType,
   SalesInvoiceLineItem,
   SupportMessage,
   SupportThread,
@@ -116,7 +118,7 @@ type CustomerCreatePayload = Pick<
   | 'notes'
 >;
 
-type TeamMemberPayload = Pick<TeamMember, 'name' | 'role' | 'email' | 'phone' | 'status' | 'allowedViews' | 'loginEnabled' | 'authUid' | 'loginEmail'>;
+type TeamMemberPayload = Pick<TeamMember, 'name' | 'role' | 'email' | 'phone' | 'status' | 'allowedViews' | 'permissions' | 'loginEnabled' | 'authUid' | 'loginEmail'>;
 
 const usersCollection = (userId: string, collectionName: string) =>
   collection(requireDb(), 'users', userId, collectionName);
@@ -141,6 +143,27 @@ const platformCouponsCollection = () => collection(requireDb(), 'platformCoupons
 const platformCouponDoc = (couponId: string) => doc(requireDb(), 'platformCoupons', couponId);
 
 const nowIso = () => new Date().toISOString();
+const calculateInvoiceTotals = (subtotal: number, discountAmount: number, taxRate: number, taxMode: GstTaxMode) => {
+  const normalizedDiscount = Math.min(Math.max(0, Number(discountAmount || 0)), subtotal);
+  const taxableAmount = Number((subtotal - normalizedDiscount).toFixed(2));
+  const taxAmount = taxMode === 'no_gst' ? 0 : Number(((taxableAmount * Number(taxRate || 0)) / 100).toFixed(2));
+  const cgstAmount = taxMode === 'intra_state' ? Number((taxAmount / 2).toFixed(2)) : 0;
+  const sgstAmount = taxMode === 'intra_state' ? Number((taxAmount - cgstAmount).toFixed(2)) : 0;
+  const igstAmount = taxMode === 'inter_state' ? taxAmount : 0;
+  return {
+    discountAmount: normalizedDiscount,
+    taxableAmount,
+    taxAmount,
+    cgstAmount,
+    sgstAmount,
+    igstAmount,
+    totalAmount: Number((taxableAmount + taxAmount).toFixed(2)),
+  };
+};
+const salesDocumentNumber = (userId: string, documentId: string, createdAt: string, type: SalesDocumentType, prefix?: string) => {
+  const normalizedPrefix = (prefix || (type === 'quotation' ? 'QUO' : 'INV')).trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '') || 'INV';
+  return buildInvoiceNumber(userId, documentId, createdAt).replace(/^INV-/, `${normalizedPrefix}-`);
+};
 const shortUserId = (userId: string) => userId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase() || userId.slice(0, 8).toUpperCase();
 const normalizeSubscriptionPlan = (plan?: string): SubscriptionPlan =>
   plan === 'focused' || plan === 'growth' || plan === 'business_pro' ? plan : 'freemium';
@@ -291,6 +314,10 @@ const defaultBillingDefaults: BillingDefaults = {
   printerDeviceName: '',
   printerPaperWidth: '80mm',
   networkPrinterAddress: '',
+  defaultTaxMode: 'intra_state',
+  defaultPlaceOfSupply: '',
+  invoicePrefix: 'INV',
+  quotationPrefix: 'QUO',
 };
 
 const getUserName = (user: User, preferredName?: string) =>
@@ -335,6 +362,10 @@ const buildWorkspaceProfile = (user: User, profile?: Partial<UserProfileDoc>): W
     printerDeviceName: profile?.billingDefaults?.printerDeviceName || '',
     printerPaperWidth: profile?.billingDefaults?.printerPaperWidth || defaultBillingDefaults.printerPaperWidth,
     networkPrinterAddress: profile?.billingDefaults?.networkPrinterAddress || '',
+    defaultTaxMode: profile?.billingDefaults?.defaultTaxMode || 'intra_state',
+    defaultPlaceOfSupply: profile?.billingDefaults?.defaultPlaceOfSupply || profile?.city?.trim() || '',
+    invoicePrefix: profile?.billingDefaults?.invoicePrefix?.trim() || 'INV',
+    quotationPrefix: profile?.billingDefaults?.quotationPrefix?.trim() || 'QUO',
   },
   workspaceOwnerId: profile?.workspaceOwnerId,
   linkedTeamMemberId: profile?.linkedTeamMemberId,
@@ -492,6 +523,13 @@ const normalizeCustomer = (
     renderQueue: (value?.renderQueue ?? []).map(normalizeRenderRequest),
     activities: (value?.activities ?? []).map(normalizeActivity),
     internalNotes: (value?.internalNotes ?? []).map(normalizeNote),
+    canonicalContactId: value?.canonicalContactId,
+    canonicalCompanyId: value?.canonicalCompanyId,
+    canonicalLeadId: value?.canonicalLeadId,
+    canonicalDealId: value?.canonicalDealId,
+    quotationIds: value?.quotationIds ?? [],
+    invoiceIds: value?.invoiceIds ?? [],
+    supportThreadIds: value?.supportThreadIds ?? [],
   };
 };
 
@@ -506,6 +544,7 @@ const normalizeTeamMember = (memberId: string, value: Partial<TeamMember> | unde
   workload: value?.workload ?? 0,
   status: value?.status || 'offline',
   allowedViews: filterDashboardViews(value?.allowedViews),
+  permissions: value?.permissions ?? ['view', 'create', 'edit'],
   loginEnabled: value?.loginEnabled ?? false,
   authUid: value?.authUid,
   loginEmail: value?.loginEmail || value?.email || '',
@@ -549,6 +588,17 @@ const normalizeInventoryItem = (itemId: string, value: Partial<InventoryItem> | 
   assignedProjectIds: value?.assignedProjectIds || [],
   clearanceReason: value?.clearanceReason || '',
   notes: value?.notes || '',
+  hsnSac: value?.hsnSac || '',
+  size: value?.size || '',
+  color: value?.color || '',
+  variantLabel: value?.variantLabel || '',
+  branchId: value?.branchId || 'main',
+  supplierGstin: value?.supplierGstin || '',
+  damagedStock: value?.damagedStock ?? 0,
+  purchaseOrderNumber: value?.purchaseOrderNumber || '',
+  goodsReceiptNumber: value?.goodsReceiptNumber || '',
+  physicalCount: value?.physicalCount,
+  lastPhysicalCountAt: value?.lastPhysicalCountAt,
 });
 
 const normalizeCashRegisterSize = (value: Partial<CashRegisterMenuSize> | undefined): CashRegisterMenuSize => ({
@@ -672,25 +722,44 @@ const normalizeSalesInvoiceLine = (value: Partial<SalesInvoiceLineItem> | undefi
   quantity: value?.quantity ?? 1,
   unitPrice: value?.unitPrice ?? 0,
   lineSubtotal: value?.lineSubtotal ?? 0,
+  hsnSac: value?.hsnSac || '',
+  discountAmount: value?.discountAmount ?? 0,
 });
 
 const normalizeSalesInvoice = (invoiceId: string, value: Partial<SalesInvoice> | undefined): SalesInvoice => ({
   id: invoiceId,
   invoiceNumber: value?.invoiceNumber || `INV-${invoiceId.slice(0, 8).toUpperCase()}`,
   status: value?.status || 'finalized',
+  documentType: value?.documentType || (value?.status === 'quotation' ? 'quotation' : 'invoice'),
   businessBarcodeKey: value?.businessBarcodeKey || '',
   customerName: value?.customerName || 'Walk-in customer',
+  customerGstin: value?.customerGstin || '',
+  placeOfSupply: value?.placeOfSupply || '',
+  taxMode: value?.taxMode || 'inter_state',
   paymentStatus: value?.paymentStatus || 'pending',
   paymentMethod: value?.paymentMethod || 'cash',
   lineItems: (value?.lineItems ?? []).map(normalizeSalesInvoiceLine),
   subtotal: value?.subtotal ?? 0,
+  discountAmount: value?.discountAmount ?? 0,
+  taxableAmount: value?.taxableAmount ?? value?.subtotal ?? 0,
   taxRate: value?.taxRate ?? 0,
   taxAmount: value?.taxAmount ?? 0,
+  cgstAmount: value?.cgstAmount ?? 0,
+  sgstAmount: value?.sgstAmount ?? 0,
+  igstAmount: value?.igstAmount ?? value?.taxAmount ?? 0,
   totalAmount: value?.totalAmount ?? 0,
   notes: value?.notes || '',
   billedBy: value?.billedBy || 'System',
   createdAt: value?.createdAt || nowIso(),
   updatedAt: value?.updatedAt || value?.createdAt || nowIso(),
+  validUntil: value?.validUntil,
+  voidedAt: value?.voidedAt,
+  voidedBy: value?.voidedBy,
+  voidReason: value?.voidReason,
+  originalInvoiceId: value?.originalInvoiceId,
+  printCount: value?.printCount ?? 0,
+  lastPrintedAt: value?.lastPrintedAt,
+  shiftId: value?.shiftId,
 });
 
 const normalizeSupportMessage = (value: Partial<SupportMessage> | undefined): SupportMessage => ({
@@ -914,7 +983,11 @@ export const dashboardService = {
         printerConnectionType: data.billingDefaults?.printerConnectionType || fallbackProfile.billingDefaults?.printerConnectionType || defaultBillingDefaults.printerConnectionType,
         printerDeviceName: data.billingDefaults?.printerDeviceName || fallbackProfile.billingDefaults?.printerDeviceName || '',
         printerPaperWidth: data.billingDefaults?.printerPaperWidth || fallbackProfile.billingDefaults?.printerPaperWidth || defaultBillingDefaults.printerPaperWidth,
-        networkPrinterAddress: data.billingDefaults?.networkPrinterAddress || fallbackProfile.billingDefaults?.networkPrinterAddress || '',
+      networkPrinterAddress: data.billingDefaults?.networkPrinterAddress || fallbackProfile.billingDefaults?.networkPrinterAddress || '',
+      defaultTaxMode: data.billingDefaults?.defaultTaxMode || fallbackProfile.billingDefaults?.defaultTaxMode || 'intra_state',
+      defaultPlaceOfSupply: data.billingDefaults?.defaultPlaceOfSupply || fallbackProfile.billingDefaults?.defaultPlaceOfSupply || data.city?.trim() || '',
+      invoicePrefix: data.billingDefaults?.invoicePrefix?.trim() || fallbackProfile.billingDefaults?.invoicePrefix || 'INV',
+      quotationPrefix: data.billingDefaults?.quotationPrefix?.trim() || fallbackProfile.billingDefaults?.quotationPrefix || 'QUO',
       },
       workspaceOwnerId: data.workspaceOwnerId || fallbackProfile.workspaceOwnerId,
       linkedTeamMemberId: data.linkedTeamMemberId || fallbackProfile.linkedTeamMemberId,
@@ -1637,18 +1710,48 @@ export const dashboardService = {
 
   async addCustomer(user: User, payload: CustomerCreatePayload, actorName: string, workspaceUserId: string = user.uid) {
     const ref = doc(usersCollection(workspaceUserId, 'customers'));
+    const contactId = createId();
     const timestamp = nowIso();
-    await setDoc(ref, {
+    const batch = writeBatch(requireDb());
+    batch.set(ref, {
       ...buildCustomerPayload(payload, actorName),
+      canonicalContactId: contactId,
       userId: workspaceUserId,
       createdAt: timestamp,
       updatedAt: timestamp,
     });
+    batch.set(doc(requireDb(), 'users', workspaceUserId, 'crmContacts', contactId), {
+      id: contactId,
+      businessId: workspaceUserId,
+      createdBy: user.uid,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      type: 'customer',
+      name: payload.customerName.trim(),
+      phone: payload.phone.trim(),
+      email: payload.email.trim(),
+      companyId: '',
+      companyName: '',
+      address: payload.address.trim(),
+      city: payload.location.trim(),
+      state: '',
+      country: 'India',
+      status: 'Active',
+      source: 'Customer workspace',
+      assignedTo: payload.ownerId || '',
+      tagIds: [],
+      notes: payload.notes.trim(),
+      lastActivityAt: timestamp,
+      customFields: { legacyCustomerId: ref.id },
+    });
+    await batch.commit();
     return ref.id;
   },
 
   async updateCustomer(userId: string, customerId: string, patch: Partial<Omit<CustomerProject, 'id'>>) {
     const timestamp = nowIso();
+    const currentSnapshot = await getDoc(customerDoc(userId, customerId));
+    const currentCustomer = currentSnapshot.exists() ? normalizeCustomer(customerId, currentSnapshot.data() as Partial<CustomerProject>) : null;
     const nextPayload = {
       ...patch,
       lastUpdated: patch.lastUpdated || timestamp,
@@ -1662,7 +1765,26 @@ export const dashboardService = {
       }
     });
 
-    await updateDoc(customerDoc(userId, customerId), nextPayload);
+    const batch = writeBatch(requireDb());
+    batch.update(customerDoc(userId, customerId), nextPayload);
+    if (currentCustomer?.canonicalContactId) {
+      batch.set(
+        doc(requireDb(), 'users', userId, 'crmContacts', currentCustomer.canonicalContactId),
+        {
+          ...(patch.customerName !== undefined ? { name: patch.customerName.trim() } : {}),
+          ...(patch.phone !== undefined ? { phone: patch.phone.trim() } : {}),
+          ...(patch.email !== undefined ? { email: patch.email.trim() } : {}),
+          ...(patch.address !== undefined ? { address: patch.address.trim() } : {}),
+          ...(patch.location !== undefined ? { city: patch.location.trim() } : {}),
+          ...(patch.ownerId !== undefined ? { assignedTo: patch.ownerId } : {}),
+          ...(patch.notes !== undefined ? { notes: patch.notes.trim() } : {}),
+          updatedAt: timestamp,
+          lastActivityAt: timestamp,
+        },
+        { merge: true },
+      );
+    }
+    await batch.commit();
   },
 
   async archiveCustomer(userId: string, customer: CustomerProject, deletedBy: string) {
@@ -1710,6 +1832,7 @@ export const dashboardService = {
       userId,
       ...payload,
       allowedViews: filterDashboardViews(payload.allowedViews),
+      permissions: payload.permissions?.length ? payload.permissions : ['view', 'create', 'edit'],
       avatar: getInitials(payload.name),
       activeProjects: 0,
       workload: 12,
@@ -1732,6 +1855,7 @@ export const dashboardService = {
     const nextPatch = {
       ...patch,
       ...(patch.allowedViews ? { allowedViews: filterDashboardViews(patch.allowedViews) } : {}),
+      ...(patch.permissions ? { permissions: patch.permissions } : {}),
       updatedAt: timestamp,
     };
 
@@ -1740,6 +1864,7 @@ export const dashboardService = {
     const authUid = patch.authUid || currentMember?.authUid;
     if (authUid) {
       const nextAllowedViews = patch.allowedViews ? filterDashboardViews(patch.allowedViews) : currentMember?.allowedViews || [];
+      const nextPermissions = patch.permissions || currentMember?.permissions || ['view', 'create', 'edit'];
       await setDoc(
         userDoc(authUid),
         {
@@ -1760,6 +1885,7 @@ export const dashboardService = {
           subscriptionStatus: normalizeSubscriptionStatus(ownerProfile?.subscriptionStatus),
           renewalDate: ownerProfile?.renewalDate || '',
           sidebarViews: nextAllowedViews,
+          permissions: nextPermissions,
           workspaceOwnerId: userId,
           linkedTeamMemberId: memberId,
           loginEnabled: patch.loginEnabled ?? currentMember?.loginEnabled ?? true,
@@ -1774,7 +1900,7 @@ export const dashboardService = {
     ownerUserId: string,
     ownerProfile: WorkspaceProfile,
     teamMemberId: string,
-    payload: Pick<TeamMember, 'name' | 'phone' | 'authUid' | 'loginEmail' | 'allowedViews' | 'loginEnabled'>,
+    payload: Pick<TeamMember, 'name' | 'phone' | 'authUid' | 'loginEmail' | 'allowedViews' | 'permissions' | 'loginEnabled'>,
   ) {
     if (!payload.authUid) return;
 
@@ -1800,6 +1926,7 @@ export const dashboardService = {
         renewalDate: ownerProfile.renewalDate,
         recentlyViewedIds: [],
         sidebarViews: filterDashboardViews(payload.allowedViews),
+        permissions: payload.permissions?.length ? payload.permissions : ['view', 'create', 'edit'],
         workspaceOwnerId: ownerUserId,
         linkedTeamMemberId: teamMemberId,
         createdAt: timestamp,
@@ -1829,6 +1956,16 @@ export const dashboardService = {
       | 'storageLocation'
       | 'supplierName'
       | 'supplierPhone'
+      | 'supplierGstin'
+      | 'hsnSac'
+      | 'size'
+      | 'color'
+      | 'variantLabel'
+      | 'branchId'
+      | 'damagedStock'
+      | 'purchaseOrderNumber'
+      | 'goodsReceiptNumber'
+      | 'physicalCount'
       | 'notes'
     >,
   ) {
@@ -1852,6 +1989,7 @@ export const dashboardService = {
       assignedTeamIds: [],
       assignedProjectIds: [],
       clearanceReason: '',
+      lastPhysicalCountAt: timestamp,
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -2037,6 +2175,13 @@ export const dashboardService = {
       paymentStatus: InvoicePaymentStatus;
       paymentMethod: InvoicePaymentMethod;
       taxRate: number;
+      taxMode?: GstTaxMode;
+      customerGstin?: string;
+      placeOfSupply?: string;
+      discountAmount?: number;
+      documentType?: SalesDocumentType;
+      validUntil?: string;
+      documentPrefix?: string;
       notes: string;
       billedBy: string;
       lineItems: SalesInvoiceLineItem[];
@@ -2045,28 +2190,34 @@ export const dashboardService = {
     const timestamp = nowIso();
     const ref = payload.draftId ? salesInvoiceDoc(userId, payload.draftId) : doc(usersCollection(userId, 'salesInvoices'));
     const subtotal = payload.lineItems.reduce((sum, line) => sum + line.lineSubtotal, 0);
-    const taxAmount = Number(((subtotal * payload.taxRate) / 100).toFixed(2));
-    const totalAmount = subtotal + taxAmount;
-    const draftNumber = `DRAFT-${ref.id.slice(0, 6).toUpperCase()}`;
+    const totals = calculateInvoiceTotals(subtotal, payload.discountAmount || 0, payload.taxRate, payload.taxMode || 'intra_state');
+    const isQuotation = payload.documentType === 'quotation';
+    const draftNumber = isQuotation
+      ? salesDocumentNumber(userId, ref.id, timestamp, 'quotation', payload.documentPrefix)
+      : `DRAFT-${ref.id.slice(0, 6).toUpperCase()}`;
 
     await setDoc(
       ref,
       {
         invoiceNumber: draftNumber,
-        status: 'draft',
+        status: isQuotation ? 'quotation' : 'draft',
+        documentType: isQuotation ? 'quotation' : 'invoice',
         businessBarcodeKey: buildBusinessBarcodeKey(userId),
         customerName: payload.customerName.trim() || 'Walk-in customer',
+        customerGstin: payload.customerGstin?.trim() || '',
+        placeOfSupply: payload.placeOfSupply?.trim() || '',
+        taxMode: payload.taxMode || 'intra_state',
         paymentStatus: payload.paymentStatus,
         paymentMethod: payload.paymentMethod,
         lineItems: payload.lineItems,
         subtotal,
+        ...totals,
         taxRate: payload.taxRate,
-        taxAmount,
-        totalAmount,
         notes: payload.notes.trim(),
         billedBy: payload.billedBy,
         createdAt: timestamp,
         updatedAt: timestamp,
+        validUntil: payload.validUntil || '',
       },
       { merge: true },
     );
@@ -2075,8 +2226,8 @@ export const dashboardService = {
       invoiceId: ref.id,
       invoiceNumber: draftNumber,
       subtotal,
-      taxAmount,
-      totalAmount,
+      taxAmount: totals.taxAmount,
+      totalAmount: totals.totalAmount,
       lineItems: payload.lineItems,
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -2091,6 +2242,11 @@ export const dashboardService = {
       paymentStatus: InvoicePaymentStatus;
       paymentMethod: InvoicePaymentMethod;
       taxRate: number;
+      taxMode?: GstTaxMode;
+      customerGstin?: string;
+      placeOfSupply?: string;
+      discountAmount?: number;
+      documentPrefix?: string;
       notes: string;
       billedBy: string;
       lineItems: SalesInvoiceLineItem[];
@@ -2129,13 +2285,13 @@ export const dashboardService = {
         quantity: line.quantity,
         unitPrice: item.sellingPrice,
         lineSubtotal: item.sellingPrice * line.quantity,
+        hsnSac: item.hsnSac || line.hsnSac || '',
       });
     }
 
     const subtotal = lineItems.reduce((sum, line) => sum + line.lineSubtotal, 0);
-    const taxAmount = Number(((subtotal * payload.taxRate) / 100).toFixed(2));
-    const totalAmount = subtotal + taxAmount;
-    const invoiceNumber = buildInvoiceNumber(userId, invoiceRef.id, timestamp);
+    const totals = calculateInvoiceTotals(subtotal, payload.discountAmount || 0, payload.taxRate, payload.taxMode || 'intra_state');
+    const invoiceNumber = salesDocumentNumber(userId, invoiceRef.id, timestamp, 'invoice', payload.documentPrefix);
     const batch = writeBatch(requireDb());
 
     lineItems.forEach((line, index) => {
@@ -2153,15 +2309,18 @@ export const dashboardService = {
     batch.set(salesInvoiceDoc(userId, invoiceRef.id), {
       invoiceNumber,
       status: 'finalized',
+      documentType: 'invoice',
       businessBarcodeKey,
       customerName: payload.customerName.trim() || 'Walk-in customer',
+      customerGstin: payload.customerGstin?.trim() || '',
+      placeOfSupply: payload.placeOfSupply?.trim() || '',
+      taxMode: payload.taxMode || 'intra_state',
       paymentStatus: payload.paymentStatus,
       paymentMethod: payload.paymentMethod,
       lineItems,
       subtotal,
+      ...totals,
       taxRate: payload.taxRate,
-      taxAmount,
-      totalAmount,
       notes: payload.notes.trim(),
       billedBy: payload.billedBy,
       createdAt: timestamp,
@@ -2172,7 +2331,7 @@ export const dashboardService = {
       title: invoiceNumber,
       kind: 'income',
       category: 'client_payment',
-      amount: totalAmount,
+      amount: totals.totalAmount,
       status: payload.paymentStatus,
       dueAt: timestamp,
       createdAt: timestamp,
@@ -2190,8 +2349,8 @@ export const dashboardService = {
       invoiceId: invoiceRef.id,
       invoiceNumber,
       subtotal,
-      taxAmount,
-      totalAmount,
+      taxAmount: totals.taxAmount,
+      totalAmount: totals.totalAmount,
       lineItems,
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -2206,6 +2365,11 @@ export const dashboardService = {
       paymentStatus: InvoicePaymentStatus;
       paymentMethod: InvoicePaymentMethod;
       taxRate: number;
+      taxMode?: GstTaxMode;
+      customerGstin?: string;
+      placeOfSupply?: string;
+      discountAmount?: number;
+      documentPrefix?: string;
       notes: string;
       billedBy: string;
       lineItems: SalesInvoiceLineItem[];
@@ -2229,23 +2393,25 @@ export const dashboardService = {
       lineSubtotal: Number(line.lineSubtotal || line.unitPrice * line.quantity || 0),
     }));
     const subtotal = lineItems.reduce((sum, line) => sum + line.lineSubtotal, 0);
-    const taxAmount = Number(((subtotal * payload.taxRate) / 100).toFixed(2));
-    const totalAmount = subtotal + taxAmount;
-    const invoiceNumber = buildInvoiceNumber(userId, invoiceRef.id, timestamp);
+    const totals = calculateInvoiceTotals(subtotal, payload.discountAmount || 0, payload.taxRate, payload.taxMode || 'intra_state');
+    const invoiceNumber = salesDocumentNumber(userId, invoiceRef.id, timestamp, 'invoice', payload.documentPrefix);
     const batch = writeBatch(requireDb());
 
     batch.set(salesInvoiceDoc(userId, invoiceRef.id), {
       invoiceNumber,
       status: 'finalized',
+      documentType: 'invoice',
       businessBarcodeKey,
       customerName: payload.customerName.trim() || 'Walk-in customer',
+      customerGstin: payload.customerGstin?.trim() || '',
+      placeOfSupply: payload.placeOfSupply?.trim() || '',
+      taxMode: payload.taxMode || 'intra_state',
       paymentStatus: payload.paymentStatus,
       paymentMethod: payload.paymentMethod,
       lineItems,
       subtotal,
+      ...totals,
       taxRate: payload.taxRate,
-      taxAmount,
-      totalAmount,
       notes: payload.notes.trim(),
       billedBy: payload.billedBy,
       createdAt: timestamp,
@@ -2256,7 +2422,7 @@ export const dashboardService = {
       title: invoiceNumber,
       kind: 'income',
       category: 'client_payment',
-      amount: totalAmount,
+      amount: totals.totalAmount,
       status: payload.paymentStatus,
       dueAt: timestamp,
       createdAt: timestamp,
@@ -2276,8 +2442,8 @@ export const dashboardService = {
       invoiceId: invoiceRef.id,
       invoiceNumber,
       subtotal,
-      taxAmount,
-      totalAmount,
+      taxAmount: totals.taxAmount,
+      totalAmount: totals.totalAmount,
       lineItems,
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -2287,6 +2453,49 @@ export const dashboardService = {
   async deleteSalesInvoice(userId: string, invoiceId: string) {
     const batch = writeBatch(requireDb());
     batch.delete(salesInvoiceDoc(userId, invoiceId));
+    await batch.commit();
+  },
+
+  async voidSalesInvoice(userId: string, invoiceId: string, voidedBy: string, reason: string) {
+    const invoiceRef = salesInvoiceDoc(userId, invoiceId);
+    const invoiceSnapshot = await getDoc(invoiceRef);
+    if (!invoiceSnapshot.exists()) throw new Error('Invoice not found.');
+    const invoice = normalizeSalesInvoice(invoiceId, invoiceSnapshot.data() as Partial<SalesInvoice>);
+    if (invoice.status !== 'finalized') throw new Error('Only finalized invoices can be voided.');
+
+    const timestamp = nowIso();
+    const batch = writeBatch(requireDb());
+    for (const line of invoice.lineItems) {
+      if (!line.inventoryItemId || line.inventoryItemId.startsWith('cash-')) continue;
+      const itemRef = inventoryItemDoc(userId, line.inventoryItemId);
+      const itemSnapshot = await getDoc(itemRef);
+      if (!itemSnapshot.exists()) continue;
+      const item = normalizeInventoryItem(line.inventoryItemId, itemSnapshot.data() as Partial<InventoryItem>);
+      const nextStock = item.currentStock + line.quantity;
+      batch.update(itemRef, {
+        currentStock: nextStock,
+        updatedAt: timestamp,
+        status: getInventoryStatus(nextStock, item.minimumStock, item.condition),
+      });
+    }
+
+    const financeSnapshot = await getDocs(query(usersCollection(userId, 'financeEntries'), where('sourceInvoiceId', '==', invoiceId)));
+    financeSnapshot.docs.forEach((entry) => {
+      batch.update(entry.ref, {
+        amount: 0,
+        status: 'paid',
+        updatedAt: timestamp,
+        notes: `${String(entry.data().notes || '')}\nVoided invoice ${invoice.invoiceNumber}: ${reason.trim() || 'No reason supplied.'}`.trim(),
+      });
+    });
+
+    batch.update(invoiceRef, {
+      status: 'voided',
+      voidedAt: timestamp,
+      voidedBy,
+      voidReason: reason.trim() || 'Voided by authorized user.',
+      updatedAt: timestamp,
+    });
     await batch.commit();
   },
 
