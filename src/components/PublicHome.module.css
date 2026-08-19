@@ -21,9 +21,248 @@
   min-height: 100vh;
   display: flex;
   align-items: center;
-  padding: 7.5rem 0 4rem;
+  padding: 11rem 0 4rem;
   overflow: hidden;
   background: linear-gradient(180deg, #ffffff 0%, var(--os-soft) 100%);
+}
+
+.marathonTicker {
+  position: absolute;
+  z-index: 3;
+  top: 5.6rem;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  min-height: 3.5rem;
+  overflow: hidden;
+  color: #ffffff;
+  background: #153d66;
+  border-block: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 28px rgba(18, 53, 91, 0.18);
+}
+
+.marathonTickerViewport {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.marathonTickerTrack {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  white-space: nowrap;
+  animation: marathonScroll 24s linear infinite;
+}
+
+.marathonTickerTrack span {
+  font-size: 0.82rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.marathonTickerTrack i {
+  width: 0.42rem;
+  height: 0.42rem;
+  margin: 0 1.6rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #ff4a42;
+}
+
+.marathonTickerButton {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.7rem clamp(1rem, 3vw, 2rem);
+  border: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.22);
+  background: #d62828;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 850;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.marathonTickerButton svg,
+.marathonContact svg {
+  transition: transform 0.2s ease;
+}
+
+.marathonTickerButton:hover svg,
+.marathonContact:hover svg {
+  transform: translateX(3px);
+}
+
+.marathonBackdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  overflow-y: auto;
+  background: rgba(8, 19, 34, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.marathonModal {
+  position: relative;
+  width: min(100%, 600px);
+  overflow: hidden;
+  padding: clamp(1.5rem, 5vw, 3.2rem);
+  border-radius: 16px;
+  background: #f8f7fc;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.32);
+}
+
+.marathonModal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0.45rem;
+  background: linear-gradient(90deg, #d62828 0 38%, #153d66 38% 100%);
+}
+
+.marathonClose {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  padding: 0;
+  border: 1px solid rgba(37, 36, 86, 0.13);
+  border-radius: 50%;
+  background: #ffffff;
+  color: #252456;
+  cursor: pointer;
+}
+
+.marathonKicker {
+  display: block;
+  color: #d62828;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.marathonDistance {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+  margin-top: 1.1rem;
+  color: #153d66;
+}
+
+.marathonDistance strong {
+  font-family: var(--font-serif);
+  font-size: clamp(4.5rem, 16vw, 8rem);
+  font-weight: 600;
+  line-height: 0.75;
+  letter-spacing: -0.06em;
+}
+
+.marathonDistance span {
+  color: #d62828;
+  font-size: clamp(1rem, 4vw, 1.6rem);
+  font-weight: 900;
+  letter-spacing: 0.18em;
+}
+
+.marathonModal h2 {
+  max-width: 500px;
+  margin-top: 1.4rem;
+  color: #252456;
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.marathonModal > p {
+  margin-top: 1rem;
+  color: #454779;
+  line-height: 1.65;
+}
+
+.marathonDetails {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 1.4rem;
+}
+
+.marathonDetails > span {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.9rem;
+  border: 1px solid rgba(37, 36, 86, 0.12);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #153d66;
+  font-weight: 850;
+}
+
+.marathonDetails small {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: #77779a;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.marathonContact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 3.1rem;
+  margin-top: 1rem;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  background: #153d66;
+  color: #ffffff;
+  font-weight: 850;
+}
+
+.marathonNote {
+  display: block;
+  margin-top: 0.8rem;
+  color: #68698d;
+  line-height: 1.45;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes marathonScroll {
+  to { transform: translateX(-50%); }
 }
 
 .authHero {}
@@ -842,7 +1081,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .heroAnimation span,
-  .productCard {
+  .productCard,
+  .marathonTickerTrack {
     animation: none !important;
     transform: none !important;
   }
@@ -862,7 +1102,11 @@
 @media (max-width: 900px) {
   .hero {
     min-height: auto;
-    padding-top: 12.5rem;
+    padding-top: 15.5rem;
+  }
+
+  .marathonTicker {
+    top: 9.2rem;
   }
 
   .heroAnimation span {
@@ -1042,6 +1286,27 @@
     opacity: 0.085;
   }
 
+  .marathonTickerButton {
+    padding-inline: 0.8rem;
+    font-size: 0.78rem;
+  }
+
+  .marathonTickerTrack span {
+    font-size: 0.74rem;
+  }
+
+  .marathonTickerTrack i {
+    margin-inline: 1rem;
+  }
+
+  .marathonDetails {
+    grid-template-columns: 1fr;
+  }
+
+  .marathonContact {
+    width: 100%;
+  }
+
   .redBlock,
   .blueBlock {
     width: 3.6rem;
@@ -1102,7 +1367,11 @@
 
 @media (max-width: 520px) {
   .hero {
-    padding-top: 13.5rem;
+    padding-top: 17rem;
+  }
+
+  .marathonTicker {
+    top: 10.7rem;
   }
 
   .hero h1 {

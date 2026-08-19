@@ -1,11 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   BadgeIndianRupee,
   Bot,
   Boxes,
   BrainCircuit,
+  CalendarDays,
   CheckCircle2,
+  ChevronRight,
   FileText,
   Globe,
   Handshake,
@@ -14,6 +16,7 @@ import {
   ReceiptText,
   ShoppingBag,
   Users,
+  X,
 } from 'lucide-react';
 import { AuthCard } from './AuthCard';
 import { AppInstallSection } from './AppInstallSection';
@@ -87,13 +90,50 @@ const fadeUp = {
 };
 
 export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeProps) => {
+  const [isMarathonOpen, setIsMarathonOpen] = useState(false);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
+  useEffect(() => {
+    if (!isMarathonOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMarathonOpen(false);
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMarathonOpen]);
+
   return (
     <>
       <section id="top" className={`${styles.hero} ${showAuth ? styles.authHero : ''}`} aria-labelledby="home-title">
+        <div className={styles.marathonTicker} role="region" aria-label="PULA Biz 5K Run announcement">
+          <div className={styles.marathonTickerViewport}>
+            <div className={styles.marathonTickerTrack} aria-hidden="true">
+              <span>PULA Biz 5K Run</span><i />
+              <span>Bengaluru</span><i />
+              <span>October 5, 2026</span><i />
+              <span>Run your business. Run your city.</span><i />
+              <span>PULA Biz 5K Run</span><i />
+              <span>Bengaluru</span><i />
+              <span>October 5, 2026</span><i />
+              <span>Run your business. Run your city.</span><i />
+            </div>
+            <span className={styles.srOnly}>PULA Biz 5K Run in Bengaluru on October 5, 2026.</span>
+          </div>
+          <button type="button" className={styles.marathonTickerButton} onClick={() => setIsMarathonOpen(true)}>
+            View event <ChevronRight size={17} />
+          </button>
+        </div>
         <div className={styles.heroAnimation} aria-hidden="true">
           <span className={styles.redBlock} />
           <span className={styles.blueBlock} />
@@ -163,6 +203,58 @@ export const PublicHome = ({ authMode = 'login', showAuth = false }: PublicHomeP
           </motion.div>
         </div>
       </section>
+
+      {isMarathonOpen ? (
+        <div
+          className={styles.marathonBackdrop}
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setIsMarathonOpen(false);
+          }}
+        >
+          <motion.section
+            className={styles.marathonModal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="marathon-title"
+            aria-describedby="marathon-description"
+            initial={{ opacity: 0, y: 24, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.25 }}
+          >
+            <button
+              type="button"
+              className={styles.marathonClose}
+              onClick={() => setIsMarathonOpen(false)}
+              aria-label="Close marathon details"
+              autoFocus
+            >
+              <X size={20} />
+            </button>
+            <span className={styles.marathonKicker}>PULA Biz presents</span>
+            <div className={styles.marathonDistance} aria-label="5 kilometre run">
+              <strong>5K</strong>
+              <span>RUN</span>
+            </div>
+            <h2 id="marathon-title">Bengaluru, let’s move business forward.</h2>
+            <p id="marathon-description">
+              Join the PULA Biz community for a 5K run celebrating the energy, focus, and momentum behind every
+              growing business.
+            </p>
+            <div className={styles.marathonDetails}>
+              <span><CalendarDays size={20} /><span><small>Date</small>October 5, 2026</span></span>
+              <span><MapPin size={20} /><span><small>City</small>Bengaluru</span></span>
+            </div>
+            <a
+              className={styles.marathonContact}
+              href="mailto:contact@pulabiz.com?subject=PULA%20Biz%205K%20Run%20-%20Bengaluru"
+            >
+              Get event updates <ChevronRight size={18} />
+            </a>
+            <small className={styles.marathonNote}>Venue, timing, and registration details will be announced soon.</small>
+          </motion.section>
+        </div>
+      ) : null}
 
       <PublicNarrativeDemo />
 
